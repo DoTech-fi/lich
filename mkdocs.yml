@@ -33,8 +33,6 @@ theme:
     - content.tabs.link
   icon:
     repo: fontawesome/brands/github
-  logo: assets/lich2.png
-  favicon: assets/lich2.png
 
 markdown_extensions:
   - pymdownx.highlight:

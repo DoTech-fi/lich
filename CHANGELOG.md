@@ -2,6 +2,22 @@
 
 All notable changes to Lich Framework will be documented in this file.
 
+## [1.2.0] - 2026-01-02
+
+### Added
+- **`lich make`** - Code generators (Laravel Artisan style)
+  - `lich make entity <Name>` - Generate entity + port + adapter
+  - `lich make service <Name>` - Generate service class
+  - `lich make api <Name>` - Generate FastAPI router
+  - `lich make dto <Name>` - Generate Pydantic DTOs
+- **`lich shell`** - Interactive Python REPL with project context
+- **`lich routes`** - List all API routes in table format
+- **`lich test`** - Pytest wrapper with useful options
+  - `--unit`, `--integration`, `--coverage`, `--watch`
+- **`lich seed`** - Database seeding with custom seeders
+
+---
+
 ## [1.1.0] - 2026-01-02
 
 ### Added

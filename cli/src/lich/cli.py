@@ -5,8 +5,9 @@ import typer
 from rich.console import Console
 
 from lich import __version__
-from lich.commands import init, dev, version, upgrade, adopt
+from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed
 from lich.commands.migration import migration_app
+from lich.commands.make import make_app
 
 # Create main Typer app
 app = typer.Typer(
@@ -26,9 +27,14 @@ app.command(name="stop", help="Stop development environment")(dev.stop_dev)
 app.command(name="version", help="Show Lich version")(version.show_version)
 app.command(name="check", help="Validate project structure")(version.check_project)
 app.command(name="upgrade", help="Upgrade project to latest version")(upgrade.upgrade_project)
+app.command(name="shell", help="Interactive Python shell")(shell.shell_command)
+app.command(name="routes", help="List all API routes")(routes.routes_command)
+app.command(name="test", help="Run project tests")(test.test_command)
+app.command(name="seed", help="Seed database with test data")(seed.seed_command)
 
 # Register sub-apps
 app.add_typer(migration_app, name="migration")
+app.add_typer(make_app, name="make")
 
 
 @app.callback()

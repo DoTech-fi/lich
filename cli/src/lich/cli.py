@@ -8,6 +8,7 @@ from lich import __version__
 from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed
 from lich.commands.migration import migration_app
 from lich.commands.make import make_app
+from lich.commands.middleware import middleware_app
 
 # Create main Typer app
 app = typer.Typer(
@@ -35,6 +36,7 @@ app.command(name="seed", help="Seed database with test data")(seed.seed_command)
 # Register sub-apps
 app.add_typer(migration_app, name="migration")
 app.add_typer(make_app, name="make")
+app.add_typer(middleware_app, name="middleware")
 
 
 @app.callback()

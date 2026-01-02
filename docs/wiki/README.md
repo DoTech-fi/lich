@@ -58,6 +58,12 @@
   - چطور Enable کنیم
   - ترتیب Middlewares
 
+### Testing & Factories
+- [Factory Guide](./FACTORY_GUIDE.md) ← **NEW!**
+  - چطور Factory بسازیم
+  - Faker استفاده کنیم
+  - پترن‌های مختلف Factory
+
 ---
 
 ## 🤖 AI Integration

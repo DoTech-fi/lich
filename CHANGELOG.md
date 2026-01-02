@@ -2,6 +2,31 @@
 
 All notable changes to Lich Framework will be documented in this file.
 
+## [1.3.1] - 2026-01-02
+
+### Added
+- **`lich middleware list`** - Show all middlewares and their status
+- **`lich middleware enable <name>`** - Enable a middleware
+- **`lich middleware disable <name>`** - Disable a middleware
+- **`lich middleware enable-all`** - Enable all middlewares
+- **`lich middleware disable-all`** - Disable all middlewares
+- **Pre-built middlewares (opt-in)**:
+  - `RateLimitMiddleware` - Prevent API abuse
+  - `RequestLoggingMiddleware` - Log all requests
+  - `SecurityHeadersMiddleware` - OWASP security headers
+  - `TimingMiddleware` - Response time headers
+- **Comprehensive documentation**:
+  - CLI Reference Wiki
+  - Auth & Policy Guide
+  - Middleware Guide
+  - Factory Guide
+  - Events & Listeners Guide
+  - Background Jobs Guide
+  - Authorization Policies Guide
+  - AI Enforcement Guide
+
+---
+
 ## [1.3.0] - 2026-01-02
 
 ### Added
@@ -11,6 +36,7 @@ All notable changes to Lich Framework will be documented in this file.
 - **`lich make listener`** - Generate event listeners
 - **`lich make job`** - Generate background jobs (Celery or Temporal)
 - **`lich make policy`** - Generate authorization policies
+- **39 unit tests** for all CLI commands
 
 ---
 

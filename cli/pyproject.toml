@@ -38,7 +38,11 @@ dev = [
 lich = "lich.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/DoTech/lich"
+Homepage = "https://github.com/DoTech-fi/lich"
+Documentation = "https://github.com/DoTech-fi/lich/tree/main/docs/wiki"
+Repository = "https://github.com/DoTech-fi/lich.git"
+Issues = "https://github.com/DoTech-fi/lich/issues"
+Changelog = "https://github.com/DoTech-fi/lich/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

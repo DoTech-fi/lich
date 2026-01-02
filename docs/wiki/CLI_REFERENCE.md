@@ -19,7 +19,7 @@
 
 ```bash
 # Install Lich CLI
-pip install lich-framework
+pip install lich-cli
 
 # Create new project
 lich init

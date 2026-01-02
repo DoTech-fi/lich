@@ -33,6 +33,7 @@ jobs:
         run: |
           pip install mkdocs-material
           pip install mkdocs-minify-plugin
+          pip install mkdocs-static-i18n
       
       - name: Build docs
         run: mkdocs build --config-file mkdocs.yml

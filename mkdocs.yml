@@ -9,6 +9,8 @@ repo_url: https://github.com/DoTech-fi/lich
 
 theme:
   name: material
+  language: en
+  custom_dir: site-docs/overrides
   palette:
     - scheme: slate
       primary: deep purple
@@ -34,6 +36,42 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
+plugins:
+  - search
+  - tags
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: fa
+          name: فارسی
+          build: true
+          site_name: لیچ فریم‌ورک
+          nav_translations:
+            Home: خانه
+            Getting Started: شروع کار
+            Installation: نصب
+            Quick Start: شروع سریع
+            Configuration: تنظیمات
+            Commands: دستورات
+            Overview: نمای کلی
+            Architecture: معماری
+            Entities: موجودیت‌ها
+            Services: سرویس‌ها
+            Ports & Adapters: پورت‌ها و آداپترها
+            API Layer: لایه API
+            Best Practices: بهترین شیوه‌ها
+            Testing: تست
+            Security: امنیت
+            AI Integration: یکپارچگی هوش مصنوعی
+          theme:
+            direction: rtl
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
@@ -47,10 +85,6 @@ markdown_extensions:
   - md_in_html
   - toc:
       permalink: true
-
-plugins:
-  - search
-  - tags
 
 nav:
   - Home: index.md
@@ -92,6 +126,13 @@ nav:
     - AI Integration: best-practices/ai.md
 
 extra:
+  alternate:
+    - name: English
+      link: /lich/
+      lang: en
+    - name: فارسی
+      link: /lich/fa/
+      lang: fa
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/DoTech-fi/lich

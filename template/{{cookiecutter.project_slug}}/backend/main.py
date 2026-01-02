@@ -63,6 +63,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============================================================
+# OPTIONAL MIDDLEWARES - Uncomment to enable
+# ============================================================
+
+# --- Timing: Add response time headers ---
+# from api.middleware.timing import TimingMiddleware
+# app.add_middleware(TimingMiddleware)
+
+# --- Security Headers: OWASP security headers ---
+# from api.middleware.security import SecurityHeadersMiddleware
+# app.add_middleware(SecurityHeadersMiddleware)
+
+# --- Request Logging: Log all requests with timing ---
+# from api.middleware.logging import RequestLoggingMiddleware
+# app.add_middleware(RequestLoggingMiddleware)
+
+# --- Rate Limiting: Prevent API abuse ---
+# from api.middleware.rate_limit import RateLimitMiddleware
+# app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
+
+# ============================================================
+
 # Include API routes
 app.include_router(api_router, prefix="/api")
 

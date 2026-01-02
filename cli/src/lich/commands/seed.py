@@ -121,12 +121,12 @@ async def run(db_session):
                 # For now, just call sync version or skip async
                 import asyncio
                 if asyncio.iscoroutinefunction(module.run):
-                    console.print(f"   [yellow]Async seeder - manual run required[/yellow]")
+                    console.print("   [yellow]Async seeder - manual run required[/yellow]")
                 else:
                     module.run(None)
                     console.print(f"   [green]✅ {seeder_name} complete[/green]")
             else:
-                console.print(f"   [yellow]No run() function found[/yellow]")
+                console.print("   [yellow]No run() function found[/yellow]")
         except Exception as e:
             console.print(f"   [red]❌ Error: {e}[/red]")
     

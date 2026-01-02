@@ -1,7 +1,6 @@
 """
 lich shell - Interactive Python shell with project context.
 """
-import subprocess
 import sys
 from pathlib import Path
 

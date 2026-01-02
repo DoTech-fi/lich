@@ -2,7 +2,6 @@
 lich make - Code generation commands (like Laravel Artisan).
 """
 from pathlib import Path
-from datetime import datetime
 
 import typer
 from rich.console import Console
@@ -305,8 +304,8 @@ async def delete_{name_lower.rstrip('s')}(id: UUID):
     
     console.print(f"\n[green]✅ API {name_lower} created![/green]")
     console.print("\nNext steps:")
-    console.print(f"   1. Register router in backend/main.py")
-    console.print(f"   2. Add request/response DTOs")
+    console.print("   1. Register router in backend/main.py")
+    console.print("   2. Add request/response DTOs")
 
 
 @make_app.command("dto")
@@ -726,7 +725,7 @@ def {name_lower}_job(self, data: dict) -> dict:
     console.print(f"\n[green]✅ Job {name_pascal}Job created ({queue_type})![/green]")
     console.print("\nUsage:")
     if queue_type == "temporal":
-        console.print(f"   # Start workflow")
+        console.print("   # Start workflow")
         console.print(f"   await client.start_workflow({name_pascal}Workflow.run, data, id='...')")
     else:
         console.print(f"   {name_lower}_job.delay({{'key': 'value'}})")
@@ -802,5 +801,5 @@ class {name_pascal}Policy:
     console.print("\nUsage:")
     console.print(f"   from internal.policies.{name_lower}_policy import {name_pascal}Policy")
     console.print(f"   if {name_pascal}Policy().can_edit(user, {name_lower}):")
-    console.print(f"       # allow action")
+    console.print("       # allow action")
 

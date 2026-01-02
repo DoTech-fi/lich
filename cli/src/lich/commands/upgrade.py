@@ -67,7 +67,7 @@ def upgrade_project(
         console.print("[red]❌ Not a Lich project![/red]")
         raise typer.Exit(1)
     
-    console.print(f"\n🔄 [bold blue]Lich Framework Upgrade[/bold blue]\n")
+    console.print("\n🔄 [bold blue]Lich Framework Upgrade[/bold blue]\n")
     console.print(f"[bold]Installed CLI Version:[/bold] v{__version__}")
     
     # Get available versions
@@ -75,7 +75,7 @@ def upgrade_project(
     
     # If no --to specified, show picker
     if not to_version:
-        console.print(f"\n[bold]Available Versions:[/bold]\n")
+        console.print("\n[bold]Available Versions:[/bold]\n")
         
         table = Table(show_header=True, header_style="bold cyan")
         table.add_column("#", style="dim")
@@ -125,7 +125,7 @@ def upgrade_project(
         ("CLAUDE.md", "Claude.md"),
     ]
     
-    console.print(f"\n[bold]Components to update:[/bold]")
+    console.print("\n[bold]Components to update:[/bold]")
     for path, name in components:
         exists = "exists" if Path(path).exists() else "new"
         console.print(f"   • {name} ({exists})")

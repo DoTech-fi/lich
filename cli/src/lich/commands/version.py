@@ -23,7 +23,7 @@ def show_version(
     """
     Show Lich Framework version and available versions.
     """
-    console.print(f"\n🧙 [bold blue]Lich Framework[/bold blue]")
+    console.print("\n🧙 [bold blue]Lich Framework[/bold blue]")
     console.print(f"\n[bold]Current Version:[/bold] v{__version__}")
     
     # Show project version if in a project
@@ -43,7 +43,7 @@ def show_version(
     else:
         console.print("\n[bold]Available Versions:[/bold]")
         _show_available_versions()
-        console.print(f"\n[dim]Run 'lich version --history' for detailed changelog[/dim]")
+        console.print("\n[dim]Run 'lich version --history' for detailed changelog[/dim]")
 
 
 def _show_available_versions():

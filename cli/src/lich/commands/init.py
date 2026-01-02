@@ -3,7 +3,6 @@ lich init - Create a new Lich project.
 """
 import os
 import tempfile
-import shutil
 from pathlib import Path
 from typing import Optional
 import zipfile
@@ -129,10 +128,10 @@ def init_project(
         
         project_name = Path(result).name
         
-        console.print(f"\n[green]✅ Project created successfully![/green]")
-        console.print(f"\n[bold]Next steps:[/bold]")
+        console.print("\n[green]✅ Project created successfully![/green]")
+        console.print("\n[bold]Next steps:[/bold]")
         console.print(f"   cd {project_name}")
-        console.print(f"   lich dev")
+        console.print("   lich dev")
         
     except Exception as e:
         console.print(f"[red]❌ Error: {e}[/red]")

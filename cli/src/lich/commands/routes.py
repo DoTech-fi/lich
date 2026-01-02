@@ -1,7 +1,6 @@
 """
 lich routes - List all API routes.
 """
-import ast
 import re
 from pathlib import Path
 

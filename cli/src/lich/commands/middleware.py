@@ -151,7 +151,7 @@ def enable_middleware(
     
     _write_main_py(content)
     console.print(f"[green]✅ {mw['name']} enabled![/green]")
-    console.print(f"[dim]File updated: backend/main.py[/dim]")
+    console.print("[dim]File updated: backend/main.py[/dim]")
 
 
 @middleware_app.command("disable")
@@ -185,7 +185,7 @@ def disable_middleware(
     # Comment out the import (only if not already commented)
     content = re.sub(
         rf'^({re.escape(mw["import"])})$',
-        rf'# \1',
+        r'# \1',
         content,
         flags=re.MULTILINE
     )
@@ -193,14 +193,14 @@ def disable_middleware(
     # Comment out the add_middleware (only if not already commented)
     content = re.sub(
         rf'^({re.escape(mw["add"])})$',
-        rf'# \1',
+        r'# \1',
         content,
         flags=re.MULTILINE
     )
     
     _write_main_py(content)
     console.print(f"[green]✅ {mw['name']} disabled![/green]")
-    console.print(f"[dim]File updated: backend/main.py[/dim]")
+    console.print("[dim]File updated: backend/main.py[/dim]")
 
 
 @middleware_app.command("enable-all")

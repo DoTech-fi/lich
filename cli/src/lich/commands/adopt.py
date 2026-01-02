@@ -1,10 +1,7 @@
 """
 lich adopt - Adopt an existing Python project into Lich architecture.
 """
-import os
-import re
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -93,7 +90,7 @@ def _count_python_files(project_path: Path) -> dict:
         try:
             with open(py_file) as f:
                 stats["total_lines"] += len(f.readlines())
-        except:
+        except (OSError, IOError):
             pass
         
         if py_file.name == "main.py" or py_file.name == "app.py":
@@ -203,9 +200,9 @@ def adopt_project(
         console.print(f"\n[green]✅ Lich project created: {Path(result).name}[/green]")
         console.print("\n[bold]Next steps:[/bold]")
         console.print(f"   1. cd {Path(result).name}")
-        console.print(f"   2. Copy your business logic to backend/internal/")
-        console.print(f"   3. Migrate models to backend/internal/entities/")
-        console.print(f"   4. Run: lich dev")
+        console.print("   2. Copy your business logic to backend/internal/")
+        console.print("   3. Migrate models to backend/internal/entities/")
+        console.print("   4. Run: lich dev")
     
     except Exception as e:
         console.print(f"[red]❌ Error: {e}[/red]")

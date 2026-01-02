@@ -2,7 +2,6 @@
 lich test - Test runner (pytest wrapper).
 """
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
@@ -58,10 +57,10 @@ def test_command(
     
     # Watch mode
     if watch:
-        try:
-            import pytest_watch
+        import importlib.util
+        if importlib.util.find_spec("pytest_watch"):
             cmd = ["ptw", "--"] + cmd[2:]  # Replace with ptw
-        except ImportError:
+        else:
             console.print("[yellow]Watch mode requires pytest-watch: pip install pytest-watch[/yellow]")
             raise typer.Exit(1)
     

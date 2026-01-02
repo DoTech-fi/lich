@@ -3,8 +3,6 @@ Lich CLI - Main Typer application.
 """
 import typer
 from rich.console import Console
-
-from lich import __version__
 from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed
 from lich.commands.migration import migration_app
 from lich.commands.make import make_app

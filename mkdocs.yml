@@ -10,7 +10,6 @@ repo_url: https://github.com/DoTech-fi/lich
 theme:
   name: material
   language: en
-  custom_dir: site-docs/overrides
   palette:
     - scheme: slate
       primary: deep purple

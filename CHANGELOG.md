@@ -2,6 +2,14 @@
 
 All notable changes to Lich Framework will be documented in this file.
 
+## [1.0.3] - 2026-01-02
+
+### Added
+- Interactive version picker in `lich upgrade`
+- Users can now select which version to upgrade to
+
+---
+
 ## [1.0.2] - 2026-01-02
 
 ### Added

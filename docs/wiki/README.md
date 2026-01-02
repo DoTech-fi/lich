@@ -23,6 +23,13 @@
 
 ## 🎯 Feature Guides
 
+### Authentication & Authorization
+- [Auth and Policy Guide](./AUTH_AND_POLICY.md) ← **NEW!**
+  - Authentication vs Authorization
+  - Request Flow diagram
+  - جا و نقش هر کدوم
+  - FAQ
+
 ### Events & Listeners
 - [Events & Listeners Guide](./EVENTS_LISTENERS.md)
   - Event چیست؟

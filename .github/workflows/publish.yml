@@ -10,6 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Show version being built
+        run: |
+          echo "Building from commit: $(git rev-parse HEAD)"
+          echo "Version in __init__.py:"
+          cat cli/src/lich/__init__.py
+          echo "Version in pyproject.toml:"
+          grep version cli/pyproject.toml
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,15 +32,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
-      - name: Build package
+      - name: Clean and build package
         run: |
           cd cli
+          rm -rf dist/ build/ *.egg-info/
           python -m build
 
       - name: Check package
         run: |
           cd cli
           twine check dist/*
+          echo "Package files:"
+          ls -la dist/
 
       - name: Publish to PyPI
         env:

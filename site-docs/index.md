@@ -31,13 +31,33 @@ cd your-project
 lich dev
 ```
 
-That's it! You now have a full-stack app running:
+That's it! You now have a **complete full-stack application** with:
+
+### 🎁 What You Get
+
+| Component | Description |
+|-----------|-------------|
+| 🖥️ **Admin Panel** | Ready-to-use Next.js admin dashboard |
+| 🌐 **Landing Page** | Astro landing with optional WordPress API |
+| ⚛️ **Frontend App** | Next.js 14+ with App Router & TypeScript |
+| 🐍 **Backend API** | FastAPI with Clean Architecture |
+| 🐳 **Docker Compose** | Complete containerized setup |
+| 🔀 **Traefik Proxy** | Reverse proxy with SSL ready |
+| 🗃️ **Database** | PostgreSQL or MongoDB (your choice) |
+| ⚡ **Redis** | Caching and sessions |
+| 🔐 **Authentication** | Keycloak SSO or JWT built-in |
+| 🤖 **AI Rules** | Pre-configured for AI coding assistants |
+
+### 🌍 Development URLs
 
 | Service | URL |
 |---------|-----|
-| Backend API | http://localhost:8000 |
 | Frontend | http://localhost:3000 |
+| Admin Panel | http://localhost:3002 |
+| Landing Page | http://localhost:4321 |
+| Backend API | http://localhost:8000 |
 | API Docs | http://localhost:8000/docs |
+| Traefik Dashboard | http://localhost:8080 |
 
 ## 📦 Key Features
 

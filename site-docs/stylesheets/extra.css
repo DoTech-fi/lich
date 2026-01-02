@@ -1,0 +1,33 @@
+/* Vazir Font for Persian RTL */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+/* Apply Vazir font to Persian pages */
+[dir="rtl"] {
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+[dir="rtl"] .md-typeset,
+[dir="rtl"] .md-header,
+[dir="rtl"] .md-nav,
+[dir="rtl"] .md-sidebar,
+[dir="rtl"] .md-footer {
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* Code blocks should keep monospace */
+[dir="rtl"] code,
+[dir="rtl"] pre {
+  font-family: 'Fira Code', 'Consolas', monospace !important;
+  direction: ltr;
+  text-align: left;
+}
+
+/* Fix table alignment for RTL */
+[dir="rtl"] .md-typeset table:not([class]) {
+  direction: rtl;
+}
+
+[dir="rtl"] .md-typeset table:not([class]) th,
+[dir="rtl"] .md-typeset table:not([class]) td {
+  text-align: right;
+}

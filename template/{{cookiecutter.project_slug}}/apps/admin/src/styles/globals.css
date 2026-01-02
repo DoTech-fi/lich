@@ -1,4 +1,9 @@
 /* Admin Panel Global Styles */
+{%- if cookiecutter.default_language == 'fa' %}
+/* Vazir Font for Persian */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
+{%- endif %}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,10 +11,17 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: {% if cookiecutter.default_language == 'fa' %}'Vazirmatn', {% endif %}'Inter', sans-serif;
   background: #0a0a0f;
   color: #fff;
 }
+
+{%- if cookiecutter.default_language == 'fa' %}
+/* RTL Support */
+[dir="rtl"] {
+  text-align: right;
+}
+{%- endif %}
 
 a {
   color: inherit;

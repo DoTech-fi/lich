@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="{{ cookiecutter.default_language }}"{% if cookiecutter.default_language == 'fa' %} dir="rtl"{% endif %}>
       <body>{children}</body>
     </html>
   )

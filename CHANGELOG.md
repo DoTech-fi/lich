@@ -2,6 +2,22 @@
 
 All notable changes to Lich Framework will be documented in this file.
 
+## [1.1.0] - 2026-01-02
+
+### Added
+- **`lich adopt`** - Analyze existing Python project and create Lich project
+- **`lich migration`** - Database migrations with Alembic wrapper
+  - `lich migration init` - Initialize Alembic
+  - `lich migration create` - Create new migration
+  - `lich migration up` - Apply migrations
+  - `lich migration down` - Rollback migrations
+  - `lich migration status` - Show migration status
+- New init questions: `is_microservice`, `include_admin_panel`
+- New auth option: `auth_proxy`
+- Landing backend option: `none`
+
+---
+
 ## [1.0.3] - 2026-01-02
 
 ### Added

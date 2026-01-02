@@ -5,15 +5,19 @@
   "author_name": "Your Name",
   "author_email": "your@email.com",
   
-  "project_type": ["saas_platform", "trading_platform", "ecommerce", "content_platform", "internal_tool"],
+  "project_type": ["saas_platform", "trading_platform", "ecommerce", "content_platform", "internal_tool", "microservice"],
   
-  "auth_strategy": ["keycloak", "jwt_builtin", "none"],
+  "is_microservice": ["no", "yes"],
+  
+  "include_admin_panel": ["yes", "no"],
+  
+  "auth_strategy": ["jwt_builtin", "keycloak", "auth_proxy", "none"],
   
   "database": ["postgresql", "mongodb"],
   
   "use_redis": ["yes", "no"],
   
-  "landing_backend": ["static_only", "wordpress_api"],
+  "landing_backend": ["static_only", "wordpress_api", "none"],
   
   "use_temporal": ["no", "yes"],
   

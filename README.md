@@ -21,25 +21,10 @@ Lich Framework is a **production-ready project generator** inspired by Laravel's
 
 ## 🚀 Quick Start
 
-### Installation (Private Repository)
-
 ```bash
-# Install via SSH (recommended for team members)
-pip install git+ssh://git@github.com/DoTech-fi/lich.git#subdirectory=cli
+# Install CLI
+pip install lich-cli
 
-# Or install via HTTPS with token
-pip install git+https://<GITHUB_TOKEN>@github.com/DoTech-fi/lich.git#subdirectory=cli
-```
-
-### For requirements.txt
-
-```txt
-git+ssh://git@github.com/DoTech-fi/lich.git#subdirectory=cli
-```
-
-### Create Your First Project
-
-```bash
 # Create new project
 lich init
 

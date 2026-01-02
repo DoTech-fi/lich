@@ -190,6 +190,43 @@ lich make job ProcessOrder --queue temporal
 
 ---
 
+## Pre-built Middlewares
+
+Available opt-in middlewares in `backend/api/middleware/`:
+
+| Middleware | Purpose | Enable |
+|------------|---------|--------|
+| `RateLimitMiddleware` | Prevent DoS | `requests_per_minute=60` |
+| `RequestLoggingMiddleware` | Log all requests | No args |
+| `SecurityHeadersMiddleware` | OWASP headers | Optional CSP |
+| `TimingMiddleware` | Response time | No args |
+
+**How to enable:** Uncomment in `main.py`:
+```python
+from api.middleware.timing import TimingMiddleware
+app.add_middleware(TimingMiddleware)
+```
+
+---
+
+## Authentication vs Authorization
+
+```
+Authentication (JWT/Keycloak) → WHO is this user?
+Authorization (Policy) → WHAT can this user do?
+```
+
+- Authentication happens in middleware/dependency
+- Authorization happens in endpoints via Policy classes
+
+```python
+# Policy usage in endpoint
+if not PostPolicy().can_edit(current_user, post):
+    raise HTTPException(403)
+```
+
+---
+
 ## Testing
 
 ```bash

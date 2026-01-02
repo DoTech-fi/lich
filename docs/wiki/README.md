@@ -51,11 +51,31 @@
   - سناریوهای واقعی
   - تست نوشتن
 
+### Middleware
+- [Middleware Guide](./MIDDLEWARE_GUIDE.md) ← **NEW!**
+  - Pre-built middlewares
+  - RateLimit, Logging, Security, Timing
+  - چطور Enable کنیم
+  - ترتیب Middlewares
+
 ---
 
 ## 🤖 AI Integration
 
-- [AI Rules](../AI_RULES.md) - Rules for AI agents to understand Lich
+### AI Rules
+- [AI Rules Reference](../AI_RULES.md)
+  - CLI commands
+  - Architecture rules
+  - File locations
+  - Naming conventions
+
+### AI Enforcement ← **NEW!**
+- [AI Enforcement Guide](./AI_ENFORCEMENT.md)
+  - چطور AI رو مجبور کنیم rules رو رعایت کنه
+  - System Prompt templates
+  - CLAUDE.md configuration
+  - Cursor, Copilot, ChatGPT settings
+  - Common mistakes to prevent
 
 ---
 

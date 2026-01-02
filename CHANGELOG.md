@@ -2,6 +2,18 @@
 
 All notable changes to Lich Framework will be documented in this file.
 
+## [1.3.0] - 2026-01-02
+
+### Added
+- **`lich make factory`** - Generate test factories using Faker
+- **`lich make middleware`** - Generate FastAPI middleware
+- **`lich make event`** - Generate domain event classes
+- **`lich make listener`** - Generate event listeners
+- **`lich make job`** - Generate background jobs (Celery or Temporal)
+- **`lich make policy`** - Generate authorization policies
+
+---
+
 ## [1.2.0] - 2026-01-02
 
 ### Added

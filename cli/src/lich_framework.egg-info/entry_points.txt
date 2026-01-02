@@ -1,0 +1,2 @@
+[console_scripts]
+lich = lich.cli:app

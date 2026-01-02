@@ -1,0 +1,17 @@
+/* Admin Panel Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0a0a0f;
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.egg-info/
+
+# Logs
+*.log
+.logs/
+logs/
+
+# PID files
+.pids/
+
+# Data volumes (Docker)
+data/
+
+# Test outputs
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Secrets (NEVER commit these!)
+*.pem
+*.key
+secrets/

@@ -1,0 +1,311 @@
+---
+// {{ cookiecutter.project_name }} Landing Page
+// Premium Dark Theme
+---
+
+<!DOCTYPE html>
+<html lang="{{ cookiecutter.default_language }}"{% if cookiecutter.default_language == 'fa' %} dir="rtl"{% endif %}>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ cookiecutter.project_description }}">
+  <title>{{ cookiecutter.project_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {%- if cookiecutter.default_language == 'fa' %}
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  {%- endif %}
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --surface: #1a1a2e;
+      --primary: #7C3AED;
+      --secondary: #F59E0B;
+      --text-primary: #FFFFFF;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --gradient-primary: linear-gradient(135deg, #7C3AED 0%, #a855f7 100%);
+      --gradient-gold: linear-gradient(135deg, #F59E0B 0%, #fbbf24 100%);
+      --font-family: 'Inter', {% if cookiecutter.default_language == 'fa' %}'Vazirmatn', {% endif %}sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    
+    /* Header */
+    header {
+      padding: 1.5rem 0;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(20px);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 100;
+    }
+    
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: var(--gradient-primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 5rem;
+      background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    }
+    
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+    
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+    
+    /* Features */
+    .features {
+      padding: 6rem 0;
+      background: var(--bg-secondary);
+    }
+    
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 3rem;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    
+    .feature-card {
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.3s;
+    }
+    
+    .feature-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    /* CTA */
+    .cta {
+      padding: 6rem 0;
+      text-align: center;
+      background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    }
+    
+    .cta h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .cta p {
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 2rem 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .nav-links {
+        display: none;
+      }
+      
+      .hero-cta {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="container">
+      <div class="logo">{{ cookiecutter.project_name }}</div>
+      <ul class="nav-links">
+        <li><a href="#features">{% if cookiecutter.default_language == 'fa' %}ویژگی‌ها{% else %}Features{% endif %}</a></li>
+        <li><a href="#about">{% if cookiecutter.default_language == 'fa' %}درباره ما{% else %}About{% endif %}</a></li>
+        <li><a href="#contact">{% if cookiecutter.default_language == 'fa' %}تماس{% else %}Contact{% endif %}</a></li>
+      </ul>
+      <a href="http://localhost:3000" class="btn btn-primary">
+        {% if cookiecutter.default_language == 'fa' %}ورود{% else %}Login{% endif %}
+      </a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>{{ cookiecutter.project_name }}</h1>
+        <p>{{ cookiecutter.project_description }}</p>
+        <div class="hero-cta">
+          <a href="http://localhost:3000" class="btn btn-primary">
+            {% if cookiecutter.default_language == 'fa' %}شروع کنید{% else %}Get Started{% endif %}
+          </a>
+          <a href="#features" class="btn" style="border: 1px solid rgba(255,255,255,0.2); color: white;">
+            {% if cookiecutter.default_language == 'fa' %}بیشتر بدانید{% else %}Learn More{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-title">{% if cookiecutter.default_language == 'fa' %}ویژگی‌های کلیدی{% else %}Key Features{% endif %}</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🚀</div>
+          <h3>{% if cookiecutter.default_language == 'fa' %}سریع و مدرن{% else %}Fast & Modern{% endif %}</h3>
+          <p>{% if cookiecutter.default_language == 'fa' %}ساخته شده با آخرین تکنولوژی‌های روز دنیا{% else %}Built with cutting-edge technologies{% endif %}</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>{% if cookiecutter.default_language == 'fa' %}امنیت بالا{% else %}Highly Secure{% endif %}</h3>
+          <p>{% if cookiecutter.default_language == 'fa' %}رعایت تمام استانداردهای امنیتی{% else %}Following all security best practices{% endif %}</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>{% if cookiecutter.default_language == 'fa' %}واکنش‌گرا{% else %}Responsive{% endif %}</h3>
+          <p>{% if cookiecutter.default_language == 'fa' %}طراحی بهینه برای همه دستگاه‌ها{% else %}Optimized for all devices{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>{% if cookiecutter.default_language == 'fa' %}آماده شروع هستید؟{% else %}Ready to Get Started?{% endif %}</h2>
+      <p>{% if cookiecutter.default_language == 'fa' %}همین الان ثبت‌نام کنید و از تمام امکانات استفاده کنید{% else %}Sign up now and start using all features{% endif %}</p>
+      <a href="http://localhost:3000" class="btn btn-primary">
+        {% if cookiecutter.default_language == 'fa' %}ثبت‌نام رایگان{% else %}Sign Up Free{% endif %}
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>&copy; {{ cookiecutter.author_name }}. {% if cookiecutter.default_language == 'fa' %}تمامی حقوق محفوظ است{% else %}All rights reserved{% endif %}.</p>
+    </div>
+  </footer>
+</body>
+</html>

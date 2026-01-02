@@ -1,0 +1,60 @@
+# {{ cookiecutter.project_name }} - Backend Dependencies
+# FastAPI with Lich Architecture
+
+# Core
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+
+# Database
+{%- if cookiecutter.database == 'postgresql' %}
+sqlalchemy[asyncio]>=2.0.25
+asyncpg>=0.29.0
+alembic>=1.13.0
+{%- else %}
+motor>=3.3.0
+beanie>=1.24.0
+{%- endif %}
+
+{%- if cookiecutter.use_redis == 'yes' %}
+
+# Cache
+redis>=5.0.0
+{%- endif %}
+
+{%- if cookiecutter.auth_strategy == 'keycloak' %}
+
+# Auth - Keycloak
+python-keycloak>=3.7.0
+python-jose[cryptography]>=3.3.0
+{%- elif cookiecutter.auth_strategy == 'jwt_builtin' %}
+
+# Auth - JWT
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+{%- endif %}
+
+# Security
+bcrypt>=4.1.0
+
+# HTTP Client
+httpx>=0.26.0
+
+# Logging
+{%- if cookiecutter.use_structured_logging == 'yes' %}
+structlog>=24.1.0
+python-json-logger>=2.0.0
+{%- endif %}
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+httpx>=0.26.0
+
+# Development
+black>=24.1.0
+ruff>=0.1.0
+mypy>=1.8.0

@@ -1,0 +1,15 @@
+{
+  "name": "{{ cookiecutter.project_slug }}-landing",
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^4.0.0"
+  }
+}

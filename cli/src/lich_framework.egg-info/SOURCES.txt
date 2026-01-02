@@ -1,0 +1,15 @@
+pyproject.toml
+src/lich/__init__.py
+src/lich/__main__.py
+src/lich/cli.py
+src/lich/commands/__init__.py
+src/lich/commands/dev.py
+src/lich/commands/init.py
+src/lich/commands/upgrade.py
+src/lich/commands/version.py
+src/lich_framework.egg-info/PKG-INFO
+src/lich_framework.egg-info/SOURCES.txt
+src/lich_framework.egg-info/dependency_links.txt
+src/lich_framework.egg-info/entry_points.txt
+src/lich_framework.egg-info/requires.txt
+src/lich_framework.egg-info/top_level.txt

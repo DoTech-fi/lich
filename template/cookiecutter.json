@@ -1,0 +1,37 @@
+{
+  "project_name": "My Awesome Project",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "project_description": "A brief description of the project",
+  "author_name": "Your Name",
+  "author_email": "your@email.com",
+  
+  "project_type": ["saas_platform", "trading_platform", "ecommerce", "content_platform", "internal_tool"],
+  
+  "auth_strategy": ["keycloak", "jwt_builtin", "none"],
+  
+  "database": ["postgresql", "mongodb"],
+  
+  "use_redis": ["yes", "no"],
+  
+  "landing_backend": ["static_only", "wordpress_api"],
+  
+  "use_temporal": ["no", "yes"],
+  
+  "use_i18n": ["no", "yes"],
+  
+  "default_language": ["en", "fa"],
+  
+  "use_structured_logging": ["yes", "no"],
+  
+  "use_tls": ["no", "yes"],
+  
+  "domain_name": "localhost",
+  
+  "_copy_without_render": [
+    "*.png",
+    "*.jpg",
+    "*.ico",
+    "*.woff",
+    "*.woff2"
+  ]
+}

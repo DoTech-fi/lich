@@ -1,0 +1,57 @@
+.main {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #0a0a0f;
+  color: #fff;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #7C3AED 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card {
+  background: rgba(26, 26, 46, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  border-color: rgba(124, 58, 237, 0.5);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  transform: translateY(-4px);
+}
+
+.card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+}

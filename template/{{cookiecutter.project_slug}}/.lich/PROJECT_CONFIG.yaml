@@ -1,0 +1,44 @@
+# Project Configuration
+
+# This file is machine-readable for AI agents
+
+project:
+  name: "{{ cookiecutter.project_name }}"
+  slug: "{{ cookiecutter.project_slug }}"
+  type: "{{ cookiecutter.project_type }}"
+  description: "{{ cookiecutter.project_description }}"
+
+author:
+  name: "{{ cookiecutter.author_name }}"
+  email: "{{ cookiecutter.author_email }}"
+
+stack:
+  backend: fastapi
+  frontend: nextjs
+  landing: astro
+  database: {{ cookiecutter.database }}
+  cache: {{ cookiecutter.use_redis }}
+  auth: {{ cookiecutter.auth_strategy }}
+
+features:
+  i18n: {{ cookiecutter.use_i18n }}
+  tls: {{ cookiecutter.use_tls }}
+  temporal: {{ cookiecutter.use_temporal }}
+  wordpress: {% if cookiecutter.landing_backend == 'wordpress_api' %}yes{% else %}no{% endif %}
+  structured_logging: {{ cookiecutter.use_structured_logging }}
+
+settings:
+  default_language: {{ cookiecutter.default_language }}
+  domain: {{ cookiecutter.domain_name }}
+
+ports:
+  web: 3000
+  admin: 3002
+  landing: 4321
+  api: 8000
+  traefik: 8090
+{% if cookiecutter.database == 'postgresql' %}  postgres: 5432{% else %}  mongodb: 27017{% endif %}
+{% if cookiecutter.use_redis == 'yes' %}  redis: 6379{% endif %}
+{% if cookiecutter.auth_strategy == 'keycloak' %}  keycloak: 8080{% endif %}
+{% if cookiecutter.use_temporal == 'yes' %}  temporal: 7233
+  temporal_ui: 8088{% endif %}

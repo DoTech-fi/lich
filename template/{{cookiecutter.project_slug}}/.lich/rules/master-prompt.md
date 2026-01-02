@@ -51,6 +51,7 @@ Based on task type, activate the appropriate mode:
 - Update `agentlog.md` with WHAT, WHY, WHEN
 - Generate documentation for new code
 - Follow security rules in `.lich/rules/security.md`
+- Use CLI generators from `.lich/rules/lich-cli.md`
 - Keep it simple, readable, modular
 
 ### Coding Standards
@@ -59,6 +60,21 @@ Based on task type, activate the appropriate mode:
 3. Modularity over quick hacks
 4. Strong typing everywhere
 5. Separation of concerns always
+
+### CLI Quick Reference
+
+```bash
+lich make entity <Name>      # Entity + Port + Adapter
+lich make service <Name>     # Service class
+lich make api <name>         # FastAPI router
+lich make dto <Name>         # Pydantic DTOs
+lich make factory <Name>     # Test factory
+lich make middleware <Name>  # Middleware
+lich make event <Name>       # Domain event
+lich make listener <Name>    # Event listener
+lich make job <Name>         # Background job (Celery/Temporal)
+lich make policy <Name>      # Authorization policy
+```
 
 ### Output Format
 1. Identify active mode

@@ -17,19 +17,42 @@
 
 ```
 backend/
-├── api/http/           # HTTP Controllers
+├── api/
+│   ├── http/               # HTTP Controllers
+│   └── middleware/         # Request interceptors
 ├── internal/
-│   ├── entities/       # Pure domain models (NO dependencies)
-│   ├── services/       # Use cases & business logic
-│   ├── ports/          # Interfaces (repositories, external)
-│   ├── adapters/       # Implementations (DB, Redis, HTTP)
-│   ├── dto/            # Request/Response shapes
-│   └── validators/     # Input validation
+│   ├── entities/           # Pure domain models (NO dependencies)
+│   ├── services/           # Use cases & business logic
+│   ├── ports/              # Interfaces (repositories, external)
+│   ├── adapters/           # Implementations (DB, Redis, HTTP)
+│   ├── dto/                # Request/Response shapes
+│   ├── validators/         # Input validation
+│   ├── events/             # Domain events
+│   ├── listeners/          # Event handlers
+│   ├── jobs/               # Background tasks (Celery/Temporal)
+│   └── policies/           # Authorization policies
 ├── pkg/
-│   ├── config/         # Configuration
-│   ├── logger/         # Logging setup
-│   └── errors/         # Error types
+│   ├── config/             # Configuration
+│   ├── logger/             # Logging setup
+│   └── errors/             # Error types
+├── seeds/                  # Database seeders
 └── tests/
+    └── factories/          # Test factories
+```
+
+## CLI Quick Reference
+
+```bash
+lich make entity <Name>      # Entity + Port + Adapter
+lich make service <Name>     # Service class
+lich make api <name>         # FastAPI router
+lich make dto <Name>         # Pydantic DTOs
+lich make factory <Name>     # Test factory
+lich make middleware <Name>  # Middleware
+lich make event <Name>       # Domain event
+lich make listener <Name>    # Event listener
+lich make job <Name>         # Background job
+lich make policy <Name>      # Authorization policy
 ```
 
 ---

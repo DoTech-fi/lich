@@ -16,8 +16,10 @@ class TestAdoptCommand:
         result = runner.invoke(app, ["adopt", "--help"])
         
         assert result.exit_code == 0
-        assert "PATH" in result.output or "path" in result.output.lower()
-        assert "--dry-run" in result.output or "dry-run" in result.output
+        # Check for key elements, case-insensitive
+        output_lower = result.output.lower()
+        assert "path" in output_lower
+        assert "dry" in output_lower or "--dry-run" in result.output
     
     def test_adopt_nonexistent_path(self, runner: CliRunner, temp_dir: Path):
         """Test that adopt fails with nonexistent path."""

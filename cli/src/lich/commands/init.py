@@ -3,12 +3,13 @@ lich init - Create a new Lich project.
 """
 import os
 import tempfile
+import shutil
 from pathlib import Path
 from typing import Optional
-from urllib.request import urlretrieve
 import zipfile
 
 import typer
+import requests
 from cookiecutter.main import cookiecutter
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -44,16 +45,31 @@ def _download_template() -> str:
         zip_path = os.path.join(temp_dir, "lich.zip")
         
         try:
-            urlretrieve(TEMPLATE_URL, zip_path)
-        except Exception as e:
+            # Use requests for better SSL handling
+            response = requests.get(TEMPLATE_URL, stream=True, timeout=60)
+            response.raise_for_status()
+            
+            with open(zip_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    
+        except requests.exceptions.SSLError:
+            console.print("[red]❌ SSL Certificate Error[/red]")
+            console.print("[dim]Try running: /Applications/Python*/Install\\ Certificates.command[/dim]")
+            console.print("[dim]Or: pip install certifi[/dim]")
+            raise typer.Exit(1)
+        except requests.exceptions.RequestException as e:
             console.print(f"[red]❌ Failed to download template: {e}[/red]")
             console.print("[dim]Check your internet connection.[/dim]")
             raise typer.Exit(1)
         
         # Extract
-        progress.add_task(description="Extracting template...", total=None)
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir)
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+        except zipfile.BadZipFile:
+            console.print("[red]❌ Downloaded file is not a valid zip![/red]")
+            raise typer.Exit(1)
         
         # Find template directory (lich-main/template)
         extracted_dir = os.path.join(temp_dir, f"lich-{GITHUB_BRANCH}", "template")

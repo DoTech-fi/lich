@@ -1,6 +1,6 @@
-# Contributing to Lich Framework
+# Contributing to Lich Toolkit
 
-Thank you for your interest in contributing to Lich Framework! 🧙
+Thank you for your interest in contributing to Lich Toolkit! 🧙
 
 ## 🚀 Quick Start
 

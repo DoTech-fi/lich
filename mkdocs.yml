@@ -1,4 +1,4 @@
-site_name: Lich Framework
+site_name: Lich Toolkit
 site_description: AI-Ready Full-Stack Project Generator
 site_author: DoTech
 site_url: https://dotech-fi.github.io/lich/
@@ -50,7 +50,7 @@ plugins:
         - locale: fa
           name: فارسی
           build: true
-          site_name: لیچ فریم‌ورک
+          site_name: لیچ تولکیت
           nav_translations:
             Home: خانه
             Getting Started: شروع کار

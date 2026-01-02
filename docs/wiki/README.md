@@ -1,4 +1,4 @@
-# 📚 Lich Framework Wiki
+# 📚 Lich Toolkit Wiki
 
 > **Documentation for Developers - Juniors to Seniors**
 
@@ -176,4 +176,4 @@ project/
 
 ---
 
-**Lich Framework v1.3.0**
+**Lich Toolkit v1.3.0**

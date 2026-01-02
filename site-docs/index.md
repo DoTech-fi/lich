@@ -1,4 +1,4 @@
-# 🧙 Lich Framework
+# 🧙 Lich Toolkit
 
 <div align="center">
 <h2>AI-Ready Full-Stack Project Generator</h2>
@@ -9,7 +9,7 @@
 
 ## ✨ What is Lich?
 
-Lich Framework is a **project generator** and **CLI toolkit** that creates full-stack applications with:
+Lich Toolkit is a **project generator** and **CLI toolkit** that creates full-stack applications with:
 
 - 🏗️ **FastAPI Backend** - High-performance Python API
 - ⚛️ **Next.js Frontend** - Modern React with TypeScript

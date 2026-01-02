@@ -27,7 +27,7 @@ Every Lich project includes AI rules in `.lich/rules/`:
 Add to system prompt or CLAUDE.md:
 
 ```markdown
-You are working on a Lich Framework project.
+You are working on a Lich Toolkit project.
 Read `.lich/rules/master-prompt.md` before making changes.
 ```
 

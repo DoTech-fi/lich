@@ -1,4 +1,4 @@
-# 🧙 Lich Framework - AI Rules
+# 🧙 Lich Toolkit - AI Rules
 
 > **این فایل رو به AI بده تا بفهمه چطور با Lich کار کنه**
 
@@ -6,7 +6,7 @@
 
 ## Framework Identity
 
-**Lich Framework** is a production-ready full-stack project generator inspired by Laravel's elegance and Django's batteries-included philosophy, built for Python (FastAPI) + Next.js.
+**Lich Toolkit** is a production-ready full-stack project generator inspired by Laravel's elegance and Django's batteries-included philosophy, built for Python (FastAPI) + Next.js.
 
 ### Core Philosophy
 - **Clean Architecture** - Entities → Ports → Adapters
@@ -306,4 +306,4 @@ project/
 
 ---
 
-**Lich Framework v1.3.0**
+**Lich Toolkit v1.3.0**

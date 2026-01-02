@@ -21,9 +21,9 @@ def show_version(
     history: bool = typer.Option(False, "--history", "-H", help="Show version history"),
 ):
     """
-    Show Lich Framework version and available versions.
+    Show Lich Toolkit version and available versions.
     """
-    console.print("\n🧙 [bold blue]Lich Framework[/bold blue]")
+    console.print("\n🧙 [bold blue]Lich Toolkit[/bold blue]")
     console.print(f"\n[bold]Current Version:[/bold] v{__version__}")
     
     # Show project version if in a project

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Lich Framework will be documented in this file.
+All notable changes to Lich Toolkit will be documented in this file.
 
 ## [1.3.1] - 2026-01-02
 
@@ -100,7 +100,7 @@ All notable changes to Lich Framework will be documented in this file.
 ## [1.0.0] - 2026-01-02
 
 ### Added
-- Initial Lich Framework release
+- Initial Lich Toolkit release
 - Full-stack project generator with Cookiecutter
 - **CLI Commands**: `lich init`, `lich dev`, `lich stop`, `lich check`, `lich upgrade`
 - **Backend**: FastAPI with Lich Architecture (entities, services, ports, adapters)

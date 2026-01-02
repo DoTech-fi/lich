@@ -1,6 +1,6 @@
 # lich init
 
-Create a new Lich Framework project with interactive prompts.
+Create a new Lich Toolkit project with interactive prompts.
 
 ## Usage
 
@@ -69,7 +69,7 @@ For caching and sessions.
 ```bash
 $ lich init
 
-🧙 Lich Framework - Project Generator
+🧙 Lich Toolkit - Project Generator
 
 ? Project name: my_saas
 ? Project type: saas_platform

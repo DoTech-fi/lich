@@ -1,4 +1,4 @@
-# Lich Framework - Agent Log
+# Lich Toolkit - Agent Log
 
 ## 2026-01-02T14:45:00 - v1.3.0 Complete Update
 
@@ -52,4 +52,4 @@ User requested comprehensive QA check and test coverage
 ## 2026-01-01T19:36:00 - Initial Creation
 
 **What Changed**: 
-- Complete Cookiecutter template for Lich Framework
+- Complete Cookiecutter template for Lich Toolkit

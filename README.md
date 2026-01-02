@@ -1,4 +1,4 @@
-# 🧙 Lich Framework
+# 🧙 Lich Toolkit
 
 > **AI-Ready Full-Stack Project Generator** - Create production-ready projects with a single command.
 
@@ -10,7 +10,7 @@
 
 ## ✨ What is Lich?
 
-Lich Framework is a **production-ready project generator** inspired by Laravel's elegance and Django's batteries-included philosophy, built for:
+Lich Toolkit is a **production-ready project generator** inspired by Laravel's elegance and Django's batteries-included philosophy, built for:
 
 - 🐍 **Python** (FastAPI) backend
 - ⚛️ **Next.js 14** frontend

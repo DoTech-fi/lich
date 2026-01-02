@@ -11,7 +11,7 @@
 در شروع هر session با AI، این متن رو بده:
 
 ```
-You are working on a Lich Framework project. 
+You are working on a Lich Toolkit project. 
 
 CRITICAL RULES:
 1. Read .lich/rules/*.md files before any code generation
@@ -117,7 +117,7 @@ Use lich make commands for scaffolding.
 ### GitHub Copilot
 فایل `.github/copilot-instructions.md`:
 ```markdown
-## Lich Framework Rules
+## Lich Toolkit Rules
 - Use lich make for scaffolding
 - Follow Clean Architecture
 - Keep entities pure
@@ -126,7 +126,7 @@ Use lich make commands for scaffolding.
 ### ChatGPT / Claude Direct
 در شروع chat:
 ```
-I'm using Lich Framework. Rules are in:
+I'm using Lich Toolkit. Rules are in:
 - docs/AI_RULES.md
 - .lich/rules/*.md
 
@@ -193,7 +193,7 @@ async def create_order(data: OrderCreate):
 این prompt رو هر بار به AI بده:
 
 ```
-You are an expert in Lich Framework. Follow these rules:
+You are an expert in Lich Toolkit. Follow these rules:
 
 ## Architecture
 - Entities: Pure Python, no frameworks

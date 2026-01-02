@@ -11,7 +11,7 @@ from lich.commands.middleware import middleware_app
 # Create main Typer app
 app = typer.Typer(
     name="lich",
-    help="🧙 Lich Framework - AI-Ready Full-Stack Project Generator",
+    help="🧙 Lich Toolkit - AI-Ready Full-Stack Project Generator",
     add_completion=False,
     no_args_is_help=True,
 )
@@ -40,7 +40,7 @@ app.add_typer(middleware_app, name="middleware")
 @app.callback()
 def main():
     """
-    🧙 Lich Framework - AI-Ready Full-Stack Project Generator
+    🧙 Lich Toolkit - AI-Ready Full-Stack Project Generator
     
     Create production-ready full-stack projects with a single command.
     """

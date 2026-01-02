@@ -18,7 +18,7 @@ pip install lich
 
 ```bash
 lich --version
-# 🧙 Lich Framework v1.4.1
+# 🧙 Lich Toolkit v1.4.1
 ```
 
 ### Update to Latest Version

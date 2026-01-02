@@ -32,7 +32,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Lich Framework v${{ steps.version.outputs.VERSION }}
+          name: Lich Toolkit v${{ steps.version.outputs.VERSION }}
           body: ${{ steps.changelog.outputs.CHANGELOG }}
           draft: false
           prerelease: false

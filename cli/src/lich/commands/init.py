@@ -95,7 +95,7 @@ def init_project(
         lich init --name "My App" --type saas_platform
         lich init --no-input
     """
-    console.print("\n🧙 [bold blue]Lich Framework[/bold blue] - Project Generator\n")
+    console.print("\n🧙 [bold blue]Lich Toolkit[/bold blue] - Project Generator\n")
     
     # Get template path
     local_path = _get_local_template_path()

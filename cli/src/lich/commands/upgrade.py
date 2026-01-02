@@ -59,7 +59,7 @@ def upgrade_project(
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying"),
 ):
     """
-    Upgrade project to the latest Lich Framework version.
+    Upgrade project to the latest Lich Toolkit version.
     
     Updates .lich/ folder with latest rules and workflows.
     """
@@ -67,7 +67,7 @@ def upgrade_project(
         console.print("[red]❌ Not a Lich project![/red]")
         raise typer.Exit(1)
     
-    console.print("\n🔄 [bold blue]Lich Framework Upgrade[/bold blue]\n")
+    console.print("\n🔄 [bold blue]Lich Toolkit Upgrade[/bold blue]\n")
     console.print(f"[bold]Installed CLI Version:[/bold] v{__version__}")
     
     # Get available versions

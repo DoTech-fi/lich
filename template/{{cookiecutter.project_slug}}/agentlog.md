@@ -29,7 +29,7 @@ New project initialization based on {{ cookiecutter.project_description }}
 - i18n: {{ cookiecutter.use_i18n }}
 
 **Files Created**:
-- All project structure as per Lich Framework
+- All project structure as per Lich Toolkit
 
 ---
 

@@ -61,7 +61,7 @@ lich init [OPTIONS]
 ```bash
 $ lich init
 
-🧙 Lich Framework - تولیدکننده پروژه
+🧙 Lich Toolkit - تولیدکننده پروژه
 
 ? Project name: my_saas
 ? Project type: saas_platform

@@ -1,4 +1,4 @@
-# 🧙 Lich Framework
+# 🧙 Lich Toolkit
 
 **AI-Ready Full-Stack Project Generator**
 

@@ -1,4 +1,4 @@
-# LICH FRAMEWORK - Complete AI Prompt for Full-Stack Project Generation
+# LICH TOOLKIT - Complete AI Prompt for Full-Stack Project Generation
 # Version 2.0 - With All Antigravity Rules
 
 > Give this entire file to Claude/ChatGPT/any AI to generate production-ready full-stack projects.
@@ -1187,6 +1187,6 @@ restaurant-manager/
 
 ---
 
-**END OF LICH FRAMEWORK PROMPT v2.0**
+**END OF LICH TOOLKIT PROMPT v2.0**
 
 Copy everything above and give to any AI to generate production-ready full-stack projects!

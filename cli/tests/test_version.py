@@ -17,7 +17,7 @@ class TestVersionCommand:
         
         assert result.exit_code == 0
         assert __version__ in result.output
-        assert "Lich Framework" in result.output
+        assert "Lich Toolkit" in result.output
     
     def test_version_with_history_flag(self, runner: CliRunner):
         """Test that --history flag shows changelog."""

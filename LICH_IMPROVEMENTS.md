@@ -454,14 +454,373 @@ def check_database_migrations_applied(self):
 - [ ] **CSRF Middleware**
 - [ ] **Audit Logging**
 - [ ] **Input Sanitization Middleware**
+- [ ] **CI/CD GitHub Actions**
+- [ ] **Build Strategy Options**
+- [ ] **Object Storage Integration**
+
+---
+
+## 🆕 Priority 6: CI/CD & Build Strategy
+
+### 6.1 `lich init` - New Questions
+
+Add these questions to the project initialization flow:
+
+```
+🚀 Deployment Configuration
+═══════════════════════════════════════════════════════════
+
+❓ Do you want to build images on the server? (y/n)
+   
+   → If YES: No container registry needed. Images will be built 
+     directly on the server during deployment.
+     (Best for: MVP, single server, low cost)
+     
+   → If NO: You'll need a container registry.
+     
+❓ (Only if NO above) Select your container registry:
+   
+   1. Docker Hub       (1 free private repo)
+   2. GitHub GHCR      (500MB free private)
+   3. GitLab Registry  (5GB free private) ← Recommended
+   4. AWS ECR          (Paid)
+   5. Self-hosted      (Harbor on your server)
+
+❓ Does your app need file uploads/storage? (y/n)
+
+   → If YES: Configure object storage
+     
+❓ (Only if YES above) Select your object storage:
+
+   1. Hetzner Object Storage  (€4.67/TB, S3-compatible)
+   2. AWS S3                  (Standard pricing)
+   3. MinIO (self-hosted)     (Free, on your server)
+   4. Backblaze B2            ($5/TB, cheapest)
+```
+
+---
+
+### 6.2 Build on Server Strategy (Default)
+
+When user selects "Build on Server":
+
+**Deploy Flow:**
+```bash
+lich deploy production --host myserver
+
+# Internally runs:
+ssh myserver << 'EOF'
+  cd /opt/myapp
+  git pull origin main
+  docker-compose build --parallel
+  docker-compose up -d --remove-orphans
+EOF
+```
+
+**Generated Files:**
+```
+infra/
+├── ansible/
+│   └── playbooks/
+│       └── site.yml       # Includes build step
+└── scripts/
+    └── deploy.sh          # Simple deploy script
+```
+
+**Ansible playbook with build:**
+```yaml
+# infra/ansible/playbooks/site.yml
+- name: Deploy Application
+  hosts: "{{ target_host }}"
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: "{{ git_repo }}"
+        dest: /opt/{{ project_name }}
+        version: "{{ git_branch | default('main') }}"
+    
+    - name: Build Docker images
+      command: docker-compose build --parallel
+      args:
+        chdir: /opt/{{ project_name }}
+    
+    - name: Start services
+      command: docker-compose up -d --remove-orphans
+      args:
+        chdir: /opt/{{ project_name }}
+    
+    - name: Health check
+      uri:
+        url: "http://localhost:8000/health"
+        status_code: 200
+      retries: 5
+      delay: 10
+```
+
+---
+
+### 6.3 Container Registry Strategy (Optional)
+
+When user selects a registry:
+
+**Generated `.github/workflows/release.yml`:**
+```yaml
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+      
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_URL }}/${{ github.repository }}:${{ github.ref_name }}
+            ${{ secrets.REGISTRY_URL }}/${{ github.repository }}:latest
+```
+
+---
+
+### 6.4 Object Storage Configuration
+
+When user needs file storage:
+
+**Add to `.env.example`:**
+```bash
+# Object Storage (S3-compatible)
+S3_ENDPOINT=https://fsn1.your-objectstorage.com
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+S3_BUCKET=myapp-uploads
+S3_REGION=fsn1
+```
+
+**Add to `docker-compose.yml` (dev environment):**
+```yaml
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+```
+
+**Add storage service:**
+```python
+# internal/services/storage_service.py
+import boto3
+from botocore.client import Config
+
+class StorageService:
+    def __init__(self, settings):
+        self.client = boto3.client(
+            's3',
+            endpoint_url=settings.s3_endpoint,
+            aws_access_key_id=settings.s3_access_key,
+            aws_secret_access_key=settings.s3_secret_key,
+            config=Config(signature_version='s3v4'),
+            region_name=settings.s3_region
+        )
+        self.bucket = settings.s3_bucket
+    
+    async def upload(self, file, key: str) -> str:
+        self.client.upload_fileobj(file, self.bucket, key)
+        return f"{self.bucket}/{key}"
+    
+    async def download(self, key: str):
+        return self.client.get_object(Bucket=self.bucket, Key=key)
+    
+    async def get_presigned_url(self, key: str, expires: int = 3600) -> str:
+        return self.client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': self.bucket, 'Key': key},
+            ExpiresIn=expires
+        )
+```
+
+---
+
+### 6.5 GitHub Actions CI Pipeline
+
+**Generated `.github/workflows/ci.yml`:**
+```yaml
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+      
+      - name: Run tests
+        run: |
+          cd backend
+          pytest --cov --cov-report=xml
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379/0
+      
+      - name: Security scan
+        run: |
+          pip install bandit safety
+          bandit -r backend/ -ll
+          safety check
+      
+      - name: Production readiness check
+        run: |
+          cd backend
+          lich production-ready --json > readiness.json
+        continue-on-error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+      - name: Type check
+        run: |
+          pip install mypy
+          mypy backend/
+```
+
+---
+
+### 6.6 New CLI Commands for CI/CD
+
+```bash
+# Run full CI locally
+lich ci                    # Run all: test + lint + security + production-ready
+
+# Version management
+lich version               # Show current version
+lich version bump major    # 1.0.0 -> 2.0.0
+lich version bump minor    # 1.0.0 -> 1.1.0
+lich version bump patch    # 1.0.0 -> 1.0.1
+
+# Release
+lich release               # Tag current commit with version, push tag
+
+# Remote operations
+lich logs                  # View remote logs (last 100 lines)
+lich logs -f               # Follow logs
+lich status                # Check remote health
+lich ssh                   # Quick SSH to server
+lich rollback              # Rollback to previous version
+lich rollback v1.2.3       # Rollback to specific version
+```
+
+---
+
+## 📋 Full Updated Checklist
+
+### Priority 1: Security ✅
+- [ ] Security Middlewares Default ON
+- [ ] CORS Strict Mode
+- [ ] Deep Health Check
+- [ ] Protect OpenAPI Docs
+
+### Priority 2: CLI Commands
+- [ ] `lich security`
+- [ ] `lich lint`
+- [ ] `lich deploy` with SSH options
+- [ ] `lich backup`
+- [ ] `lich secret`
+
+### Priority 3: Ansible Deployment
+- [ ] Folder structure
+- [ ] All roles (common, docker, traefik, etc.)
+- [ ] Playbooks (site, update, backup, rollback)
+
+### Priority 4: Middlewares
+- [ ] CSRF Middleware
+- [ ] Audit Logging
+- [ ] Input Sanitization
+
+### Priority 5: Production Ready
+- [ ] `lich production-ready` command
+- [ ] All checks implemented
+- [ ] `--fix` auto-fix
+
+### Priority 6: CI/CD & Build Strategy
+- [ ] `lich init` build strategy questions
+- [ ] Build on server (default)
+- [ ] Container registry options
+- [ ] Object storage integration
+- [ ] GitHub Actions CI workflow
+- [ ] GitHub Actions Release workflow
+- [ ] `lich ci` command
+- [ ] `lich version` command
+- [ ] `lich release` command
+- [ ] `lich logs/status/ssh` commands
+- [ ] `lich rollback` command
 
 ---
 
 ## 🎯 Usage
 
-وقتی خواستی implement کنی:
+To implement these improvements:
 
 ```
-Read LICH_IMPROVEMENTS.md and implement the checklist items one by one.
-Start with Priority 1 (Security).
+Read LICH_IMPROVEMENTS.md and implement the checklist items.
+Start with Priority 1 (Security), then proceed in order.
 ```

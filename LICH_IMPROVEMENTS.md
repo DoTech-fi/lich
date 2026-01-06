@@ -745,29 +745,245 @@ jobs:
 
 ---
 
-### 6.6 New CLI Commands for CI/CD
+### 6.6 Release Workflow (GitHub UI - Best Practice)
+
+**❌ OLD: Local release (removed)**
+```bash
+# DON'T DO THIS ANYMORE
+lich release --bump patch  # ← Removed
+```
+
+**✅ NEW: GitHub UI Release**
+
+All releases are done through GitHub Actions UI for better control and audit.
+
+**Generated `.github/workflows/release.yml`:**
+```yaml
+name: Release & Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      environment:
+        description: 'Deploy to environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Bump version
+        id: bump
+        run: |
+          # Read current version
+          CURRENT=$(cat VERSION 2>/dev/null || echo "v0.0.0")
+          
+          # Parse version
+          MAJOR=$(echo $CURRENT | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo $CURRENT | cut -d. -f2)
+          PATCH=$(echo $CURRENT | cut -d. -f3)
+          
+          # Bump based on type
+          case "${{ inputs.bump_type }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo $NEW_VERSION > VERSION
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "🚀 Bumping $CURRENT → $NEW_VERSION"
+      
+      - name: Update version in files
+        run: |
+          # Update pyproject.toml
+          sed -i "s/version = .*/version = \"${{ steps.bump.outputs.version }}\"/" backend/pyproject.toml
+          
+          # Update package.json files
+          for pkg in apps/*/package.json; do
+            jq ".version = \"${{ steps.bump.outputs.version }}\"" $pkg > tmp.json && mv tmp.json $pkg
+          done
+      
+      - name: Commit and tag
+        run: |
+          git add .
+          git commit -m "chore(release): ${{ steps.bump.outputs.version }}"
+          git tag ${{ steps.bump.outputs.version }}
+          git push origin main --tags
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.bump.outputs.version }}
+          generate_release_notes: true
+
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy with Ansible
+        run: |
+          pip install ansible
+          ansible-playbook \
+            -i "infra/ansible/inventory/${{ inputs.environment }}.yml" \
+            infra/ansible/playbooks/update.yml \
+            -e "git_branch=${{ steps.bump.outputs.version }}"
+      
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f https://${{ secrets.APP_DOMAIN }}/health || exit 1
+          echo "✅ Deployment successful!"
+```
+
+---
+
+### 6.7 Complete CI/CD Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  DEVELOPER WORKFLOW                                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. Write code locally                                      │
+│     git add . && git commit -m "feat: new feature"         │
+│                                                             │
+│  2. (Optional) Run CI locally to check before push          │
+│     lich ci                                                 │
+│                                                             │
+│  3. Push to GitHub                                          │
+│     git push origin main                                    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  GITHUB ACTIONS - CI (Automatic on every push)              │
+├─────────────────────────────────────────────────────────────┤
+│  ci.yml runs:                                               │
+│    ✓ pytest --cov                                          │
+│    ✓ ruff + mypy                                           │
+│    ✓ bandit + safety                                       │
+│    ✓ production-ready check                                │
+│                                                             │
+│  Result: ✅ All checks passed                               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  RELEASE MANAGER (When ready to release)                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. Go to GitHub → Actions → "Release & Deploy"            │
+│  2. Click "Run workflow"                                    │
+│  3. Select:                                                 │
+│     - bump_type: patch / minor / major                     │
+│     - environment: staging / production                    │
+│  4. Click "Run workflow"                                    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  GITHUB ACTIONS - Release & Deploy (Manual trigger)        │
+├─────────────────────────────────────────────────────────────┤
+│  release.yml runs:                                          │
+│    ✓ Bump version (v1.2.3 → v1.2.4)                        │
+│    ✓ Update VERSION, pyproject.toml, package.json          │
+│    ✓ Commit: "chore(release): v1.2.4"                      │
+│    ✓ Create git tag: v1.2.4                                │
+│    ✓ Push tag to GitHub                                    │
+│    ✓ Create GitHub Release with release notes              │
+│    ✓ Deploy to selected environment                        │
+│    ✓ Health check                                          │
+│                                                             │
+│  Result: ✅ v1.2.4 deployed to production                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 6.8 First-Time Server Setup
+
+For initial server provisioning (run once):
 
 ```bash
-# Run full CI locally
-lich ci                    # Run all: test + lint + security + production-ready
+# From local machine (or GitHub Actions with setup workflow)
+lich deploy production --setup
 
-# Version management
+# This runs:
+ansible-playbook \
+  -i infra/ansible/inventory/production.yml \
+  infra/ansible/playbooks/site.yml
+
+# What it installs:
+# ✓ Docker + Docker Compose
+# ✓ Traefik (SSL/reverse proxy)
+# ✓ PostgreSQL
+# ✓ Redis  
+# ✓ Application containers
+# ✓ Firewall rules
+# ✓ SSH hardening
+```
+
+---
+
+### 6.9 Remaining Local CLI Commands
+
+```bash
+# Run full CI locally (before push)
+lich ci                    # Run: test + lint + security + production-ready
+
+# Version info (read only)
 lich version               # Show current version
-lich version bump major    # 1.0.0 -> 2.0.0
-lich version bump minor    # 1.0.0 -> 1.1.0
-lich version bump patch    # 1.0.0 -> 1.0.1
-
-# Release
-lich release               # Tag current commit with version, push tag
 
 # Remote operations
 lich logs                  # View remote logs (last 100 lines)
 lich logs -f               # Follow logs
 lich status                # Check remote health
 lich ssh                   # Quick SSH to server
-lich rollback              # Rollback to previous version
+lich rollback              # Rollback to previous version (emergency)
 lich rollback v1.2.3       # Rollback to specific version
 ```
+
+**Note:** `lich release` and `lich version bump` are removed. All releases go through GitHub UI.
 
 ---
 

@@ -77,21 +77,150 @@ redoc_url="/api/redoc" if settings.debug else None,
 
 ## 🟡 Priority 2: New CLI Commands
 
-### 2.1 `lich security` - Security Scan
+### 2.1 `lich security` - Full Stack Security Scan
 
+**Usage:**
 ```bash
-lich security          # Run bandit + safety
-lich security --fix    # Auto-fix if possible
+lich security              # Full scan (backend + frontend)
+lich security --backend    # Backend only (bandit + safety)
+lich security --frontend   # Frontend only (npm audit)
+lich security --fix        # Auto-fix where possible
+lich security --json       # Output as JSON for CI
 ```
+
+**What it scans:**
+
+| Target | Tool | What it checks |
+|--------|------|----------------|
+| Python code | `bandit` | Security vulnerabilities in code |
+| Python deps | `safety` | Known CVEs in packages |
+| Node.js deps | `npm audit` | Known CVEs in npm packages |
+| Secrets | `git-secrets` | Hardcoded secrets in repo |
+| Docker | `trivy` | Container image vulnerabilities |
+| SAST | `semgrep` | Static analysis security testing |
 
 **Implementation:**
 ```python
 # cli/src/lich/commands/security.py
+import subprocess
+import click
+from pathlib import Path
+
 @click.command()
-def security():
-    """Run security checks (bandit + safety)."""
-    subprocess.run(["bandit", "-r", "backend/"])
-    subprocess.run(["safety", "check"])
+@click.option("--backend", is_flag=True, help="Scan backend only")
+@click.option("--frontend", is_flag=True, help="Scan frontend only")
+@click.option("--fix", is_flag=True, help="Auto-fix issues")
+@click.option("--json", "output_json", is_flag=True, help="JSON output")
+def security(backend, frontend, fix, output_json):
+    """Run comprehensive security scans."""
+    
+    results = {"backend": [], "frontend": [], "secrets": [], "docker": []}
+    scan_all = not backend and not frontend
+    
+    # Backend Security
+    if backend or scan_all:
+        click.echo("🔍 Scanning backend...")
+        
+        # Python code analysis
+        click.echo("  → Running bandit (Python SAST)...")
+        bandit_result = subprocess.run(
+            ["bandit", "-r", "backend/", "-f", "json"],
+            capture_output=True, text=True
+        )
+        results["backend"].append({"tool": "bandit", "output": bandit_result.stdout})
+        
+        # Python dependency check
+        click.echo("  → Running safety (Python CVE check)...")
+        safety_result = subprocess.run(
+            ["safety", "check", "--json"],
+            capture_output=True, text=True
+        )
+        results["backend"].append({"tool": "safety", "output": safety_result.stdout})
+    
+    # Frontend Security
+    if frontend or scan_all:
+        click.echo("🔍 Scanning frontend...")
+        
+        # Find all package.json directories
+        frontend_dirs = list(Path("apps").glob("*/package.json"))
+        
+        for pkg in frontend_dirs:
+            app_dir = pkg.parent
+            click.echo(f"  → Running npm audit in {app_dir.name}...")
+            
+            audit_cmd = ["npm", "audit", "--json"]
+            if fix:
+                audit_cmd = ["npm", "audit", "fix"]
+            
+            audit_result = subprocess.run(
+                audit_cmd,
+                cwd=app_dir,
+                capture_output=True, text=True
+            )
+            results["frontend"].append({
+                "app": app_dir.name,
+                "tool": "npm-audit",
+                "output": audit_result.stdout
+            })
+    
+    # Secrets scan (always run)
+    click.echo("🔍 Scanning for secrets...")
+    secrets_result = subprocess.run(
+        ["git", "secrets", "--scan"],
+        capture_output=True, text=True
+    )
+    results["secrets"].append({"tool": "git-secrets", "output": secrets_result.stdout})
+    
+    # Docker image scan (if trivy installed)
+    if Path("Dockerfile").exists():
+        click.echo("🔍 Scanning Docker images...")
+        trivy_result = subprocess.run(
+            ["trivy", "fs", "--security-checks", "vuln,config", "."],
+            capture_output=True, text=True
+        )
+        results["docker"].append({"tool": "trivy", "output": trivy_result.stdout})
+    
+    # Output results
+    if output_json:
+        import json
+        click.echo(json.dumps(results, indent=2))
+    else:
+        display_security_results(results)
+
+def display_security_results(results):
+    """Display security scan results in human-readable format."""
+    total_issues = 0
+    
+    for category, scans in results.items():
+        for scan in scans:
+            # Parse and count issues
+            # ... display logic
+            pass
+    
+    if total_issues == 0:
+        click.echo("\n✅ No security issues found!")
+    else:
+        click.echo(f"\n⚠️  Found {total_issues} security issue(s)")
+```
+
+**CI Integration:**
+```yaml
+# .github/workflows/ci.yml
+- name: Security Scan
+  run: |
+    pip install bandit safety
+    npm install -g npm-audit-resolver
+    
+    # Backend
+    bandit -r backend/ -ll
+    safety check
+    
+    # Frontend (all apps)
+    for dir in apps/*/; do
+      if [ -f "$dir/package.json" ]; then
+        (cd "$dir" && npm audit --audit-level=high)
+      fi
+    done
 ```
 
 ---

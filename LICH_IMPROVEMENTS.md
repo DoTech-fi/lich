@@ -176,16 +176,50 @@ template/.../infra/
 
 ### 3.2 Integration with `lich deploy`
 
+**دو روش برای اتصال:**
+
+```bash
+# روش 1: SSH Config (توصیه شده)
+# کاربر از قبل ~/.ssh/config داره:
+# Host myserver
+#   HostName 1.2.3.4
+#   User root
+#   IdentityFile ~/.ssh/id_rsa
+
+lich deploy staging --host myserver
+
+# روش 2: Inline credentials
+lich deploy staging --ip 1.2.3.4 --user root --password "xxx"
+lich deploy staging --ip 1.2.3.4 --user root --key ~/.ssh/id_rsa
+```
+
+**Implementation:**
 ```python
 # cli/src/lich/commands/deploy.py
 @click.command()
 @click.argument("environment", type=click.Choice(["staging", "production"]))
+@click.option("--host", help="SSH config host name")
+@click.option("--ip", help="Server IP address")
+@click.option("--user", default="root", help="SSH user")
+@click.option("--password", help="SSH password (not recommended)")
+@click.option("--key", help="SSH private key path")
 @click.option("--dry-run", is_flag=True)
-def deploy(environment, dry_run):
-    """Deploy to an environment using Ansible."""
+def deploy(environment, host, ip, user, password, key, dry_run):
+    """Deploy to an environment."""
+    
+    # Validate: either --host OR --ip required
+    if not host and not ip:
+        raise click.UsageError("Either --host or --ip is required")
+    
+    # Build inventory dynamically if using inline credentials
+    if ip:
+        inventory = generate_dynamic_inventory(ip, user, password, key)
+    else:
+        inventory = f"infra/ansible/inventory/{environment}.yml"
+    
     cmd = [
         "ansible-playbook",
-        "-i", f"infra/ansible/inventory/{environment}.yml",
+        "-i", inventory,
         "infra/ansible/playbooks/site.yml"
     ]
     if dry_run:
@@ -195,43 +229,207 @@ def deploy(environment, dry_run):
 
 ---
 
-## 📋 Priority 4: Missing Features
+## 🆕 Priority 5: `lich production-ready` Command
 
-### 4.1 CSRF Protection
+### 5.1 چیکار می‌کنه؟
 
-```python
-# api/middleware/csrf.py
-from starlette_csrf import CSRFMiddleware
+```bash
+lich production-ready
+```
 
-app.add_middleware(CSRFMiddleware, secret=settings.csrf_secret)
+**Output:**
+```
+🔍 Production Readiness Check
+═══════════════════════════════════════════════════════════
+
+✅ Security Middlewares     ENABLED
+✅ CORS Origins             Strict (3 origins)
+✅ Debug Mode               OFF
+✅ Secret Key               Strong (64 chars)
+⚠️  Test Coverage           45% (recommended: 80%+)
+✅ .env Variables           All defined in docker-compose
+✅ Docker Images            Using specific tags (not :latest)
+✅ Health Endpoints         /health returns DB+Redis status
+❌ SSL Certificates         Not configured (Traefik missing)
+✅ Rate Limiting            60 req/min
+⚠️  Backup Strategy         Not configured
+✅ Logging                  Structured JSON enabled
+
+═══════════════════════════════════════════════════════════
+📊 Score: 78% Production Ready
+
+⚠️  WARNINGS (non-blocking):
+   - Test coverage below 80%
+   - No backup strategy configured
+
+❌ BLOCKERS:
+   - SSL/Traefik not configured
+
+💡 Run `lich production-ready --fix` for auto-fixes
 ```
 
 ---
 
-### 4.2 Audit Logging
+### 5.2 Checks List
+
+| Check | Category | Blocking? |
+|-------|----------|-----------|
+| Security middlewares enabled | Security | ⚠️ Warning |
+| CORS not `*` in production | Security | ❌ Blocker |
+| DEBUG=false | Security | ❌ Blocker |
+| Secret key ≥32 chars | Security | ❌ Blocker |
+| JWT secret ≥32 chars | Security | ❌ Blocker |
+| No hardcoded secrets in code | Security | ❌ Blocker |
+| Test coverage ≥80% | Quality | ⚠️ Warning |
+| All .env vars in docker-compose | Config | ⚠️ Warning |
+| Docker images use specific tags | Docker | ⚠️ Warning |
+| Health check includes DB/Redis | Operations | ⚠️ Warning |
+| SSL/HTTPS configured | Security | ❌ Blocker |
+| Rate limiting enabled | Security | ⚠️ Warning |
+| Backup strategy defined | Operations | ⚠️ Warning |
+| Structured logging enabled | Operations | ⚠️ Warning |
+| No TODO/FIXME in prod code | Quality | ⚠️ Warning |
+| OpenAPI docs disabled in prod | Security | ⚠️ Warning |
+| Database backups scheduled | Operations | ⚠️ Warning |
+| Error tracking configured | Operations | ⚠️ Warning |
+
+---
+
+### 5.3 Implementation
 
 ```python
-# internal/services/audit_service.py
-class AuditService:
-    async def log(self, user_id, action, resource, details):
-        await self.repo.create(AuditLog(...))
+# cli/src/lich/commands/production_ready.py
+import click
+from pathlib import Path
+import subprocess
+import re
+
+@click.command("production-ready")
+@click.option("--fix", is_flag=True, help="Auto-fix issues where possible")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def production_ready(fix, output_json):
+    """Check if project is production ready."""
+    
+    checks = ProductionReadinessChecker()
+    
+    results = {
+        "security": [
+            checks.check_security_middlewares(),
+            checks.check_cors_config(),
+            checks.check_debug_mode(),
+            checks.check_secret_strength(),
+            checks.check_no_hardcoded_secrets(),
+        ],
+        "quality": [
+            checks.check_test_coverage(),
+            checks.check_no_todos(),
+        ],
+        "config": [
+            checks.check_env_vars_in_compose(),
+            checks.check_docker_tags(),
+        ],
+        "operations": [
+            checks.check_health_endpoints(),
+            checks.check_ssl_configured(),
+            checks.check_rate_limiting(),
+            checks.check_backup_strategy(),
+            checks.check_structured_logging(),
+            checks.check_error_tracking(),
+        ],
+    }
+    
+    if fix:
+        for category in results.values():
+            for check in category:
+                if check.fixable and not check.passed:
+                    check.auto_fix()
+    
+    display_results(results, output_json)
+
+
+class ProductionReadinessChecker:
+    def check_test_coverage(self):
+        """Check pytest coverage percentage."""
+        result = subprocess.run(
+            ["pytest", "--cov", "--cov-report=term", "-q"],
+            capture_output=True, text=True
+        )
+        # Parse coverage percentage
+        match = re.search(r"TOTAL\s+\d+\s+\d+\s+(\d+)%", result.stdout)
+        coverage = int(match.group(1)) if match else 0
+        
+        return Check(
+            name="Test Coverage",
+            passed=coverage >= 80,
+            value=f"{coverage}%",
+            recommended="80%+",
+            blocking=False,
+            fixable=False
+        )
+    
+    def check_env_vars_in_compose(self):
+        """Check all .env vars are in docker-compose."""
+        env_vars = self._parse_env_file(".env.example")
+        compose_vars = self._parse_compose_file("docker-compose.yml")
+        
+        missing = env_vars - compose_vars
+        
+        return Check(
+            name=".env Variables in Compose",
+            passed=len(missing) == 0,
+            value=f"{len(missing)} missing" if missing else "All defined",
+            details=list(missing) if missing else None,
+            blocking=False,
+            fixable=True
+        )
+    
+    def check_no_hardcoded_secrets(self):
+        """Scan code for hardcoded secrets."""
+        result = subprocess.run(
+            ["git", "secrets", "--scan"],
+            capture_output=True
+        )
+        return Check(
+            name="No Hardcoded Secrets",
+            passed=result.returncode == 0,
+            blocking=True
+        )
 ```
 
 ---
 
-### 4.3 Input Sanitization
+### 5.4 More Checks to Add
 
 ```python
-# api/middleware/sanitize.py
-class InputSanitizationMiddleware:
-    async def dispatch(self, request, call_next):
-        # Sanitize body, query params
-        ...
+def check_dockerfile_security(self):
+    """Check Dockerfile follows security best practices."""
+    issues = []
+    with open("backend/Dockerfile") as f:
+        content = f.read()
+        if "USER root" in content or "USER 0" in content:
+            issues.append("Running as root")
+        if ":latest" in content:
+            issues.append("Using :latest tag")
+        if "apt-get" in content and "--no-install-recommends" not in content:
+            issues.append("Missing --no-install-recommends")
+    return Check(name="Dockerfile Security", passed=len(issues)==0)
+
+def check_dependencies_vulnerabilities(self):
+    """Check for known vulnerabilities in dependencies."""
+    result = subprocess.run(["safety", "check"], capture_output=True)
+    return Check(name="Dependency Vulnerabilities", passed=result.returncode==0)
+
+def check_database_migrations_applied(self):
+    """Check all migrations are applied."""
+    result = subprocess.run(
+        ["alembic", "current"], capture_output=True, text=True
+    )
+    return Check(name="Migrations Applied", passed="head" in result.stdout)
 ```
 
 ---
 
-## ✅ Checklist برای Implementation
+## ✅ Updated Checklist
 
 - [ ] **Security Middlewares Default ON**
 - [ ] **CORS Strict Mode**
@@ -239,9 +437,19 @@ class InputSanitizationMiddleware:
 - [ ] **Protect OpenAPI Docs in Production**
 - [ ] **`lich security` command**
 - [ ] **`lich lint` command**
-- [ ] **`lich deploy` command with Ansible**
+- [ ] **`lich deploy` command with SSH options**
+  - [ ] Support `--host` (SSH config)
+  - [ ] Support `--ip --user --password/--key`
+  - [ ] Dynamic inventory generation
 - [ ] **`lich backup` command**
 - [ ] **`lich secret` command**
+- [ ] **`lich production-ready` command**
+  - [ ] Security checks
+  - [ ] Quality checks (coverage, TODOs)
+  - [ ] Config checks (env vars, docker tags)
+  - [ ] Operations checks (health, SSL, backups)
+  - [ ] `--fix` auto-fix option
+  - [ ] Score calculation
 - [ ] **Ansible Roles (infra folder)**
 - [ ] **CSRF Middleware**
 - [ ] **Audit Logging**

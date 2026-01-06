@@ -1801,6 +1801,12 @@ on:
         type: boolean
         default: true
 
+env:
+  S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+  S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+  S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+  S3_BUCKET: ${{ secrets.S3_BUCKET }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -1838,17 +1844,47 @@ jobs:
             fi
           EOF
       
+      # ⚠️ IMPORTANT: Auto-backup BEFORE migration
+      - name: Backup database before migration
+        if: inputs.run_migrations
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_NAME="${{ inputs.environment }}_pre_${{ inputs.tag }}_${TIMESTAMP}"
+          
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            cd /opt/${{ github.repository }}
+            
+            echo "📦 Creating backup: ${BACKUP_NAME}"
+            
+            # Backup PostgreSQL to file
+            docker-compose exec -T postgres pg_dump -U \$POSTGRES_USER \$POSTGRES_DB > /tmp/${BACKUP_NAME}.sql
+            
+            # Upload to S3
+            docker run --rm \
+              -v /tmp:/backup \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_KEY }} \
+              amazon/aws-cli \
+              --endpoint-url ${{ secrets.S3_ENDPOINT }} \
+              s3 cp /backup/${BACKUP_NAME}.sql s3://${{ secrets.S3_BUCKET }}/backups/${BACKUP_NAME}.sql
+            
+            # Cleanup local
+            rm /tmp/${BACKUP_NAME}.sql
+            
+            echo "✅ Backup uploaded to S3: ${BACKUP_NAME}"
+          EOF
+          
+          # Save backup name for summary
+          echo "BACKUP_NAME=${BACKUP_NAME}" >> $GITHUB_ENV
+      
       - name: Run database migrations
         if: inputs.run_migrations
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /opt/${{ github.repository }}
             
-            echo "📦 Checking for pending migrations..."
-            
-            # Run migrations INSIDE the backend container
+            echo "📦 Running migrations..."
             docker-compose run --rm backend alembic upgrade head
-            
             echo "✅ Migrations complete"
           EOF
       
@@ -1878,6 +1914,220 @@ jobs:
           echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Services:** ${{ inputs.services }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Migrations:** ${{ inputs.run_migrations }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$BACKUP_NAME" ]; then
+            echo "- **Backup Created:** $BACKUP_NAME" >> $GITHUB_STEP_SUMMARY
+          fi
+```
+
+---
+
+### 7.6 Rollback Workflow (با Restore از S3)
+
+**وقتی باید rollback بزنی:**
+1. لیست backups رو می‌بینی
+2. انتخاب می‌کنی کدوم backup
+3. انتخاب می‌کنی کدوم tag
+4. DB restore + code downgrade
+
+```yaml
+# .github/workflows/rollback.yml
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      target_tag:
+        description: 'Tag to rollback to (e.g. v1.2.2)'
+        required: true
+      backup_name:
+        description: 'Backup name to restore (leave empty to list available)'
+        required: false
+      confirm_restore:
+        description: 'Type "RESTORE" to confirm database restore'
+        required: true
+
+env:
+  S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+  S3_BUCKET: ${{ secrets.S3_BUCKET }}
+
+jobs:
+  list-backups:
+    if: inputs.backup_name == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: List available backups
+        run: |
+          echo "## 📦 Available Backups" >> $GITHUB_STEP_SUMMARY
+          
+          docker run --rm \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_KEY }} \
+            amazon/aws-cli \
+            --endpoint-url ${{ secrets.S3_ENDPOINT }} \
+            s3 ls s3://${{ secrets.S3_BUCKET }}/backups/ --recursive | \
+            grep "${{ inputs.environment }}" | \
+            tail -20 | \
+            while read line; do
+              echo "- $line" >> $GITHUB_STEP_SUMMARY
+            done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Re-run this workflow with the backup_name filled in**" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    if: inputs.backup_name != '' && inputs.confirm_restore == 'RESTORE'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: ⚠️ Confirmation
+        run: |
+          echo "🔴 ROLLBACK INITIATED"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Target Tag: ${{ inputs.target_tag }}"
+          echo "Backup: ${{ inputs.backup_name }}"
+      
+      - name: Stop services
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            docker-compose stop backend
+            echo "⏸️ Backend stopped"
+          EOF
+      
+      - name: Download backup from S3
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            cd /opt/\${{ github.repository }}
+            
+            echo "📥 Downloading backup: ${{ inputs.backup_name }}"
+            
+            docker run --rm \
+              -v /tmp:/backup \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.S3_ACCESS_KEY }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_KEY }} \
+              amazon/aws-cli \
+              --endpoint-url ${{ secrets.S3_ENDPOINT }} \
+              s3 cp s3://${{ secrets.S3_BUCKET }}/backups/${{ inputs.backup_name }}.sql /backup/restore.sql
+            
+            echo "✅ Backup downloaded"
+          EOF
+      
+      - name: Restore database
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            
+            echo "🔄 Restoring database..."
+            
+            # Restore PostgreSQL
+            docker-compose exec -T postgres psql -U $POSTGRES_USER -d $POSTGRES_DB < /tmp/restore.sql
+            
+            # Cleanup
+            rm /tmp/restore.sql
+            
+            echo "✅ Database restored"
+          EOF
+      
+      - name: Downgrade code to target tag
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            
+            echo "📦 Switching to tag: ${{ inputs.target_tag }}"
+            git fetch --all --tags
+            git checkout ${{ inputs.target_tag }}
+            
+            echo "🔧 Rebuilding containers..."
+            docker-compose build
+          EOF
+      
+      - name: Start services
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            docker-compose up -d
+            echo "▶️ Services started"
+          EOF
+      
+      - name: Health check
+        run: |
+          sleep 15
+          curl -f https://${{ secrets.APP_DOMAIN }}/health || exit 1
+          echo "✅ Health check passed"
+      
+      - name: Rollback summary
+        run: |
+          echo "## ⏪ Rollback Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rolled back to:** ${{ inputs.target_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Restored backup:** ${{ inputs.backup_name }}" >> $GITHUB_STEP_SUMMARY
+```
+
+---
+
+### 7.7 Per-App S3 Bucket Setup
+
+**هر MVP یه bucket جدا داره:**
+
+```
+Hetzner Object Storage:
+├── myapp-staging/
+│   └── backups/
+│       ├── staging_pre_v1.0.0_20260107_010000.sql
+│       ├── staging_pre_v1.0.1_20260108_020000.sql
+│       └── ...
+├── myapp-production/
+│   └── backups/
+│       ├── production_pre_v1.0.0_20260110_150000.sql
+│       └── ...
+└── other-app-production/
+    └── backups/
+        └── ...
+```
+
+**GitHub Secrets per environment:**
+```yaml
+# Settings → Environments → staging
+S3_BUCKET: myapp-staging
+
+# Settings → Environments → production  
+S3_BUCKET: myapp-production
+```
+
+---
+
+### 7.8 Backup Naming Convention
+
+```
+{environment}_pre_{tag}_{timestamp}.sql
+
+Examples:
+- staging_pre_v1.2.3_20260107_153045.sql
+- production_pre_v1.3.0_20260110_090000.sql
+```
+
+**Benefits:**
+- میفهمی کدوم environment
+- میفهمی پیش از کدوم deploy گرفته شده
+- Sortable by timestamp
 ```
 
 ---

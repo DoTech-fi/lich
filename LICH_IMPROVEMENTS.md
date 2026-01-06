@@ -745,21 +745,15 @@ jobs:
 
 ---
 
-### 6.6 Release Workflow (GitHub UI - Best Practice)
+### 6.6 Release Workflow (Create Tag Only)
 
-**❌ OLD: Local release (removed)**
-```bash
-# DON'T DO THIS ANYMORE
-lich release --bump patch  # ← Removed
-```
+**Workflow 1: Create Release & Tag**
 
-**✅ NEW: GitHub UI Release**
-
-All releases are done through GitHub Actions UI for better control and audit.
+This workflow ONLY creates a version and tag. Deployment is separate.
 
 **Generated `.github/workflows/release.yml`:**
 ```yaml
-name: Release & Deploy
+name: Create Release
 
 on:
   workflow_dispatch:
@@ -773,14 +767,6 @@ on:
           - patch
           - minor
           - major
-      environment:
-        description: 'Deploy to environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 jobs:
   release:
@@ -800,15 +786,12 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          # Read current version
           CURRENT=$(cat VERSION 2>/dev/null || echo "v0.0.0")
           
-          # Parse version
           MAJOR=$(echo $CURRENT | cut -d. -f1 | tr -d 'v')
           MINOR=$(echo $CURRENT | cut -d. -f2)
           PATCH=$(echo $CURRENT | cut -d. -f3)
           
-          # Bump based on type
           case "${{ inputs.bump_type }}" in
             major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
             minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
@@ -822,10 +805,8 @@ jobs:
       
       - name: Update version in files
         run: |
-          # Update pyproject.toml
           sed -i "s/version = .*/version = \"${{ steps.bump.outputs.version }}\"/" backend/pyproject.toml
           
-          # Update package.json files
           for pkg in apps/*/package.json; do
             jq ".version = \"${{ steps.bump.outputs.version }}\"" $pkg > tmp.json && mv tmp.json $pkg
           done
@@ -842,14 +823,58 @@ jobs:
         with:
           tag_name: ${{ steps.bump.outputs.version }}
           generate_release_notes: true
+      
+      - name: Summary
+        run: |
+          echo "✅ Release ${{ steps.bump.outputs.version }} created!"
+          echo "👉 To deploy, go to Actions → Deploy → Select this tag"
+```
 
+---
+
+### 6.7 Deploy Workflow (Select Tag & Deploy)
+
+**Workflow 2: Deploy to Environment**
+
+Separate workflow to deploy ANY tag to ANY environment.
+
+**Generated `.github/workflows/deploy.yml`:**
+```yaml
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag/version to deploy (e.g. v1.2.3)'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
   deploy:
-    needs: release
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      
+      - name: Validate tag exists
+        run: |
+          if ! git rev-parse ${{ inputs.tag }} >/dev/null 2>&1; then
+            echo "❌ Tag ${{ inputs.tag }} not found!"
+            exit 1
+          fi
+          echo "✅ Deploying tag: ${{ inputs.tag }}"
       
       - name: Setup SSH
         run: |
@@ -858,6 +883,30 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
       
+      - name: Install Ansible
+        run: pip install ansible
+      
+      - name: Deploy with Ansible
+        run: |
+          ansible-playbook \
+            -i "infra/ansible/inventory/${{ inputs.environment }}.yml" \
+            infra/ansible/playbooks/update.yml \
+            -e "git_version=${{ inputs.tag }}"
+      
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f https://${{ secrets.APP_DOMAIN }}/health || exit 1
+          echo "✅ Deployment successful!"
+      
+      - name: Summary
+        run: |
+          echo "🚀 Deployed ${{ inputs.tag }} to ${{ inputs.environment }}"
+```
+
+---
+
+### 6.8 Complete CI/CD Flow (Updated)
       - name: Deploy with Ansible
         run: |
           pip install ansible

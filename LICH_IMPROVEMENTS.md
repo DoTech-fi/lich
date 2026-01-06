@@ -122,12 +122,220 @@ lich deploy staging
 
 ---
 
-### 2.4 `lich backup` - Database Backup
+### 2.4 `lich backup` - Database Backup (Auto-Detect)
 
+**Usage:**
 ```bash
-lich backup            # Backup to ./backups/
-lich backup --remote   # Upload to S3/Backblaze
-lich restore <file>    # Restore from backup
+lich backup                    # Backup all detected databases
+lich backup --verify           # Backup + verify integrity
+lich backup --remote           # Backup + upload to S3/B2
+lich backup --list             # List available backups
+lich restore                   # Interactive restore
+lich restore <file>            # Restore specific backup
+lich restore --latest          # Restore latest backup
+```
+
+**What it does:**
+1. Auto-detects installed databases from `docker-compose.yml`
+2. Creates timestamped backups for each
+3. Optionally verifies backup integrity
+4. Optionally uploads to remote storage
+
+**Auto-Detection Logic:**
+```python
+# cli/src/lich/commands/backup.py
+import yaml
+from pathlib import Path
+
+def detect_databases():
+    """Detect databases from docker-compose.yml"""
+    compose = yaml.safe_load(Path("docker-compose.yml").read_text())
+    databases = []
+    
+    for service, config in compose.get("services", {}).items():
+        image = config.get("image", "")
+        
+        if "postgres" in image:
+            databases.append({
+                "type": "postgresql",
+                "service": service,
+                "container": f"{service}_1"
+            })
+        elif "mariadb" in image or "mysql" in image:
+            databases.append({
+                "type": "mysql",
+                "service": service,
+                "container": f"{service}_1"
+            })
+        elif "mongo" in image:
+            databases.append({
+                "type": "mongodb",
+                "service": service,
+                "container": f"{service}_1"
+            })
+        elif "redis" in image:
+            databases.append({
+                "type": "redis",
+                "service": service,
+                "container": f"{service}_1"
+            })
+    
+    return databases
+```
+
+**Backup Commands Per DB Type:**
+```python
+BACKUP_COMMANDS = {
+    "postgresql": {
+        "backup": 'pg_dump -U $POSTGRES_USER -d $POSTGRES_DB > /backup/{filename}.sql',
+        "restore": 'psql -U $POSTGRES_USER -d $POSTGRES_DB < /backup/{filename}.sql',
+        "verify": 'pg_restore --list /backup/{filename}.sql'
+    },
+    "mysql": {
+        "backup": 'mysqldump -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE > /backup/{filename}.sql',
+        "restore": 'mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE < /backup/{filename}.sql',
+        "verify": 'head -n 20 /backup/{filename}.sql | grep -q "MySQL dump"'
+    },
+    "mongodb": {
+        "backup": 'mongodump --out /backup/{filename}',
+        "restore": 'mongorestore /backup/{filename}',
+        "verify": 'ls -la /backup/{filename}'
+    },
+    "redis": {
+        "backup": 'redis-cli BGSAVE && cp /data/dump.rdb /backup/{filename}.rdb',
+        "restore": 'cp /backup/{filename}.rdb /data/dump.rdb && redis-cli DEBUG RELOAD',
+        "verify": 'redis-cli DEBUG RELOAD NOSAVE'
+    }
+}
+```
+
+**Full Implementation:**
+```python
+@click.command()
+@click.option("--verify", is_flag=True, help="Verify backup after creation")
+@click.option("--remote", is_flag=True, help="Upload to remote storage")
+@click.option("--list", "list_backups", is_flag=True, help="List available backups")
+def backup(verify, remote, list_backups):
+    """Backup all detected databases."""
+    
+    if list_backups:
+        backups = list(Path("backups").glob("*.sql*"))
+        for b in sorted(backups, reverse=True)[:20]:
+            click.echo(f"  {b.name} ({b.stat().st_size // 1024}KB)")
+        return
+    
+    databases = detect_databases()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = Path("backups") / timestamp
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    
+    click.echo(f"🔍 Detected {len(databases)} database(s)")
+    
+    for db in databases:
+        click.echo(f"\n📦 Backing up {db['type']}: {db['service']}")
+        
+        filename = f"{db['service']}_{timestamp}"
+        cmd = BACKUP_COMMANDS[db['type']]['backup'].format(filename=filename)
+        
+        # Run backup in container
+        result = subprocess.run([
+            "docker", "exec", db['container'],
+            "sh", "-c", cmd
+        ], capture_output=True)
+        
+        if result.returncode != 0:
+            click.echo(f"   ❌ Backup failed: {result.stderr.decode()}")
+            continue
+        
+        click.echo(f"   ✅ Backup created: {filename}")
+        
+        # Verify if requested
+        if verify:
+            click.echo(f"   🔍 Verifying backup...")
+            verify_cmd = BACKUP_COMMANDS[db['type']]['verify'].format(filename=filename)
+            verify_result = subprocess.run([
+                "docker", "exec", db['container'],
+                "sh", "-c", verify_cmd
+            ], capture_output=True)
+            
+            if verify_result.returncode == 0:
+                click.echo(f"   ✅ Backup verified!")
+            else:
+                click.echo(f"   ⚠️  Verification failed - backup may be corrupted")
+    
+    # Upload to remote if requested
+    if remote:
+        click.echo(f"\n☁️  Uploading to remote storage...")
+        upload_to_remote(backup_dir)
+        click.echo(f"   ✅ Uploaded to {settings.backup_remote_url}")
+    
+    click.echo(f"\n✅ All backups completed: {backup_dir}")
+
+
+def upload_to_remote(backup_dir: Path):
+    """Upload backup to S3-compatible storage."""
+    import boto3
+    
+    s3 = boto3.client(
+        's3',
+        endpoint_url=settings.backup_s3_endpoint,
+        aws_access_key_id=settings.backup_s3_key,
+        aws_secret_access_key=settings.backup_s3_secret
+    )
+    
+    for file in backup_dir.glob("*"):
+        s3.upload_file(
+            str(file),
+            settings.backup_s3_bucket,
+            f"backups/{backup_dir.name}/{file.name}"
+        )
+```
+
+**Restore Command:**
+```python
+@click.command()
+@click.argument("file", required=False)
+@click.option("--latest", is_flag=True, help="Restore latest backup")
+def restore(file, latest):
+    """Restore database from backup."""
+    
+    if latest:
+        backups = sorted(Path("backups").glob("*/*.sql*"), reverse=True)
+        if not backups:
+            click.echo("❌ No backups found")
+            return
+        file = backups[0]
+        click.echo(f"📂 Restoring latest: {file.name}")
+    
+    if not file:
+        # Interactive selection
+        backups = list(Path("backups").glob("*/*.sql*"))
+        for i, b in enumerate(backups[:10]):
+            click.echo(f"  [{i}] {b.name}")
+        choice = click.prompt("Select backup", type=int)
+        file = backups[choice]
+    
+    # Detect DB type from filename
+    db_type = detect_db_type_from_filename(file)
+    
+    click.echo(f"⚠️  This will OVERWRITE the current database!")
+    if not click.confirm("Continue?"):
+        return
+    
+    # Run restore
+    cmd = BACKUP_COMMANDS[db_type]['restore'].format(filename=file.stem)
+    subprocess.run(["docker", "exec", ...])
+    
+    click.echo(f"✅ Restored from {file.name}")
+```
+
+**Environment Variables:**
+```bash
+# .env for remote backup
+BACKUP_S3_ENDPOINT=https://s3.eu-central-003.backblazeb2.com
+BACKUP_S3_KEY=your-key
+BACKUP_S3_SECRET=your-secret
+BACKUP_S3_BUCKET=myapp-backups
 ```
 
 ---

@@ -2173,3 +2173,696 @@ To implement these improvements:
 Read LICH_IMPROVEMENTS.md and implement the checklist items.
 Start with Priority 1 (Security), then proceed in order.
 ```
+
+---
+
+## 🆕 Priority 4: Middlewares (Detail)
+
+### 4.1 CSRF Protection Middleware
+
+```python
+# api/middleware/csrf.py
+from starlette.middleware.base import BaseHTTPMiddleware
+import secrets
+
+class CSRFMiddleware(BaseHTTPMiddleware):
+    """CSRF protection for form submissions."""
+    
+    def __init__(self, app, safe_methods=("GET", "HEAD", "OPTIONS")):
+        super().__init__(app)
+        self.safe_methods = safe_methods
+    
+    async def dispatch(self, request, call_next):
+        if request.method not in self.safe_methods:
+            # Check CSRF token
+            csrf_cookie = request.cookies.get("csrf_token")
+            csrf_header = request.headers.get("X-CSRF-Token")
+            
+            if not csrf_cookie or csrf_cookie != csrf_header:
+                return JSONResponse(
+                    {"error": "CSRF token missing or invalid"},
+                    status_code=403
+                )
+        
+        response = await call_next(request)
+        
+        # Set CSRF cookie if not exists
+        if "csrf_token" not in request.cookies:
+            token = secrets.token_urlsafe(32)
+            response.set_cookie(
+                "csrf_token",
+                token,
+                httponly=False,  # JS needs to read it
+                samesite="strict",
+                secure=True
+            )
+        
+        return response
+```
+
+**Usage in main.py:**
+```python
+from api.middleware.csrf import CSRFMiddleware
+
+# Only for web apps with forms (not pure APIs)
+if settings.enable_csrf:
+    app.add_middleware(CSRFMiddleware)
+```
+
+---
+
+### 4.2 Audit Logging Middleware
+
+```python
+# api/middleware/audit.py
+import json
+from datetime import datetime
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class AuditLoggingMiddleware(BaseHTTPMiddleware):
+    """Log all state-changing operations for audit trail."""
+    
+    AUDIT_METHODS = ("POST", "PUT", "PATCH", "DELETE")
+    
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        
+        if request.method in self.AUDIT_METHODS:
+            await self._log_audit(request, response)
+        
+        return response
+    
+    async def _log_audit(self, request, response):
+        user_id = getattr(request.state, "user_id", None)
+        
+        audit_log = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "user_id": user_id,
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": response.status_code,
+            "ip": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+        }
+        
+        # Log to structured logging
+        logger.info("audit", extra=audit_log)
+        
+        # Optionally persist to DB
+        # await AuditLogRepository.create(audit_log)
+```
+
+**Database Model (optional):**
+```python
+# internal/entities/audit_log.py
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    
+    id = Column(UUID, primary_key=True, default=uuid4)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(UUID, nullable=True)
+    method = Column(String(10))
+    path = Column(String(500))
+    status_code = Column(Integer)
+    ip_address = Column(String(50))
+    user_agent = Column(String(500))
+    request_body = Column(JSON, nullable=True)
+```
+
+---
+
+### 4.3 Input Sanitization Middleware
+
+```python
+# api/middleware/sanitize.py
+import re
+import html
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class InputSanitizationMiddleware(BaseHTTPMiddleware):
+    """Sanitize incoming request data to prevent XSS and injection."""
+    
+    # Patterns to block
+    DANGEROUS_PATTERNS = [
+        r"<script.*?>.*?</script>",
+        r"javascript:",
+        r"on\w+\s*=",
+        r"data:text/html",
+    ]
+    
+    async def dispatch(self, request, call_next):
+        if request.method in ("POST", "PUT", "PATCH"):
+            # Read and sanitize body
+            body = await request.body()
+            if body:
+                try:
+                    data = json.loads(body)
+                    sanitized = self._sanitize_dict(data)
+                    # Replace request body
+                    request._body = json.dumps(sanitized).encode()
+                except json.JSONDecodeError:
+                    pass
+        
+        return await call_next(request)
+    
+    def _sanitize_dict(self, data: dict) -> dict:
+        """Recursively sanitize dictionary values."""
+        sanitized = {}
+        for key, value in data.items():
+            if isinstance(value, str):
+                sanitized[key] = self._sanitize_string(value)
+            elif isinstance(value, dict):
+                sanitized[key] = self._sanitize_dict(value)
+            elif isinstance(value, list):
+                sanitized[key] = [
+                    self._sanitize_string(v) if isinstance(v, str) 
+                    else self._sanitize_dict(v) if isinstance(v, dict)
+                    else v
+                    for v in value
+                ]
+            else:
+                sanitized[key] = value
+        return sanitized
+    
+    def _sanitize_string(self, value: str) -> str:
+        """Remove dangerous patterns and escape HTML."""
+        # Remove script tags and event handlers
+        for pattern in self.DANGEROUS_PATTERNS:
+            value = re.sub(pattern, "", value, flags=re.IGNORECASE)
+        
+        # Escape remaining HTML
+        return html.escape(value)
+```
+
+---
+
+## 🆕 Priority 8: Scheduled Tasks (Temporal/Celery)
+
+### 8.1 `lich init` Question
+
+```
+📆 Background Tasks & Scheduling:
+   What task runner do you want to use?
+   
+   [1] Temporal (recommended for complex workflows)
+       → Durable workflows, automatic retries
+       → Best for: payment processing, multi-step jobs
+       
+   [2] Celery + Redis (simpler, battle-tested)
+       → Traditional task queue
+       → Best for: send emails, simple background jobs
+       
+   [3] None (will add later)
+   
+   Choice [1/2/3]: _
+```
+
+---
+
+### 8.2 Temporal Configuration
+
+**Generated `docker-compose.yml`:**
+```yaml
+services:
+  temporal:
+    image: temporalio/auto-setup:1.22
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
+      - POSTGRES_SEEDS=postgres
+    depends_on:
+      - postgres
+
+  temporal-ui:
+    image: temporalio/ui:2.21.0
+    ports:
+      - "8088:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      - temporal
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    environment:
+      - TEMPORAL_HOST=temporal
+      - TEMPORAL_PORT=7233
+    depends_on:
+      - temporal
+      - backend
+```
+
+**Worker Service:**
+```python
+# internal/workers/main.py
+from temporalio.client import Client
+from temporalio.worker import Worker
+from workflows import PaymentWorkflow, EmailWorkflow
+from activities import send_email, process_payment
+
+async def main():
+    client = await Client.connect(f"{TEMPORAL_HOST}:{TEMPORAL_PORT}")
+    
+    worker = Worker(
+        client,
+        task_queue="main-queue",
+        workflows=[PaymentWorkflow, EmailWorkflow],
+        activities=[send_email, process_payment],
+    )
+    
+    await worker.run()
+```
+
+**Example Workflow:**
+```python
+# internal/workflows/payment.py
+from temporalio import workflow
+from datetime import timedelta
+
+@workflow.defn
+class PaymentWorkflow:
+    @workflow.run
+    async def run(self, user_id: str, amount: float):
+        # Step 1: Validate
+        await workflow.execute_activity(
+            validate_payment,
+            args=[user_id, amount],
+            start_to_close_timeout=timedelta(minutes=1),
+        )
+        
+        # Step 2: Process
+        result = await workflow.execute_activity(
+            process_stripe_payment,
+            args=[user_id, amount],
+            start_to_close_timeout=timedelta(minutes=5),
+            retry_policy=RetryPolicy(maximum_attempts=3),
+        )
+        
+        # Step 3: Update credits
+        await workflow.execute_activity(
+            update_user_credits,
+            args=[user_id, result.credits],
+            start_to_close_timeout=timedelta(minutes=1),
+        )
+        
+        return result
+```
+
+---
+
+### 8.3 Celery Configuration (Alternative)
+
+**Generated `docker-compose.yml`:**
+```yaml
+services:
+  celery-worker:
+    build: ./backend
+    command: celery -A celery_app worker --loglevel=info
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - backend
+
+  celery-beat:
+    build: ./backend
+    command: celery -A celery_app beat --loglevel=info
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+```
+
+**Celery App:**
+```python
+# internal/celery_app.py
+from celery import Celery
+from celery.schedules import crontab
+
+app = Celery("tasks", broker=settings.celery_broker_url)
+
+app.conf.beat_schedule = {
+    "cleanup-expired-tokens": {
+        "task": "tasks.cleanup_expired_tokens",
+        "schedule": crontab(hour=0, minute=0),  # Daily at midnight
+    },
+    "send-weekly-reports": {
+        "task": "tasks.send_weekly_reports",
+        "schedule": crontab(hour=9, minute=0, day_of_week=1),  # Monday 9am
+    },
+    "backup-database": {
+        "task": "tasks.backup_database",
+        "schedule": crontab(hour=3, minute=0),  # Daily at 3am
+    },
+}
+
+@app.task
+def send_email(to: str, subject: str, body: str):
+    """Send email task."""
+    email_service.send(to, subject, body)
+
+@app.task
+def cleanup_expired_tokens():
+    """Remove expired refresh tokens."""
+    TokenRepository.delete_expired()
+```
+
+---
+
+### 8.4 Comparison Table
+
+| Feature | Temporal | Celery |
+|---------|----------|--------|
+| **Complexity** | Higher | Lower |
+| **Durability** | Built-in | Manual |
+| **Workflow State** | Automatic | Manual |
+| **Retries** | Automatic | Configurable |
+| **UI** | Built-in | Flower (separate) |
+| **Best For** | Complex workflows | Simple tasks |
+| **Resource Usage** | Higher | Lower |
+| **Learning Curve** | Steeper | Easier |
+
+**Recommendation:**
+- 🔰 MVP/Simple → **Celery**
+- 🏢 Complex/Payments → **Temporal**
+
+---
+
+## 🆕 Priority 9: Observability (Monitoring + Error Tracking)
+
+### 9.1 `lich init` Question
+
+```
+📊 Monitoring & Observability:
+   What monitoring stack do you want?
+   
+   [1] Full Stack (Prometheus + Grafana + Loki)
+       → Metrics, dashboards, log aggregation
+       → Resource: ~1GB RAM extra
+       
+   [2] Sentry Only (error tracking)
+       → Error reporting and tracing
+       → Cloud service, minimal resources
+       
+   [3] Both (recommended for production)
+   
+   [4] None (will add later)
+   
+   Choice [1/2/3/4]: _
+```
+
+---
+
+### 9.2 Prometheus + Grafana Setup
+
+**Generated `docker-compose.yml`:**
+```yaml
+services:
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./infra/loki/config.yml:/etc/loki/config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./infra/promtail/config.yml:/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+```
+
+**Prometheus Config:**
+```yaml
+# infra/prometheus/prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: /metrics
+
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8082']
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+```
+
+**Backend Metrics Endpoint:**
+```python
+# api/http/metrics.py
+from prometheus_client import Counter, Histogram, generate_latest
+from fastapi import APIRouter
+
+router = APIRouter()
+
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency',
+    ['method', 'endpoint']
+)
+
+@router.get("/metrics")
+async def metrics():
+    return Response(
+        generate_latest(),
+        media_type="text/plain"
+    )
+```
+
+---
+
+### 9.3 Sentry Integration
+
+**Installation:**
+```bash
+pip install sentry-sdk[fastapi]
+```
+
+**Backend Setup:**
+```python
+# main.py
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        traces_sample_rate=0.1,  # 10% of requests
+        profiles_sample_rate=0.1,
+        integrations=[
+            FastApiIntegration(transaction_style="endpoint"),
+            SqlalchemyIntegration(),
+        ],
+        # Don't send PII
+        send_default_pii=False,
+    )
+```
+
+**Frontend Setup (Next.js):**
+```javascript
+// sentry.client.config.js
+import * as Sentry from "@sentry/nextjs";
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+});
+```
+
+**Environment Variables:**
+```bash
+# .env
+SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+SENTRY_ENVIRONMENT=production
+```
+
+---
+
+### 9.4 Alert Rules
+
+**Prometheus Alerts:**
+```yaml
+# infra/prometheus/alerts.yml
+groups:
+  - name: application
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "95th percentile latency > 1s"
+          
+      - alert: DatabaseDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space below 10%"
+```
+
+---
+
+### 9.5 Grafana Dashboards
+
+**Pre-configured Dashboards:**
+```
+infra/grafana/provisioning/dashboards/
+├── application.json      # Request rate, latency, errors
+├── infrastructure.json   # CPU, memory, disk, network
+├── database.json         # Postgres connections, queries
+└── business.json         # Custom business metrics
+```
+
+**Application Dashboard includes:**
+- Request rate (per endpoint)
+- Error rate (4xx, 5xx)
+- Latency percentiles (p50, p95, p99)
+- Active users
+- Background jobs queue size
+
+---
+
+### 9.6 Summary Table
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| **Prometheus** | Metrics collection | Always in production |
+| **Grafana** | Dashboards | Always in production |
+| **Loki** | Log aggregation | When need searchable logs |
+| **Sentry** | Error tracking | Always in production |
+| **Alertmanager** | Alert notifications | When need Slack/Email alerts |
+
+---
+
+## 📋 Full Updated Checklist (Final)
+
+### Priority 1: Security ✅
+- [ ] Security Middlewares default ON
+- [ ] CORS Strict Mode
+- [ ] Deep Health Check
+- [ ] Protect OpenAPI Docs
+
+### Priority 2: CLI Commands
+- [ ] `lich security` (full-stack)
+- [ ] `lich lint`
+- [ ] `lich deploy`
+- [ ] `lich backup`
+- [ ] `lich secret`
+
+### Priority 3: Ansible Deployment
+- [ ] Folder structure
+- [ ] All roles
+- [ ] Playbooks
+
+### Priority 4: Middlewares
+- [ ] CSRF Protection
+- [ ] Audit Logging
+- [ ] Input Sanitization
+
+### Priority 5: Production Ready
+- [ ] `lich production-ready` command
+- [ ] All checks implemented
+- [ ] `--fix` auto-fix
+
+### Priority 6: CI/CD & Build Strategy
+- [ ] `lich init` build questions
+- [ ] Build on server (default)
+- [ ] Container registry options
+- [ ] Object storage
+- [ ] GitHub Actions workflows
+
+### Priority 7: Monorepo CI/CD
+- [ ] Smart change detection
+- [ ] Per-app CI workflows
+- [ ] Production tests
+- [ ] Deploy with migration
+- [ ] Rollback workflow
+
+### Priority 8: Scheduled Tasks
+- [ ] `lich init` Temporal/Celery question
+- [ ] Temporal configuration
+- [ ] Celery configuration
+- [ ] Worker Dockerfile
+
+### Priority 9: Observability
+- [ ] Prometheus + Grafana setup
+- [ ] Loki log aggregation
+- [ ] Sentry integration
+- [ ] Alert rules
+- [ ] Pre-configured dashboards

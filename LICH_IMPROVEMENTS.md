@@ -1412,9 +1412,506 @@ lich rollback v1.2.3       # Rollback to specific version
 - [ ] GitHub Actions Release workflow
 - [ ] `lich ci` command
 - [ ] `lich version` command
-- [ ] `lich release` command
 - [ ] `lich logs/status/ssh` commands
 - [ ] `lich rollback` command
+
+### Priority 7: Monorepo CI/CD
+- [ ] Smart change detection
+- [ ] Per-app CI workflows
+- [ ] Production tests (load, e2e, scenario)
+- [ ] Database migration in deploy
+- [ ] Selective service deploy
+
+---
+
+## 🆕 Priority 7: Monorepo CI/CD Architecture
+
+### 7.1 Tool Location (Important!)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      LOCAL / CI                          │
+│  ✅ lich (installed via pip)                            │
+│  ✅ lich ci, lich security, lich test                   │
+│  ✅ ansible (runs FROM CI, connects TO server)          │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼ (via SSH/Ansible)
+┌─────────────────────────────────────────────────────────┐
+│                       SERVER                             │
+│  ❌ lich is NOT installed here                          │
+│  ✅ docker, docker-compose                              │
+│  ✅ alembic runs INSIDE container                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Why no lich on server?**
+- Lich is a developer/CI tool, not a production dependency
+- Fewer dependencies = fewer problems
+- Everything runs via docker-compose on server
+
+---
+
+### 7.2 Smart CI with Change Detection
+
+**CLI Commands:**
+```bash
+lich ci                    # Smart detect changes → run only affected
+lich ci backend            # Backend only
+lich ci admin              # Admin panel only
+lich ci web                # Web app only
+lich ci landing            # Landing page only
+lich ci:all                # Everything
+
+# Production tests
+lich ci:load               # k6 load test
+lich ci:e2e                # Playwright E2E
+lich ci:scenario           # User scenario tests
+```
+
+**Main CI Workflow with Change Detection:**
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      admin: ${{ steps.filter.outputs.admin }}
+      web: ${{ steps.filter.outputs.web }}
+      landing: ${{ steps.filter.outputs.landing }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            admin:
+              - 'apps/admin/**'
+            web:
+              - 'apps/web/**'
+            landing:
+              - 'apps/landing/**'
+            shared:
+              - 'packages/**'
+
+  backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    uses: ./.github/workflows/ci-backend.yml
+
+  admin:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.admin == 'true' || needs.detect-changes.outputs.shared == 'true'
+    uses: ./.github/workflows/ci-admin.yml
+
+  web:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.web == 'true' || needs.detect-changes.outputs.shared == 'true'
+    uses: ./.github/workflows/ci-web.yml
+
+  landing:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.landing == 'true'
+    uses: ./.github/workflows/ci-landing.yml
+
+  security:
+    needs: detect-changes
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backend Security
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: |
+          pip install bandit safety
+          bandit -r backend/ -ll
+          cd backend && safety check
+      - name: Frontend Security
+        run: |
+          for dir in apps/*/; do
+            if [ -f "$dir/package.json" ]; then
+              echo "Scanning $dir..."
+              (cd "$dir" && npm audit --audit-level=high) || true
+            fi
+          done
+```
+
+---
+
+### 7.3 Per-App CI Workflows
+
+**Backend CI:**
+```yaml
+# .github/workflows/ci-backend.yml
+name: CI Backend
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+      
+      - name: Run tests
+        run: |
+          cd backend
+          pytest --cov --cov-report=xml -v
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379/0
+      
+      - name: Security scan
+        run: |
+          pip install bandit safety
+          bandit -r backend/ -ll
+          cd backend && safety check
+```
+
+**Frontend App CI (reusable):**
+```yaml
+# .github/workflows/ci-frontend.yml
+name: CI Frontend App
+
+on:
+  workflow_call:
+    inputs:
+      app_path:
+        required: true
+        type: string
+      app_name:
+        required: true
+        type: string
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.app_path }}/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd ${{ inputs.app_path }}
+          npm ci
+      
+      - name: Lint
+        run: |
+          cd ${{ inputs.app_path }}
+          npm run lint || true
+      
+      - name: Type check
+        run: |
+          cd ${{ inputs.app_path }}
+          npm run type-check || true
+      
+      - name: Build
+        run: |
+          cd ${{ inputs.app_path }}
+          npm run build
+      
+      - name: Test
+        run: |
+          cd ${{ inputs.app_path }}
+          npm test || true
+      
+      - name: Security audit
+        run: |
+          cd ${{ inputs.app_path }}
+          npm audit --audit-level=high || true
+```
+
+**Admin/Web/Landing use the reusable workflow:**
+```yaml
+# .github/workflows/ci-admin.yml
+name: CI Admin
+on:
+  workflow_call:
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-frontend.yml
+    with:
+      app_path: apps/admin
+      app_name: admin
+```
+
+---
+
+### 7.4 Production Tests
+
+```yaml
+# .github/workflows/prod-tests.yml
+name: Production Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type'
+        type: choice
+        options:
+          - load
+          - e2e
+          - scenario
+          - all
+      target_url:
+        description: 'Target URL'
+        required: true
+        default: 'https://staging.example.com'
+
+jobs:
+  load-test:
+    if: inputs.test_type == 'load' || inputs.test_type == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run k6 Load Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/load/main.js
+          flags: --env BASE_URL=${{ inputs.target_url }}
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-results
+          path: results/
+
+  e2e-test:
+    if: inputs.test_type == 'e2e' || inputs.test_type == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Playwright
+        run: |
+          cd tests/e2e
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Run E2E tests
+        run: |
+          cd tests/e2e
+          npx playwright test
+        env:
+          BASE_URL: ${{ inputs.target_url }}
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/e2e/playwright-report/
+
+  scenario-test:
+    if: inputs.test_type == 'scenario' || inputs.test_type == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: User Journey Tests
+        run: |
+          cd tests/scenarios
+          npm ci
+          npm run test:scenarios
+        env:
+          BASE_URL: ${{ inputs.target_url }}
+```
+
+---
+
+### 7.5 Deploy with Database Migration
+
+**Complete Deploy Workflow:**
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g. v1.2.3)'
+        required: true
+      environment:
+        description: 'Environment'
+        type: choice
+        options:
+          - staging
+          - production
+      services:
+        description: 'Services to deploy'
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - backend
+          - admin
+          - web
+          - landing
+      run_migrations:
+        description: 'Run database migrations?'
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Pull code on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            git fetch --all --tags
+            git checkout ${{ inputs.tag }}
+          EOF
+      
+      - name: Build containers
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            
+            if [ "${{ inputs.services }}" == "all" ]; then
+              docker-compose build
+            else
+              docker-compose build ${{ inputs.services }}
+            fi
+          EOF
+      
+      - name: Run database migrations
+        if: inputs.run_migrations
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            
+            echo "📦 Checking for pending migrations..."
+            
+            # Run migrations INSIDE the backend container
+            docker-compose run --rm backend alembic upgrade head
+            
+            echo "✅ Migrations complete"
+          EOF
+      
+      - name: Deploy services
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /opt/${{ github.repository }}
+            
+            if [ "${{ inputs.services }}" == "all" ]; then
+              docker-compose up -d --remove-orphans
+            else
+              docker-compose up -d ${{ inputs.services }}
+            fi
+          EOF
+      
+      - name: Health check
+        run: |
+          sleep 15
+          curl -f https://${{ secrets.APP_DOMAIN }}/health || exit 1
+          echo "✅ Health check passed"
+      
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ inputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Services:** ${{ inputs.services }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Migrations:** ${{ inputs.run_migrations }}" >> $GITHUB_STEP_SUMMARY
+```
+
+---
+
+### 7.6 Workflow Files Structure
+
+```
+.github/workflows/
+├── ci.yml                 # Main CI (smart detect + trigger others)
+├── ci-backend.yml         # Backend tests + security
+├── ci-frontend.yml        # Reusable frontend workflow
+├── ci-admin.yml           # Admin panel (uses ci-frontend)
+├── ci-web.yml             # Web app (uses ci-frontend)
+├── ci-landing.yml         # Landing page (uses ci-frontend)
+├── release.yml            # Create release + tag
+├── deploy.yml             # Deploy with migration support
+└── prod-tests.yml         # Load + E2E + Scenario tests
+```
+
+---
+
+### 7.7 Summary Table
+
+| Command/Workflow | Location | Purpose |
+|------------------|----------|---------|
+| `lich ci` | Local/CI | Run tests locally |
+| `lich ci backend` | Local/CI | Backend tests only |
+| `lich security` | Local/CI | Security scans |
+| `ci.yml` | GitHub | Smart CI on PR/push |
+| `release.yml` | GitHub | Create tag |
+| `deploy.yml` | GitHub | Deploy with migrations |
+| `prod-tests.yml` | GitHub | Load/E2E tests |
+| `alembic` | Server (container) | Migrations |
+| `docker-compose` | Server | Container management |
 
 ---
 

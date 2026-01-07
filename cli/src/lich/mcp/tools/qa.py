@@ -43,9 +43,12 @@ def register_qa_tools(mcp):
     def lich_test(unit: bool = False, integration: bool = False, coverage: bool = False) -> str:
         """Run project tests via subprocess (pytest wrapper)."""
         cmd = ["lich", "test"]
-        if unit: cmd.append("--unit")
-        if integration: cmd.append("--integration")
-        if coverage: cmd.append("--coverage")
+        if unit:
+            cmd.append("--unit")
+        if integration:
+            cmd.append("--integration")
+        if coverage:
+            cmd.append("--coverage")
         
         try:
             res = subprocess.run(cmd, capture_output=True, text=True)

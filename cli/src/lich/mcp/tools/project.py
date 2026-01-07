@@ -1,4 +1,3 @@
-from mcp.server.fastmcp import Context
 from pathlib import Path
 from lich.commands.init import init_project
 

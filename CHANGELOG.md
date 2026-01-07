@@ -2,6 +2,32 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.4.1] - 2026-01-07
+
+### Added
+- **Total Security Overhaul**:
+  - `lich security` command with 5+ scanners (bandit, safety, npm-audit, gitleaks, trivy)
+  - `RateLimitMiddleware`, `CSRFMiddleware`, `AuditMiddleware`, `SanitizeMiddleware`
+  - Deep readiness checks in `health.py`
+  - Automated secure headers and CORS configuration
+- **Production Readiness**:
+  - `lich production-ready` command with 15+ automated checks and `--fix` capability
+  - `lich deploy` with Ansible integration (SSH, dynamic inventory)
+  - `lich backup` with S3 support and multi-db (Postgres, Redis, Mongo, MySQL) auto-detection
+  - `lich secret` for credential management
+- **DevOps & Infrastructure**:
+  - Full **Ansible** infrastructure code (`infra/ansible/`) with 7 roles
+  - **GitHub Actions** workflows: `deploy.yml`, `rollback.yml`, `release.yml`, `prod-tests.yml`
+  - `lich ci` for local continuous integration
+  - `Makefile` for standardized developer experience
+- **AI-Powered Development**:
+  - `AGENTS.md` as the single source of truth for AI agents (Meta Architect persona)
+  - Comprehensive `.lich/rules/` covering Backend, Frontend, Docker, Security, Platform, DevOps
+- **Workers**:
+  - Temporal/Celery worker integration patterns
+
+---
+
 ## [1.3.1] - 2026-01-02
 
 ### Added

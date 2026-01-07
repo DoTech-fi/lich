@@ -53,11 +53,18 @@
 ### Database (`lich migration`)
 | Command | Description |
 |---------|-------------|
-| `lich migration init` | Initialize Alembic |
-| `lich migration create "msg"` | Create migration |
-| `lich migration up` | Apply migrations |
-| `lich migration down` | Rollback migrations |
-| `lich migration status` | Show current status |
+| `lich migration` | Manage DB migrations |
+| `lich backup` | Backup/Restore databases |
+| `lich seed` | Seed database |
+
+### Operations & Security
+| Command | Description |
+|---------|-------------|
+| `lich deploy` | Deploy to servers (Ansible) |
+| `lich security` | Run security scans |
+| `lich production-ready` | Check for production issues |
+| `lich ci` | Run CI pipeline locally |
+| `lich secret` | Manage secrets |
 
 ---
 
@@ -306,4 +313,4 @@ project/
 
 ---
 
-**Lich Toolkit v1.3.0**
+**Lich Toolkit v1.4.1**

@@ -159,3 +159,14 @@ User requested comprehensive QA check and test coverage
 **Why Changed**: User requested a robust, professional process to handle breaking changes and ensure `pip uninstall/install` safety.
 
 
+
+---
+
+## 2026-01-08 - CI/CD Stabilization & Docker Optimization
+
+**What Changed**:
+- **Docker Optimization**: Added `.dockerignore` files for `apps/web` and `apps/admin` (removing `node_modules` from build context) and optimized `backend/.dockerignore`.
+- **Lich Framework Fixes**: Resolved `IndentationError` in `backup.py` and ambiguities in `lint.py` to fix CI failures.
+- **Emberboard CI**: Fixed 178+ lint errors, corrected `memory_service.py` corruption, and verified backend tests pass (119/119).
+
+**Why Changed**: To ensure all CI pipelines pass and Docker images are built efficiently without unnecessary context bloat.

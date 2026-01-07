@@ -9,10 +9,8 @@ Usage:
     lich backup restore             # Interactive restore
 """
 import subprocess
-import os
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
 import typer
 import yaml
 from rich.console import Console
@@ -125,13 +123,13 @@ def backup_mysql(container: str, db_name: str, backup_path: Path, info: dict) ->
     """Backup MySQL/MariaDB database."""
     console.print(f"  [blue]Backing up MySQL: {db_name}[/blue]")
     
-        # Get password from detected env or default to 'root'
-        password = info.get("env", {}).get("MYSQL_ROOT_PASSWORD", "root")
-        
-        cmd = [
-            "docker", "exec", container,
-            "mysqldump", "-u", "root", f"-p{password}", db_name
-        ]
+    # Get password from detected env or default to 'root'
+    password = info.get("env", {}).get("MYSQL_ROOT_PASSWORD", "root")
+    
+    cmd = [
+        "docker", "exec", container,
+        "mysqldump", "-u", "root", f"-p{password}", db_name
+    ]
     
     code, stdout, stderr = _run_docker_command(cmd)
     
@@ -146,7 +144,7 @@ def backup_mysql(container: str, db_name: str, backup_path: Path, info: dict) ->
 
 def backup_mongodb(container: str, backup_path: Path) -> bool:
     """Backup MongoDB database."""
-    console.print(f"  [blue]Backing up MongoDB[/blue]")
+    console.print("  [blue]Backing up MongoDB[/blue]")
     
     # mongodump creates a directory
     cmd = [
@@ -167,7 +165,7 @@ def backup_mongodb(container: str, backup_path: Path) -> bool:
 
 def backup_redis(container: str, backup_path: Path) -> bool:
     """Backup Redis database."""
-    console.print(f"  [blue]Backing up Redis[/blue]")
+    console.print("  [blue]Backing up Redis[/blue]")
     
     # Trigger BGSAVE and copy dump.rdb
     cmd = ["docker", "exec", container, "redis-cli", "BGSAVE"]

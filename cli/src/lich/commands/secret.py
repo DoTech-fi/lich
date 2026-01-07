@@ -8,9 +8,7 @@ Usage:
 """
 import secrets
 import string
-import os
 from pathlib import Path
-from typing import Optional
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -247,7 +245,7 @@ def check_secrets(
             )
         
         console.print(table)
-        console.print(f"\n[yellow]Run 'lich secret rotate' to fix these issues[/yellow]")
+        console.print("\n[yellow]Run 'lich secret rotate' to fix these issues[/yellow]")
         raise typer.Exit(1)
     else:
         console.print("[green]✓ All secrets look good![/green]")

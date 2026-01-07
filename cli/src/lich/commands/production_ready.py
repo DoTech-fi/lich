@@ -5,11 +5,10 @@ Usage:
     lich production-ready           # Run all checks
     lich production-ready --json    # Output as JSON
 """
-import os
 import re
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List
 from dataclasses import dataclass, field
 import typer
 from rich.console import Console

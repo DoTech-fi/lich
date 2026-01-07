@@ -11,7 +11,6 @@ import subprocess
 from pathlib import Path
 import typer
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
 
 console = Console()
@@ -87,7 +86,7 @@ def lint_python(fix: bool = False) -> dict:
     code, stdout, stderr = _run_command(cmd)
     
     if stdout:
-        lines = [l for l in stdout.strip().split('\n') if l]
+        lines = [line for line in stdout.strip().split('\n') if line]
         results["issues"] = len(lines)
         
         # Show first 10 issues
@@ -158,7 +157,7 @@ def lint_frontend(fix: bool = False) -> dict:
             if code != 0:
                 results["passed"] = False
                 # Count approximate issues
-                issue_lines = [l for l in (stdout + stderr).split('\n') if 'error' in l.lower() or 'warning' in l.lower()]
+                issue_lines = [line for line in (stdout + stderr).split('\n') if 'error' in line.lower() or 'warning' in line.lower()]
                 results["issues"] += len(issue_lines)
                 console.print(f"    [red]✗ Found issues in {app_dir.name}[/red]")
                 # Show first few lines of output

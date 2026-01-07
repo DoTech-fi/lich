@@ -14,7 +14,6 @@ import requests
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
-from rich.table import Table
 
 from lich import __version__
 
@@ -279,5 +278,5 @@ def upgrade_project(
         except Exception as e:
             console.print(f"   [red]❌ Failed to update {dst_rel}: {e}[/red]")
 
-    console.print(f"\n[green]✅ Project configuration upgraded successfully![/green]")
+    console.print("\n[green]✅ Project configuration upgraded successfully![/green]")
     console.print("[dim]You may now need to run `lich start` or check `AGENTS.md` for new commands.[/dim]")

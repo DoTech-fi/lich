@@ -7,7 +7,6 @@ import time
 import signal
 import subprocess
 import typer
-from typing import Optional
 from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel

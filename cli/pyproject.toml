@@ -48,12 +48,3 @@ Changelog = "https://github.com/DoTech-fi/lich/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.semantic_release]
-version_variable = [
-    "cli/src/lich/__init__.py:__version__",
-]
-branch = "release"
-upload_to_pypi = false
-upload_to_release = true
-build_command = "pip install build && python -m build"

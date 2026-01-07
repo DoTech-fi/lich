@@ -123,7 +123,6 @@ nav:
     - Testing: best-practices/testing.md
     - Security: best-practices/security.md
     - AI Integration: best-practices/ai.md
-    - Release Workflow: best-practices/release-workflow.md
 
 extra:
   alternate:

@@ -124,6 +124,9 @@ nav:
     - Security: best-practices/security.md
     - AI Integration: best-practices/ai.md
     - Git Workflow: best-practices/git-workflow.md
+  - Integrations:
+    - AI & MCP: integrations/mcp.md
+    - GitHub Actions: best-practices/git-workflow.md
 
 extra:
   alternate:

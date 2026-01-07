@@ -42,6 +42,10 @@ app.command(name="commit", help="Create a Semantic Commit")(git.git_commit)
 app.command(name="tag", help="Create a Version Tag")(git.git_tag)
 app.command(name="push", help="Push changes to remote")(git.git_push)
 
+# Register MCP Server
+from lich import server
+app.command(name="serve", help="Start Lich MCP Server")(server.start_server)
+
 # Register sub-apps
 app.add_typer(migration_app, name="migration")
 app.add_typer(make_app, name="make")

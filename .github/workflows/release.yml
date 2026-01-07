@@ -1,38 +1,24 @@
-name: Create Release
+name: Semantic Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - release
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    concurrency: release
     permissions:
+      id-token: write
       contents: write
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Extract changelog
-        id: changelog
-        run: |
-          # Extract changelog for this version
-          VERSION=${{ steps.version.outputs.VERSION }}
-          CHANGELOG=$(awk "/## \[${VERSION}\]/,/## \[/" CHANGELOG.md | head -n -1)
-          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Python Semantic Release
+        uses: python-semantic-release/python-semantic-release@master
         with:
-          name: Lich Toolkit v${{ steps.version.outputs.VERSION }}
-          body: ${{ steps.changelog.outputs.CHANGELOG }}
-          draft: false
-          prerelease: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -3,7 +3,7 @@ Lich CLI - Main Typer application.
 """
 import typer
 from rich.console import Console
-from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed
+from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed, git
 from lich.commands.migration import migration_app
 from lich.commands.make import make_app
 from lich.commands.middleware import middleware_app
@@ -38,6 +38,9 @@ app.command(name="shell", help="Interactive Python shell")(shell.shell_command)
 app.command(name="routes", help="List all API routes")(routes.routes_command)
 app.command(name="test", help="Run project tests")(test.test_command)
 app.command(name="seed", help="Seed database with test data")(seed.seed_command)
+app.command(name="commit", help="Create a Semantic Commit")(git.git_commit)
+app.command(name="tag", help="Create a Version Tag")(git.git_tag)
+app.command(name="push", help="Push changes to remote")(git.git_push)
 
 # Register sub-apps
 app.add_typer(migration_app, name="migration")

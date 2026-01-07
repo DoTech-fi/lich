@@ -123,6 +123,7 @@ nav:
     - Testing: best-practices/testing.md
     - Security: best-practices/security.md
     - AI Integration: best-practices/ai.md
+    - Git Workflow: best-practices/git-workflow.md
 
 extra:
   alternate:

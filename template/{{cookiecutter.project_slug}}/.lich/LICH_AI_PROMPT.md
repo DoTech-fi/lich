@@ -1,10 +1,10 @@
 # LICH Framework - AI Prompt
 
-> این فایل قوانین معماری پروژه رو برای AI توضیح میده
+> This file explains the project architecture rules for AI.
 
 ## About This Project
 
-این پروژه با **LICH Framework** ساخته شده:
+This project is built with **LICH Framework**:
 - **L**ayered Architecture (Hexagonal/Ports & Adapters)
 - **I**nterface-based Design (Dependency Inversion)
 - **C**lean Code Principles (SOLID, DRY, KISS)

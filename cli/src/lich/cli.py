@@ -14,6 +14,7 @@ from lich.commands.backup import backup_app
 from lich.commands.secret import secret_app
 from lich.commands.production_ready import production_ready_app
 from lich.commands.ci import ci_app
+from lich.version_check import check_compatibility
 
 # Create main Typer app
 app = typer.Typer(
@@ -58,7 +59,7 @@ def main():
     
     Create production-ready full-stack projects with a single command.
     """
-    pass
+    check_compatibility()
 
 
 if __name__ == "__main__":

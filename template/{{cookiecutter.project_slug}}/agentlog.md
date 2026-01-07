@@ -1,6 +1,6 @@
 # {{ cookiecutter.project_name }} Agent Log
 
-> این فایل تاریخچه تمام تغییرات پروژه رو ثبت می‌کنه. هر تغییر کد باید اینجا لاگ بشه.
+> This file records the entire project history. Every code change must be logged here.
 
 ---
 

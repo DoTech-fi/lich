@@ -131,4 +131,31 @@ User requested comprehensive QA check and test coverage
 - Marked Priority 7 (Monorepo), 8 (Scheduled Tasks), 9 (Observability) as skipped/deferred
 - Updated progress summary table
 
-**Why Changed**: User requested skipping observability, completing remaining priorities
+
+---
+
+## 2026-01-07 - v1.6.0 Release (Admin, CLI, OAuth)
+
+**What Changed**:
+- **Admin Seeding**: Added `backend/scripts/seed_db.py` and `cookiecutter.json` variables (`admin_email`, `admin_password`) to automatically create an admin user on startup.
+- **CLI Enhancement**: Replaced `dev-start.sh` and `dev-stop.sh` with Python-based `lich start` and `lich stop` commands in the CLI.
+- **OAuth**: Added Google OAuth configuration to the template and documentation.
+- **Template Fixes**: Translated Farsi text in `agentlog.md` and `LICH_AI_PROMPT.md` to English.
+- **Agent Rules**: Overhauled `AGENTS.md` to be a comprehensive Master Prompt properly referencing all CLI commands and rules.
+- **Documentation**: Updated `site-docs` to reflect `lich start/stop` and new auth configurations.
+
+**Why Changed**: To improve developer experience, ensure projects start with a secure admin user, and fix language inconsistencies for a professional release.
+
+## 2026-01-07 - Implemented Professional Upgrade Safety
+
+**What Changed**:
+- **Version Stamping**: New projects get a `.lich/lich.version` file with the generating CLI version.
+- **Compatibility Check**: CLI now checks this file on startup.
+- **Warnings**:
+    - **Legacy**: Warns if version file is missing.
+    - **Major Mismatch**: RED ALERT if CLI is v2+ and Project is v1.
+    - **Outdated CLI**: Yellow warning if CLI < Project.
+
+**Why Changed**: User requested a robust, professional process to handle breaking changes and ensure `pip uninstall/install` safety.
+
+

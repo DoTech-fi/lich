@@ -10,11 +10,20 @@
 |------|---------|
 | **AGENTS.md** (this file) | Master AI prompt + CLI commands |
 | **agentlog.md** | Change history - ALWAYS UPDATE! |
-| **.lich/rules/backend.md** | Backend architecture rules |
-| **.lich/rules/frontend.md** | Frontend architecture rules |
-| **.lich/rules/security.md** | Security rules |
-| **.lich/rules/docker.md** | Docker/infra rules |
-| **.lich/rules/documentation.md** | Documentation rules |
+| **.lich/workflows/** | Step-by-step guides for common tasks |
+| **.lich/rules/master-prompt.md** | **Core** architecture instructions |
+| **.lich/rules/backend.md** | Backend architecture & patterns |
+| **.lich/rules/frontend.md** | Frontend architecture & UI components |
+| **.lich/rules/infra.md** | Infrastructure (Terraform/Ansible) |
+| **.lich/rules/docker.md** | Docker & Containerization rules |
+| **.lich/rules/security.md** | Security standards (OWASP) |
+| **.lich/rules/testing.md** | Testing strategy & standards |
+| **.lich/rules/documentation.md** | Documentation requirements |
+| **.lich/rules/devops.md** | CI/CD & Deployment workflows |
+| **.lich/rules/platform.md** | Platform-specific constraints |
+| **.lich/rules/ui-ux.md** | UI/UX Design Guidelines |
+| **.lich/rules/mobile.md** | Mobile development rules (if applicable) |
+| **.lich/rules/lich-cli.md** | CLI Command Reference |
 
 ---
 
@@ -74,61 +83,71 @@ After EVERY change you make:
 
 ---
 
-## 🔧 LICH CLI COMMANDS
+## 🔧 LICH CLI COMMANDS (MANDATORY USE)
 
-**USE THESE INSTEAD OF RAW FILE OPERATIONS!**
+**⚠️ CRITICAL RULE: YOU MUST USE `lich` CLI COMMANDS FOR ANY TASK THAT HAS A CORRESPONDING COMMAND.**
+**DO NOT CREATE FILES MANUALLY IF A GENERATOR EXISTS.**
+**DO NOT RUN RAW SHELL COMMANDS IF A CLI COMMAND EXISTS.**
 
-### Code Generation
-
+### 1. Development & Lifecycle
 ```bash
-lich make entity <name>      # Entity + Port + Adapter
-lich make service <name>     # Service (use case)
-lich make api <name>         # FastAPI router
-lich make dto <name>         # Pydantic DTOs
-lich make job <name>         # Background job
-lich make middleware <name>  # Middleware
-lich make factory <name>     # Test factory
-lich make event <name>       # Domain event
-lich make listener <name>    # Event listener
-lich make policy <name>      # Auth policy
+lich init                    # Create a new project
+lich adopt                   # Adopt an existing project
+lich start                   # Start dev environment (Docker, Backend, Frontend)
+lich stop                    # Stop dev environment and clean ports
+lich version                 # Show version
+lich check                   # Validate project structure
+lich upgrade                 # Upgrade project to latest Lich version
 ```
 
-### Development
-
+### 2. Code Generation (Generators)
+**ALWAYS use these instead of manually creating files:**
 ```bash
-lich dev                     # Start all services
-lich stop                    # Stop services
-lich routes                  # List all routes
-lich shell                   # Python REPL
+lich make entity <name>      # Generate Entity + Port + Adapter + Tests
+lich make service <name>     # Generate Service (Use Case) + Tests
+lich make api <name>         # Generate FastAPI Router + DTOs
+lich make dto <name>         # Generate Pydantic Schemas
+lich make job <name>         # Generate Background Job
+lich make middleware <name>  # Generate Middleware
+lich make factory <name>     # Generate Test Factory
+lich make event <name>       # Generate Domain Event
+lich make listener <name>    # Generate Event Listener
+lich make policy <name>      # Generate Auth Policy
 ```
 
-### Database
-
+### 3. Database & Migrations
 ```bash
-lich migration create "desc" # Create migration
-lich migration up            # Apply
-lich migration down          # Rollback
-lich seed                    # Seed data
-lich backup                  # Backup DB
+lich migration init          # Initialize migrations (first time)
+lich migration create "msg"  # Create a new migration file (alembic)
+lich migration up            # Apply migrations
+lich migration down          # Rollback migrations
+lich seed                    # Seed database with test data
+lich backup                  # Backup database (Postgres, Mongo, etc.)
 ```
 
-### Quality & Security
-
+### 4. Quality Assurance & Testing
 ```bash
-lich test -c                 # Tests with coverage
-lich lint --fix              # Lint and fix
-lich security                # Security scan
-lich ci                      # Full CI locally
-lich production-ready        # Check readiness
+lich test                    # Run all tests
+lich test --coverage         # Run tests with coverage report
+lich lint                    # Check code style (Ruff, Eslint)
+lich lint --fix              # Auto-fix code style issues
+lich security                # Run security scans (Bandit, Safety, Trivy)
+lich ci                      # Run full local CI pipeline (Lint + Test + Security)
+lich production-ready        # Final readiness check before deploy
 ```
 
-### Deployment
-
+### 5. Deployment & DevOps
 ```bash
-lich deploy --env staging    # Deploy to staging
-lich deploy --env production # Deploy to prod
-lich secret generate         # Generate secret
-lich secret rotate           # Rotate secrets
+lich deploy                  # Deploy via Ansible
+lich deploy --dry-run        # Test deployment
+lich secret generate         # Generate strong secrets
+lich secret rotate           # Rotate application secrets
+```
+
+### 6. Utilities
+```bash
+lich shell                   # Open interactive Python shell
+lich routes                  # List all API routes
 ```
 
 ---
@@ -181,6 +200,7 @@ api → services → ports ← adapters
 | `pytest` directly | `lich test` |
 | `ruff check .` | `lich lint` |
 | `bandit -r .` | `lich security` |
+| `./dev-start.sh` | `lich start` |
 | Forget agentlog.md | Always update it |
 
 ---
@@ -190,14 +210,14 @@ api → services → ports ← adapters
 **User says: "Add a payment system"**
 
 ```bash
-# 1. Generate code
+# 1. Generate code (NEVER write files manually for core structures)
 lich make entity payment
 lich make entity subscription  
 lich make service payment_service
 lich make api payments
 
 # 2. Customize generated files
-# (view and edit as needed)
+# (Use view_file/edit_file here)
 
 # 3. Database
 lich migration create "add_payment_tables"
@@ -258,7 +278,7 @@ If documentation is missing → OUTPUT IS INVALID.
 ## 🚀 START NOW!
 
 1. Read `.lich/rules/` for detailed rules
-2. Use `lich` commands for everything
+2. **USE `lich` COMMANDS FOR EVERYTHING**
 3. Update `agentlog.md` after every change
 4. Follow the architecture strictly
 

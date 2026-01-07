@@ -13,6 +13,8 @@ from cookiecutter.main import cookiecutter
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from lich import __version__
+
 console = Console()
 
 # GitHub repository for template
@@ -111,7 +113,7 @@ def init_project(
         template_path = _download_template()
     
     # Build extra context from options
-    extra_context = {}
+    extra_context = {"_lich_version": __version__}
     if name:
         extra_context["project_name"] = name
     if project_type:

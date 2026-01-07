@@ -2,7 +2,7 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
-## [1.4.1] - 2026-01-07
+## [1.6.0] - 2026-01-07
 
 ### Added
 - **Total Security Overhaul**:

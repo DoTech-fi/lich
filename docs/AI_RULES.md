@@ -313,4 +313,4 @@ project/
 
 ---
 
-**Lich Toolkit v1.4.1**
+**Lich Toolkit v1.6.0**

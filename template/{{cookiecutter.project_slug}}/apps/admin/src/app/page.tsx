@@ -1,34 +1,42 @@
-import styles from './page.module.css'
+import Link from "next/link";
+import styles from "./page.module.css";
 
-export default function AdminHome() {
+export default function Home() {
   return (
     <main className={styles.main}>
-      <div className={styles.header}>
-        <h1>{{ cookiecutter.project_name }} Admin</h1>
-        <p>Administration Dashboard</p>
+      <div className={styles.description}>
+        <p>
+          {{ cookiecutter.project_name }} Admin Panel
+        </p>
       </div>
-      
+
+      <div className={styles.center}>
+        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+      </div>
+
       <div className={styles.grid}>
-        <a href="/users" className={styles.card}>
-          <h2>👥 Users</h2>
-          <p>Manage user accounts</p>
-        </a>
+        <Link
+          href="/users"
+          className={styles.card}
+        >
+          <h2>
+            Users <span>-&gt;</span>
+          </h2>
+          <p>Manage users, roles, and permissions.</p>
+        </Link>
         
-        <a href="/settings" className={styles.card}>
-          <h2>⚙️ Settings</h2>
-          <p>System configuration</p>
-        </a>
-        
-        <a href="/logs" className={styles.card}>
-          <h2>📋 Logs</h2>
-          <p>View system logs</p>
-        </a>
-        
-        <a href="/analytics" className={styles.card}>
-          <h2>📊 Analytics</h2>
-          <p>Usage statistics</p>
+        <a
+          href="http://localhost:3000"
+          className={styles.card}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <h2>
+            Main Site <span>-&gt;</span>
+          </h2>
+          <p>Go to the public website.</p>
         </a>
       </div>
     </main>
-  )
+  );
 }

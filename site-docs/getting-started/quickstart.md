@@ -30,7 +30,7 @@ cd your-project-name
 ## 3. Start Development Servers
 
 ```bash
-lich dev
+lich start
 ```
 
 This starts:

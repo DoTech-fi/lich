@@ -121,14 +121,17 @@ def backup_postgresql(container: str, db_name: str, backup_path: Path) -> bool:
         return False
 
 
-def backup_mysql(container: str, db_name: str, backup_path: Path) -> bool:
+def backup_mysql(container: str, db_name: str, backup_path: Path, info: dict) -> bool:
     """Backup MySQL/MariaDB database."""
     console.print(f"  [blue]Backing up MySQL: {db_name}[/blue]")
     
-    cmd = [
-        "docker", "exec", container,
-        "mysqldump", "-u", "root", f"-proot", db_name
-    ]
+        # Get password from detected env or default to 'root'
+        password = info.get("env", {}).get("MYSQL_ROOT_PASSWORD", "root")
+        
+        cmd = [
+            "docker", "exec", container,
+            "mysqldump", "-u", "root", f"-p{password}", db_name
+        ]
     
     code, stdout, stderr = _run_docker_command(cmd)
     
@@ -264,7 +267,7 @@ def backup_command(
             success = backup_postgresql(container, db_name, backup_file)
         elif db_type == "mysql":
             db_name = info["env"].get("MYSQL_DATABASE", name)
-            success = backup_mysql(container, db_name, backup_file)
+            success = backup_mysql(container, db_name, backup_file, info)
         elif db_type == "mongodb":
             success = backup_mongodb(container, backup_file)
         elif db_type == "redis":

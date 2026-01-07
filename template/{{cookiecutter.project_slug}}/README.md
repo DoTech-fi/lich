@@ -8,10 +8,10 @@
 
 ```bash
 # Start all services
-./dev-start.sh
+lich start
 
 # Stop all services
-./dev-stop.sh
+lich stop
 ```
 
 ## 📍 Service URLs

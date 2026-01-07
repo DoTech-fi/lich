@@ -7,10 +7,10 @@
 cp .env.example .env
 
 # 2. Start all services
-./dev-start.sh
+lich start
 
 # 3. Stop services when done
-./dev-stop.sh
+lich stop
 ```
 
 ---
@@ -153,7 +153,7 @@ See [docs/troubleshooting/](docs/troubleshooting/) for common issues.
 
 **Port conflicts?**
 ```bash
-./dev-stop.sh  # Stop all services and clean ports
+lich stop  # Stop all services and clean ports
 ```
 
 **Check service status?**

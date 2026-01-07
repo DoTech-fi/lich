@@ -28,7 +28,7 @@ console = Console()
 # Register commands
 app.command(name="init", help="Create a new Lich project")(init.init_project)
 app.command(name="adopt", help="Adopt an existing Python project")(adopt.adopt_project)
-app.command(name="dev", help="Start development environment")(dev.start_dev)
+app.command(name="start", help="Start development environment")(dev.start_dev)
 app.command(name="stop", help="Stop development environment")(dev.stop_dev)
 app.command(name="version", help="Show Lich version")(version.show_version)
 app.command(name="check", help="Validate project structure")(version.check_project)

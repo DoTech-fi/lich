@@ -154,6 +154,132 @@ async def refresh_token(
         )
 
 
+
+# ==========================================
+# GOOGLE OAUTH
+# ==========================================
+
+@router.get("/google/url")
+async def google_auth_url():
+    """Get Google OAuth authorization URL."""
+    if not settings.google_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Google OAuth is not configured. Please set GOOGLE_CLIENT_ID in your environment.",
+        )
+    
+    import urllib.parse
+    
+    params = {
+        "client_id": settings.google_client_id,
+        "redirect_uri": settings.google_redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    
+    google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    
+    return {"url": google_auth_url}
+
+
+@router.post("/google/callback")
+async def google_callback(
+    code: str,
+    user_service: UserService = Depends(get_user_service),
+):
+    """Handle Google OAuth callback and exchange code for tokens."""
+    import httpx
+    
+    if not settings.google_client_id or not settings.google_client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Google OAuth is not configured",
+        )
+    
+    # Exchange code for tokens
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": settings.google_client_id,
+                "client_secret": settings.google_client_secret,
+                "redirect_uri": settings.google_redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+        
+        if token_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to exchange code for tokens",
+            )
+        
+        tokens = token_response.json()
+        
+        # Get user info from Google
+        userinfo_response = await client.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {tokens['access_token']}"},
+        )
+        
+        if userinfo_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to get user info from Google",
+            )
+        
+        google_user = userinfo_response.json()
+    
+    # Find or create user
+    email = google_user.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google account does not have an email",
+        )
+    
+    user = await user_service.get_user_by_email(email)
+    
+    if not user:
+        # Create new user from Google data
+        user = await user_service.create_user_from_google(
+            email=email,
+            first_name=google_user.get("given_name", ""),
+            last_name=google_user.get("family_name", ""),
+            avatar_url=google_user.get("picture"),
+        )
+    
+    # Create tokens
+    access_token = create_access_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+    
+    return LoginResponse(
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            full_name=user.full_name,
+            role=user.role.value,
+            status=user.status.value,
+            is_verified=user.is_verified,
+            avatar_url=user.avatar_url,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        ),
+        tokens=TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=settings.jwt_access_token_expire_minutes * 60,
+        ),
+    )
+
+
 {%- elif cookiecutter.auth_strategy == 'keycloak' %}
 
 

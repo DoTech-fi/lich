@@ -65,6 +65,47 @@ class UserService:
         
         return await self.user_repo.create(user)
     
+    {%- if cookiecutter.auth_strategy == 'jwt_builtin' %}
+    async def create_user_from_google(
+        self,
+        email: str,
+        first_name: str = "",
+        last_name: str = "",
+        avatar_url: str = None,
+    ) -> User:
+        """
+        Create a new user from Google OAuth data.
+        
+        Use case: OAuth login - user doesn't exist yet
+        User is automatically verified (Google already verified their email).
+        """
+        import secrets
+        
+        # Generate unique username from email
+        base_username = email.split("@")[0]
+        username = base_username
+        counter = 1
+        
+        while await self.user_repo.get_by_username(username):
+            username = f"{base_username}{counter}"
+            counter += 1
+        
+        # Create user with random password (they'll use OAuth to login)
+        user = User(
+            email=email,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            hashed_password=pwd_context.hash(secrets.token_urlsafe(32)),
+            role=UserRole.USER,
+            status=UserStatus.ACTIVE,  # Auto-active for OAuth users
+            is_verified=True,  # Google already verified email
+            avatar_url=avatar_url,
+        )
+        
+        return await self.user_repo.create(user)
+    {%- endif %}
+    
     async def get_user(self, user_id: UUID) -> User:
         """
         Get a user by ID.

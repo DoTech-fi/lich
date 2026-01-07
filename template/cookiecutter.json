@@ -5,6 +5,9 @@
   "author_name": "Your Name",
   "author_email": "your@email.com",
   
+  "admin_email": "admin@example.com",
+  "admin_password": "admin",
+  
   "project_type": ["saas_platform", "trading_platform", "ecommerce", "content_platform", "internal_tool", "microservice"],
   
   "is_microservice": ["no", "yes"],

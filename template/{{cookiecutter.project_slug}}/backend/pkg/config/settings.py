@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256")
     jwt_access_token_expire_minutes: int = Field(default=30)
     jwt_refresh_token_expire_days: int = Field(default=7)
+    
+    # Google OAuth
+    google_client_id: str = Field(default="")
+    google_client_secret: str = Field(default="")
+    google_redirect_uri: str = Field(default="http://localhost:3000/auth/google/callback")
     {%- endif %}
     
     # Logging

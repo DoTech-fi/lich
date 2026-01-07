@@ -33,6 +33,11 @@ REDIS_PORT=6379
 JWT_SECRET=your-secret-key-change-in-production
 JWT_ALGORITHM=HS256
 JWT_EXPIRY_HOURS=24
+  
+# Google OAuth (if using jwt_builtin)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 
 # Keycloak (if using keycloak)
 KEYCLOAK_URL=http://localhost:8080

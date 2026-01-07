@@ -1,0 +1,29 @@
+# Traefik docker-compose
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: {{ project_name }}_traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+{% if app_environment == 'staging' %}
+      - "8080:8080"  # Dashboard
+{% endif %}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./config:/etc/traefik/config:ro
+{% if ssl_enabled %}
+      - ./certs:/certs
+{% endif %}
+    networks:
+      - {{ project_name }}_network
+
+networks:
+  {{ project_name }}_network:
+    external: true

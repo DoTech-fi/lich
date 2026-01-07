@@ -1,0 +1,58 @@
+# App role - Application deployment
+---
+- name: Create app directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0755'
+  loop:
+    - "{{ project_home }}/app"
+    - "{{ project_home }}/app/logs"
+
+- name: Copy application files
+  synchronize:
+    src: "{{ playbook_dir }}/../../../"
+    dest: "{{ project_home }}/app/"
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=node_modules"
+      - "--exclude=__pycache__"
+      - "--exclude=.env"
+      - "--exclude=*.pyc"
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Template .env file
+  template:
+    src: env.j2
+    dest: "{{ project_home }}/app/.env"
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0600'
+
+- name: Build and start application
+  docker_compose:
+    project_src: "{{ project_home }}/app"
+    build: yes
+    state: present
+  become_user: "{{ project_user }}"
+  environment:
+    COMPOSE_PROJECT_NAME: "{{ project_name }}"
+
+- name: Run database migrations
+  command: docker compose exec -T backend alembic upgrade head
+  args:
+    chdir: "{{ project_home }}/app"
+  become_user: "{{ project_user }}"
+  register: migration_result
+  changed_when: "'Running upgrade' in migration_result.stdout"
+
+- name: Health check
+  uri:
+    url: "http://localhost:8000/health"
+    status_code: 200
+  retries: 30
+  delay: 2
+  register: health_check
+  until: health_check.status == 200

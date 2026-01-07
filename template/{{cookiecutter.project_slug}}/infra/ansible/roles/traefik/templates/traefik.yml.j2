@@ -1,0 +1,42 @@
+# Traefik static configuration
+api:
+  dashboard: true
+  insecure: {{ 'true' if app_environment == 'staging' else 'false' }}
+
+entryPoints:
+  web:
+    address: ":80"
+{% if ssl_enabled %}
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+{% endif %}
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: {{ project_name }}_network
+  file:
+    directory: /etc/traefik/config
+    watch: true
+
+{% if ssl_enabled %}
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: {{ ssl_email }}
+      storage: /certs/acme.json
+      tlsChallenge: {}
+{% endif %}
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json

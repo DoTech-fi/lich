@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      pre_release:
+        description: 'Pre-release (e.g., alpha, beta, rc)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ "{{" }} secrets.GITHUB_TOKEN {{ "}}" }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current
+        run: |
+          if [ -f VERSION ]; then
+            version=$(cat VERSION)
+          else
+            version="0.0.0"
+          fi
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: new
+        run: |
+          current="${{ "{{" }} steps.current.outputs.version {{ "}}" }}"
+          IFS='.' read -r major minor patch <<< "$current"
+          
+          case "${{ "{{" }} inputs.version_bump {{ "}}" }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+          
+          new_version="${major}.${minor}.${patch}"
+          
+          if [ -n "${{ "{{" }} inputs.pre_release {{ "}}" }}" ]; then
+            new_version="${new_version}-${{ "{{" }} inputs.pre_release {{ "}}" }}"
+          fi
+          
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Update VERSION file
+        run: |
+          echo "${{ "{{" }} steps.new.outputs.version {{ "}}" }}" > VERSION
+          git add VERSION
+          git commit -m "chore: bump version to ${{ "{{" }} steps.new.outputs.version {{ "}}" }}"
+
+      - name: Create and push tag
+        run: |
+          git tag "v${{ "{{" }} steps.new.outputs.version {{ "}}" }}"
+          git push origin main --tags
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          last_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$last_tag" ]; then
+            changes=$(git log ${last_tag}..HEAD --pretty=format:"- %s" --no-merges)
+          else
+            changes=$(git log --pretty=format:"- %s" --no-merges -20)
+          fi
+          echo "changes<<EOF" >> $GITHUB_OUTPUT
+          echo "$changes" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ "{{" }} steps.new.outputs.version {{ "}}" }}
+          name: Release v${{ "{{" }} steps.new.outputs.version {{ "}}" }}
+          body: |
+            ## What's Changed
+            
+            ${{ "{{" }} steps.changelog.outputs.changes {{ "}}" }}
+            
+            ## Full Changelog
+            https://github.com/${{ "{{" }} github.repository {{ "}}" }}/compare/${{ "{{" }} steps.current.outputs.version {{ "}}" }}...v${{ "{{" }} steps.new.outputs.version {{ "}}" }}
+          draft: false
+          prerelease: ${{ "{{" }} inputs.pre_release != '' {{ "}}" }}

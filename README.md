@@ -187,13 +187,11 @@ lich middleware enable rate_limit
 
 ## 📚 Documentation
 
-- [CLI Reference](docs/wiki/CLI_REFERENCE.md)
-- [Auth & Policy Guide](docs/wiki/AUTH_AND_POLICY.md)
-- [Middleware Guide](docs/wiki/MIDDLEWARE_GUIDE.md)
-- [Factory Guide](docs/wiki/FACTORY_GUIDE.md)
-- [Events & Listeners](docs/wiki/EVENTS_LISTENERS.md)
-- [Background Jobs](docs/wiki/BACKGROUND_JOBS.md)
-- [AI Rules](docs/AI_RULES.md)
+📖 **Full documentation:** [dotech-fi.github.io/lich](https://dotech-fi.github.io/lich/)
+
+- [Getting Started](https://dotech-fi.github.io/lich/getting-started/)
+- [CLI Commands](https://dotech-fi.github.io/lich/commands/)
+- [Architecture](https://dotech-fi.github.io/lich/architecture/)
 
 ---
 

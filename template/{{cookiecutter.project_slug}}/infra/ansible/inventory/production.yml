@@ -1,0 +1,17 @@
+# {{ cookiecutter.project_name }} - Production Inventory
+# Update with your server details
+
+---
+all:
+  children:
+    production:
+      hosts:
+        prod-server:
+          ansible_host: YOUR_SERVER_IP
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          
+      vars:
+        app_environment: production
+        app_debug: false
+        ssl_enabled: true

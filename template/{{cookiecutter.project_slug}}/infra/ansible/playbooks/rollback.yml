@@ -1,0 +1,60 @@
+# {{ cookiecutter.project_name }} - Rollback Playbook
+# Run: ansible-playbook -i inventory/production.yml playbooks/rollback.yml -e backup_file=backup.sql.gz
+---
+- name: Rollback {{ cookiecutter.project_name }} Database
+  hosts: all
+  become: yes
+  
+  vars:
+    backup_file: ""  # Required: path to backup file
+    
+  pre_tasks:
+    - name: Validate backup file provided
+      fail:
+        msg: "Please provide backup_file variable: -e backup_file=path/to/backup.sql.gz"
+      when: backup_file == ""
+      
+  tasks:
+    - name: Stop application
+      docker_compose:
+        project_src: "{{ project_home }}/app"
+        state: stopped
+      become_user: "{{ project_user }}"
+      
+    - name: Copy backup file to server
+      copy:
+        src: "{{ backup_file }}"
+        dest: "/tmp/restore.sql.gz"
+        mode: '0644'
+      when: "'/' in backup_file"
+      
+    - name: Restore database
+      shell: |
+        gunzip -c /tmp/restore.sql.gz | docker exec -i {{ project_name }}_postgres psql -U {{ db_user }} {{ db_name }}
+      become_user: "{{ project_user }}"
+      
+    - name: Start application
+      docker_compose:
+        project_src: "{{ project_home }}/app"
+        state: present
+      become_user: "{{ project_user }}"
+      
+    - name: Health check
+      uri:
+        url: "http://localhost:8000/health"
+        status_code: 200
+      retries: 30
+      delay: 2
+      register: health_check
+      until: health_check.status == 200
+      
+    - name: Cleanup
+      file:
+        path: /tmp/restore.sql.gz
+        state: absent
+        
+    - name: Display rollback info
+      debug:
+        msg: |
+          ✅ Rollback completed!
+          📁 Restored from: {{ backup_file }}

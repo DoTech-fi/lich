@@ -1,0 +1,16 @@
+# {{ cookiecutter.project_name }} - Staging Inventory
+
+---
+all:
+  children:
+    staging:
+      hosts:
+        staging-server:
+          ansible_host: YOUR_STAGING_IP
+          ansible_user: root
+          ansible_ssh_private_key_file: ~/.ssh/id_rsa
+          
+      vars:
+        app_environment: staging
+        app_debug: true
+        ssl_enabled: false

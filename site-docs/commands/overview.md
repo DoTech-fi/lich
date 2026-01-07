@@ -1,6 +1,6 @@
 # Commands Overview
 
-Lich CLI provides commands for project management, code generation, and development.
+Lich CLI provides commands for project management, code generation, DevOps, and security.
 
 ## Command Categories
 
@@ -34,6 +34,23 @@ Lich CLI provides commands for project management, code generation, and developm
 |---------|-------------|
 | [`lich migration`](migration.md) | Database migration commands |
 | [`lich seed`](seed.md) | Database seeding |
+| [`lich backup`](backup.md) | Create/restore backups |
+
+### 🔒 Security
+
+| Command | Description |
+|---------|-------------|
+| [`lich security`](security.md) | Run security scans |
+| [`lich secret`](secret.md) | Manage secrets |
+| [`lich lint`](lint.md) | Code linting |
+
+### 🚀 DevOps & CI/CD
+
+| Command | Description |
+|---------|-------------|
+| [`lich deploy`](deploy.md) | Deploy with Ansible |
+| [`lich ci`](ci.md) | Run CI checks locally |
+| [`lich production-ready`](production-ready.md) | Check production readiness |
 
 ### 🔧 Utilities
 
@@ -52,6 +69,8 @@ All commands support `--help`:
 lich --help                  # Main help
 lich make --help             # Make commands help
 lich migration --help        # Migration help
+lich security --help         # Security scans help
+lich deploy --help           # Deployment help
 ```
 
 ## Command Context
@@ -65,3 +84,4 @@ lich make entity User     # ✅ Works
 cd /some/other/folder
 lich make entity User     # ❌ Not a Lich project!
 ```
+

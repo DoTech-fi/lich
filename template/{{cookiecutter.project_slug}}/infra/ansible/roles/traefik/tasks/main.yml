@@ -1,0 +1,45 @@
+# Traefik role - Reverse proxy with SSL
+---
+- name: Create Traefik directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0755'
+  loop:
+    - "{{ project_home }}/traefik"
+    - "{{ project_home }}/traefik/config"
+    - "{{ project_home }}/traefik/certs"
+
+- name: Create Traefik static config
+  template:
+    src: traefik.yml.j2
+    dest: "{{ project_home }}/traefik/traefik.yml"
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0644'
+  notify: Restart Traefik
+
+- name: Create acme.json for Let's Encrypt
+  file:
+    path: "{{ project_home }}/traefik/certs/acme.json"
+    state: touch
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0600'
+  when: ssl_enabled
+
+- name: Deploy Traefik docker-compose
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ project_home }}/traefik/docker-compose.yml"
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0644'
+
+- name: Start Traefik
+  docker_compose:
+    project_src: "{{ project_home }}/traefik"
+    state: present
+  become_user: "{{ project_user }}"

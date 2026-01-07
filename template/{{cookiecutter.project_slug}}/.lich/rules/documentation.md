@@ -1,75 +1,119 @@
-# Documentation Architecture Rules
+# Documentation Rules
 
-> **MANDATORY**: Documentation is required for ALL new code. No exceptions.
-
-## Core Principles
-
-```
-📝 DOCUMENT AS YOU CODE
-🎯 AUDIENCE-FOCUSED  
-🔄 KEEP IT UPDATED
-📖 EXAMPLES OVER THEORY
-```
+> **Documentation Architect - Mandatory Documentation for Everything**
 
 ---
 
-## 1. Documentation is ALWAYS Required For
+## ⚠️ ABSOLUTE RULE (NON-NEGOTIABLE)
 
-### Frontend
-- New feature, component, hook
-- New service/API call
-- New route or page
-- New UI flow, state logic
-- New validation rules
+**No task is complete until:**
+
+1. ✅ Code is generated
+2. ✅ Tests pass
+3. ✅ Documentation is written
+4. ✅ `agentlog.md` is updated
+
+**If documentation is missing → OUTPUT IS INVALID.**
+
+---
+
+## 📝 agentlog.md (MANDATORY)
+
+After EVERY change:
+
+```markdown
+## 2024-01-07 - What Changed
+- WHAT: Added payment entity, service, API
+- WHY: User requested payment feature
+- FILES: internal/entities/payment.py, api/http/payments.py
+```
+
+**NEVER forget to update agentlog.md!**
+
+---
+
+## 📚 When Documentation Required
 
 ### Backend
-- New entity, service (use case)
-- New port (interface), adapter
+- New entity
+- New service (use case)
+- New port (interface)
+- New adapter (DB, Redis)
 - New endpoint (REST, gRPC)
 - New validator or DTO
 - Any business logic change
 
+### Frontend
+- New feature
+- New component
+- New hook
+- New API call
+- New route/page
+- New UI flow
+- New validation
+
 ### Infrastructure
-- New Terraform module/variable/output
-- New Ansible role/task
-- New Docker service/Dockerfile
-- New Kubernetes resource
-- New secret or config
+- New Docker service
+- New Dockerfile
+- New Terraform module
+- New Ansible role
+- New K8s resource
 
 ---
 
-## 2. Documentation Folder Structure
+## 📁 Documentation Structure
 
 ```
 docs/
-├── runbooks/
-│   ├── frontend/
-│   ├── backend/
-│   └── infra/
 ├── features/
-│   ├── frontend/<feature>.md
 │   ├── backend/<module>.md
+│   ├── frontend/<feature>.md
 │   └── infra/<component>.md
 ├── architecture/
 │   ├── system-overview.md
-│   ├── frontend-architecture.md
-│   ├── backend-architecture.md
-│   └── infra-architecture.md
-├── troubleshooting/
-│   ├── frontend.md
 │   ├── backend.md
+│   ├── frontend.md
 │   └── infra.md
+├── runbooks/
+│   ├── deployment.md
+│   ├── troubleshooting.md
+│   └── disaster-recovery.md
 └── onboarding/
     ├── dev-setup.md
-    ├── contribution-guide.md
-    └── workflows.md
+    └── contribution-guide.md
 ```
 
 ---
 
-## 3. Runbook Template
+## 📋 Feature Doc Template
 
-Every feature/module MUST have a runbook:
+```markdown
+# <Feature Name>
+
+## 1. Purpose
+Brief description of what this does.
+
+## 2. Components
+- List of files involved
+
+## 3. API Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /api/payments | Create payment |
+
+## 4. Data Flow
+Explain how data moves through the system.
+
+## 5. Security Considerations
+What security measures are in place.
+
+## 6. Testing
+How to test this feature.
+```
+
+---
+
+## 📋 Runbook Template
 
 ```markdown
 # Runbook — <Name>
@@ -82,86 +126,20 @@ Every feature/module MUST have a runbook:
 ## 6. Debugging
 ## 7. Disaster Recovery
 ## 8. Ownership
-## 9. Change History
 ```
 
 ---
 
-## 4. Frontend Feature Doc Template
+## ✅ Documentation Checklist
 
-```markdown
-# <Feature Name> (Frontend Feature Doc)
+Before completing any task:
 
-## 1. Overview
-## 2. UI/UX Flow
-## 3. Data Flow
-## 4. Components
-## 5. Services/API
-## 6. Hooks
-## 7. State Logic
-## 8. Edge Cases
-## 9. Security Considerations
-## 10. Testing Strategy
-## 11. Future Improvements
-```
+- [ ] Code written and tested
+- [ ] README updated if needed
+- [ ] Feature doc created/updated
+- [ ] API documentation in OpenAPI
+- [ ] agentlog.md entry added
 
 ---
 
-## 5. Backend Module Doc Template
-
-```markdown
-# <Module Name> (Backend Module Doc)
-
-## 1. Purpose
-## 2. Entities
-## 3. Services (Use Cases)
-## 4. Ports
-## 5. Adapters
-## 6. API Endpoints
-## 7. Validation Rules
-## 8. Security Model
-## 9. Testing Strategy
-## 10. Future Improvements
-```
-
----
-
-## 6. Infra Module Doc Template
-
-```markdown
-# <Infra Component>
-
-## 1. Purpose
-## 2. Architecture
-## 3. Inputs (Variables)
-## 4. Outputs
-## 5. Security Rules
-## 6. Deployment Steps
-## 7. Rollback
-## 8. Monitoring & Alerts
-## 9. Change History
-```
-
----
-
-## 7. agentlog.md (Required!)
-
-Always update `agentlog.md` with:
-- **WHAT** changed
-- **WHY** it changed  
-- **WHEN** (timestamp)
-
----
-
-## 8. Completion Rule
-
-**No task is complete until:**
-1. Code is generated
-2. Documentation is generated
-3. `agentlog.md` is updated
-
-If documentation is missing → Output is INVALID.
-
----
-
-> **Mantra**: Simple → Clear → Current
+**Mantra: If it's not documented, it doesn't exist.**

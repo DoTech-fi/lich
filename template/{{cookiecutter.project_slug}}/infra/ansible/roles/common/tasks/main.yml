@@ -1,0 +1,71 @@
+# Common role - Base server setup
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install essential packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - htop
+      - vim
+      - unzip
+      - python3-pip
+      - python3-venv
+      - ufw
+      - fail2ban
+    state: present
+
+- name: Create project user
+  user:
+    name: "{{ project_user }}"
+    groups: sudo
+    shell: /bin/bash
+    create_home: yes
+    state: present
+
+- name: Create project directory
+  file:
+    path: "{{ project_home }}"
+    state: directory
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0755'
+
+- name: Configure UFW defaults
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+
+- name: Allow HTTP through UFW
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: Allow HTTPS through UFW
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+
+- name: Set timezone
+  timezone:
+    name: UTC

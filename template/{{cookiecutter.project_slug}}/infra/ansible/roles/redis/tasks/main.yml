@@ -1,0 +1,33 @@
+# Redis role - Cache setup
+---
+- name: Create Redis directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0755'
+  loop:
+    - "{{ project_home }}/redis"
+    - "{{ project_home }}/redis/data"
+
+- name: Deploy Redis docker-compose
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ project_home }}/redis/docker-compose.yml"
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0644'
+
+- name: Start Redis
+  docker_compose:
+    project_src: "{{ project_home }}/redis"
+    state: present
+  become_user: "{{ project_user }}"
+
+- name: Wait for Redis to be ready
+  wait_for:
+    host: "{{ redis_host }}"
+    port: "{{ redis_port }}"
+    delay: 3
+    timeout: 30

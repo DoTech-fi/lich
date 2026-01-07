@@ -1,0 +1,26 @@
+# PostgreSQL docker-compose
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: {{ project_name }}_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: {{ db_user }}
+      POSTGRES_PASSWORD: {{ db_password }}
+      POSTGRES_DB: {{ db_name }}
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - {{ project_name }}_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ db_user }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  {{ project_name }}_network:
+    external: true

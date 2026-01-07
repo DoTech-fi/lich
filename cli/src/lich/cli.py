@@ -7,6 +7,13 @@ from lich.commands import init, dev, version, upgrade, adopt, shell, routes, tes
 from lich.commands.migration import migration_app
 from lich.commands.make import make_app
 from lich.commands.middleware import middleware_app
+from lich.commands.security import security_app
+from lich.commands.lint import lint_app
+from lich.commands.deploy import deploy_app
+from lich.commands.backup import backup_app
+from lich.commands.secret import secret_app
+from lich.commands.production_ready import production_ready_app
+from lich.commands.ci import ci_app
 
 # Create main Typer app
 app = typer.Typer(
@@ -35,6 +42,13 @@ app.command(name="seed", help="Seed database with test data")(seed.seed_command)
 app.add_typer(migration_app, name="migration")
 app.add_typer(make_app, name="make")
 app.add_typer(middleware_app, name="middleware")
+app.add_typer(security_app, name="security")
+app.add_typer(lint_app, name="lint")
+app.add_typer(deploy_app, name="deploy")
+app.add_typer(backup_app, name="backup")
+app.add_typer(secret_app, name="secret")
+app.add_typer(production_ready_app, name="production-ready")
+app.add_typer(ci_app, name="ci")
 
 
 @app.callback()

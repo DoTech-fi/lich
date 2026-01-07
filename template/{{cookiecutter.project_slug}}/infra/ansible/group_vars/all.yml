@@ -1,0 +1,42 @@
+# {{ cookiecutter.project_name }} - Group Variables
+# These variables apply to all hosts
+
+---
+# Project settings
+project_name: "{{ cookiecutter.project_slug }}"
+project_user: deploy
+project_group: deploy
+project_home: "/opt/{{ cookiecutter.project_slug }}"
+
+# Docker settings
+docker_compose_version: "2.24.0"
+docker_registry: ""  # Leave empty for Docker Hub
+
+# Application settings
+app_domain: "{{ cookiecutter.project_slug }}.com"
+app_environment: production
+app_debug: false
+
+# Database settings (override in inventory)
+db_host: localhost
+db_port: 5432
+db_name: "{{ cookiecutter.project_slug }}"
+db_user: app
+db_password: "{{ '{{' }} vault_db_password {{ '}}' }}"
+
+# Redis settings
+redis_host: localhost
+redis_port: 6379
+
+# SSL/TLS settings
+ssl_enabled: true
+ssl_email: "{{ cookiecutter.author_email }}"
+
+# Backup settings
+backup_enabled: true
+backup_schedule: "0 3 * * *"  # 3 AM daily
+backup_retention_days: 7
+backup_s3_bucket: ""  # Set to enable S3 backups
+
+# Monitoring
+monitoring_enabled: false

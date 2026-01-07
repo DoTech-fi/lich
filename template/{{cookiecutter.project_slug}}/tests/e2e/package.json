@@ -1,0 +1,14 @@
+{
+  "name": "{{ cookiecutter.project_slug }}-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests with Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

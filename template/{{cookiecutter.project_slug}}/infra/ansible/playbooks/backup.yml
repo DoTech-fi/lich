@@ -1,0 +1,47 @@
+# {{ cookiecutter.project_name }} - Backup Playbook
+# Run: ansible-playbook -i inventory/production.yml playbooks/backup.yml
+---
+- name: Backup {{ cookiecutter.project_name }} Database
+  hosts: all
+  become: yes
+  
+  vars:
+    upload_to_s3: false
+    
+  tasks:
+    - name: Create backup directory
+      file:
+        path: "{{ project_home }}/backups/db"
+        state: directory
+        owner: "{{ project_user }}"
+        group: "{{ project_group }}"
+        mode: '0755'
+        
+    - name: Run database backup
+      shell: |
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        docker exec {{ project_name }}_postgres pg_dump -U {{ db_user }} {{ db_name }} | gzip > {{ project_home }}/backups/db/{{ project_name }}_${TIMESTAMP}.sql.gz
+        echo "{{ project_home }}/backups/db/{{ project_name }}_${TIMESTAMP}.sql.gz"
+      register: backup_result
+      become_user: "{{ project_user }}"
+      
+    - name: Get backup file path
+      set_fact:
+        backup_file: "{{ backup_result.stdout_lines[-1] }}"
+        
+    - name: Upload to S3
+      command: aws s3 cp "{{ backup_file }}" "s3://{{ backup_s3_bucket }}/{{ project_name }}/"
+      when: upload_to_s3 and backup_s3_bucket | length > 0
+      
+    - name: Fetch backup locally
+      fetch:
+        src: "{{ backup_file }}"
+        dest: "./backups/"
+        flat: yes
+      when: not upload_to_s3
+      
+    - name: Display backup info
+      debug:
+        msg: |
+          ✅ Backup completed!
+          📁 File: {{ backup_file }}

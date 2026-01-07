@@ -1,0 +1,22 @@
+# Redis docker-compose
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: {{ project_name }}_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - ./data:/data
+    networks:
+      - {{ project_name }}_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  {{ project_name }}_network:
+    external: true

@@ -1,0 +1,154 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      tag:
+        description: 'Git tag to deploy (e.g., v1.0.0)'
+        required: true
+        type: string
+      services:
+        description: 'Services to deploy'
+        required: true
+        type: choice
+        options:
+          - all
+          - backend
+          - frontend
+      run_migrations:
+        description: 'Run database migrations'
+        required: false
+        type: boolean
+        default: true
+      backup_before:
+        description: 'Create backup before deployment'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  SSH_USER: ${{ "{{" }} secrets.SSH_USER {{ "}}" }}
+  SSH_HOST: ${{ "{{" }} secrets[format('{0}_SSH_HOST', inputs.environment)] {{ "}}" }}
+
+jobs:
+  backup:
+    if: ${{ "{{" }} inputs.backup_before {{ "}}" }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create pre-deployment backup
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ "{{" }} env.SSH_HOST {{ "}}" }}
+          username: ${{ "{{" }} env.SSH_USER {{ "}}" }}
+          key: ${{ "{{" }} secrets.SSH_PRIVATE_KEY {{ "}}" }}
+          script: |
+            cd /opt/{{ cookiecutter.project_slug }}
+            ./backups/backup.sh
+            echo "Backup created successfully"
+
+      - name: Upload backup to S3
+        if: ${{ "{{" }} secrets.AWS_ACCESS_KEY_ID != '' {{ "}}" }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ "{{" }} env.SSH_HOST {{ "}}" }}
+          username: ${{ "{{" }} env.SSH_USER {{ "}}" }}
+          key: ${{ "{{" }} secrets.SSH_PRIVATE_KEY {{ "}}" }}
+          script: |
+            export AWS_ACCESS_KEY_ID=${{ "{{" }} secrets.AWS_ACCESS_KEY_ID {{ "}}" }}
+            export AWS_SECRET_ACCESS_KEY=${{ "{{" }} secrets.AWS_SECRET_ACCESS_KEY {{ "}}" }}
+            latest_backup=$(ls -t /opt/{{ cookiecutter.project_slug }}/backups/db/*.sql.gz | head -1)
+            aws s3 cp "$latest_backup" s3://${{ "{{" }} secrets.BACKUP_S3_BUCKET {{ "}}" }}/pre-deploy/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [backup]
+    if: always() && (needs.backup.result == 'success' || needs.backup.result == 'skipped')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ "{{" }} inputs.tag {{ "}}" }}
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ "{{" }} env.SSH_HOST {{ "}}" }}
+          username: ${{ "{{" }} env.SSH_USER {{ "}}" }}
+          key: ${{ "{{" }} secrets.SSH_PRIVATE_KEY {{ "}}" }}
+          script: |
+            cd /opt/{{ cookiecutter.project_slug }}/app
+            
+            # Pull latest code
+            git fetch --tags
+            git checkout ${{ "{{" }} inputs.tag {{ "}}" }}
+            
+            # Rebuild services
+            if [ "${{ "{{" }} inputs.services {{ "}}" }}" == "all" ]; then
+              docker compose build
+              docker compose up -d
+            elif [ "${{ "{{" }} inputs.services {{ "}}" }}" == "backend" ]; then
+              docker compose build backend
+              docker compose up -d backend
+            elif [ "${{ "{{" }} inputs.services {{ "}}" }}" == "frontend" ]; then
+              docker compose build web admin
+              docker compose up -d web admin
+            fi
+            
+            echo "Deployment complete"
+
+      - name: Run migrations
+        if: ${{ "{{" }} inputs.run_migrations {{ "}}" }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ "{{" }} env.SSH_HOST {{ "}}" }}
+          username: ${{ "{{" }} env.SSH_USER {{ "}}" }}
+          key: ${{ "{{" }} secrets.SSH_PRIVATE_KEY {{ "}}" }}
+          script: |
+            cd /opt/{{ cookiecutter.project_slug }}/app
+            docker compose exec -T backend alembic upgrade head
+            echo "Migrations complete"
+
+      - name: Health check
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ "{{" }} env.SSH_HOST {{ "}}" }}
+          username: ${{ "{{" }} env.SSH_USER {{ "}}" }}
+          key: ${{ "{{" }} secrets.SSH_PRIVATE_KEY {{ "}}" }}
+          script: |
+            # Wait for service to be ready
+            for i in {1..30}; do
+              if curl -sf http://localhost:8000/health; then
+                echo "Health check passed!"
+                exit 0
+              fi
+              echo "Waiting for service... ($i/30)"
+              sleep 2
+            done
+            echo "Health check failed!"
+            exit 1
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    steps:
+      - name: Notify on success
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "✅ Deployment of ${{ "{{" }} inputs.tag {{ "}}" }} to ${{ "{{" }} inputs.environment {{ "}}" }} succeeded!"
+          # Add Slack/Discord notification here
+
+      - name: Notify on failure
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "❌ Deployment of ${{ "{{" }} inputs.tag {{ "}}" }} to ${{ "{{" }} inputs.environment {{ "}}" }} failed!"
+          # Add Slack/Discord notification here

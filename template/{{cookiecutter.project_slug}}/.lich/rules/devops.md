@@ -1,8 +1,10 @@
 # DevOps Architecture Rules
 
-> As a DevOps Architect, follow these rules for reliable infrastructure.
+> **DevOps Architect - Reliable Infrastructure & Automation**
 
-## Core Principles
+---
+
+## ⚡ Core Principles
 
 ```
 🔄 INFRASTRUCTURE AS CODE
@@ -15,69 +17,135 @@
 
 ## 1. CI/CD Pipeline
 
-### DO ✅
+**DO ✅:**
 - Lint → Test → Build → Deploy
 - Run tests in parallel
 - Cache dependencies
 - Scan for vulnerabilities
 - Deploy with rollback capability
+- Blue-green or canary deploys
 
-### DON'T ❌
+**DON'T ❌:**
 - No manual deployments to prod
 - No skipping tests
 - No secrets in pipeline logs
+- No unreviewed changes
+
+```bash
+lich ci                      # Run CI locally
+lich ci backend              # Backend only
+lich ci web                  # Frontend only
+```
 
 ---
 
 ## 2. Environment Strategy
 
 ```
-local     → Docker Compose (dev)
-staging   → K8s/Cloud (test)
-production → K8s/Cloud (live)
+local      → Docker Compose (dev)
+staging    → Cloud/K8s (test)
+production → Cloud/K8s (live)
 ```
 
-### DO ✅
+**DO ✅:**
 - Same Docker images all environments
-- Environment-specific config via env vars
+- Config via environment variables
 - Feature flags for rollout
+- Environment-specific secrets
+
+```bash
+lich dev                     # Start local
+lich deploy --env staging    # Deploy staging
+lich deploy --env production # Deploy prod
+```
 
 ---
 
 ## 3. Monitoring & Observability
 
-### DO ✅
-- Health endpoints (/health, /ready)
+**DO ✅:**
+- Health endpoints (`/health`, `/ready`)
 - Structured JSON logging
 - Metrics collection (Prometheus)
-- Distributed tracing
+- Distributed tracing (optional)
 - Alert on anomalies
 
-### DON'T ❌
+**DON'T ❌:**
 - No silent failures
 - No unmonitored services
+- No logs without context
 
 ---
 
 ## 4. Backup & Recovery
 
-### DO ✅
+**DO ✅:**
 - Automated daily backups
 - Test restores regularly
 - Multiple backup locations
 - Encrypted backups
 - Document recovery process
 
+```bash
+lich backup                  # Create backup
+lich backup restore <file>   # Restore from backup
+```
+
 ---
 
-## 5. Scripts
+## 5. Security in Pipelines
 
-### DO ✅
+**DO ✅:**
+- Scan dependencies (safety, npm audit)
+- Scan code (bandit, eslint-security)
+- Scan containers (trivy)
+- Rotate secrets regularly
+- Least privilege access
+
+```bash
+lich security                # Run all scans
+lich security --fix          # Auto-fix issues
+lich secret check            # Verify secrets
+lich secret rotate           # Rotate secrets
+```
+
+---
+
+## 6. Infrastructure as Code
+
+**DO ✅:**
+- Ansible for server setup
+- Terraform for cloud resources
+- Version control all infra
 - Idempotent scripts
-- Clear error messages
-- Dry-run option
-- Logging all actions
+- Dry-run before apply
+
+```
+infra/
+├── ansible/
+│   ├── playbooks/
+│   └── roles/
+└── terraform/
+    ├── modules/
+    └── environments/
+```
 
 ---
 
-> **Mantra**: Simple → Automated → Observable
+## 7. Pre-Deployment Checklist
+
+```bash
+lich production-ready        # Check everything
+lich production-ready --fix  # Auto-fix issues
+```
+
+- [ ] Tests pass
+- [ ] Security scan clean
+- [ ] Secrets configured
+- [ ] Backups working
+- [ ] Health checks defined
+- [ ] Rollback procedure ready
+
+---
+
+**Mantra: Simple → Automated → Observable → Secure**

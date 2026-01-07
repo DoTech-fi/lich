@@ -1,97 +1,174 @@
-# Docker Architecture Rules
+# Docker & Infrastructure Rules
 
-> As a Docker/Container Architect, follow these rules for production-ready containers.
-
-## Core Principles
-
-```
-🔒 SECURE BY DEFAULT
-📦 MINIMAL IMAGES
-⚡ FAST BUILDS
-🔄 REPRODUCIBLE
-```
+> **Senior DevOps & Docker Compose Architect**
 
 ---
 
-## 1. Dockerfile Best Practices
+## ⚡ Core Mission
 
-### DO ✅
-- Multi-stage builds
-- Use specific version tags (not :latest)
-- Use alpine/slim base images
-- Run as non-root user
-- Copy only what's needed
-- Group RUN commands
-
-### DON'T ❌
-- Never run as root
-- Never use :latest tags
-- Never copy entire project blindly
-- Never install dev dependencies in prod
+Design secure, production-ready Docker Compose setups with:
+- Least privilege
+- Clean networking
+- Observability
+- Modular configuration
 
 ---
 
-## 2. Image Structure
+## 📁 Folder Structure
 
-```dockerfile
-# Stage 1: Build
-FROM python:3.12-slim AS builder
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt
-
-# Stage 2: Runtime
-FROM python:3.12-slim
-WORKDIR /app
-RUN useradd -r -s /bin/false appuser
-COPY --from=builder /root/.local /home/appuser/.local
-COPY . .
-USER appuser
-CMD ["python", "main.py"]
+```
+deployments/
+└── docker/
+    ├── docker-compose.yml
+    ├── docker-compose.dev.yml
+    ├── docker-compose.prod.yml
+    ├── backend/
+    │   ├── Dockerfile
+    │   └── env.example
+    ├── frontend/
+    │   ├── Dockerfile
+    │   └── env.example
+    └── proxy/
+        ├── Dockerfile
+        └── traefik.yml
 ```
 
 ---
 
-## 3. Docker Compose Rules
+## 🔧 Docker Compose Rules
 
-### DO ✅
-- Define healthchecks for all services
-- Use named volumes
-- Explicit network definitions
-- Resource limits (memory/cpu)
-- Restart policies
+### Services
 
-### DON'T ❌
-- No anonymous volumes
-- No default bridge network
-- No unlimited resources
+- Use version "3.8" or higher
+- Clear, descriptive service names
+- Dedicated Dockerfile per service
+- Environment from `.env` files (never inline)
+- `healthcheck` on every service
+- `restart: unless-stopped`
 
----
+### Networks
 
-## 4. Security
+Define at least:
+- `internal_net` — backend ↔ DB/cache
+- `public_net` — frontend/proxy
 
-### DO ✅
-- Non-root user (USER appuser)
-- Read-only filesystem where possible
-- No secrets in image
-- Scan images for vulnerabilities
-- Use .dockerignore
+**RULE:** Databases/caches MUST NOT be on `public_net`
 
-### DON'T ❌
-- Never hardcode secrets
-- Never run privileged
-- Never expose unnecessary ports
+### Volumes
+
+- Named volumes (no anonymous)
+- Each stateful service = own volume
+- Explicit host paths when needed
 
 ---
 
-## 5. Networking
+## 🔒 Security Rules
 
-### DO ✅
-- Internal network for services
-- Public network only for proxy
-- Database NOT on public network
-- Use service discovery (names)
+### Container Security
+
+```yaml
+# MANDATORY
+user: "1000:1000"           # Non-root
+read_only: true             # Stateless services
+security_opt:
+  - no-new-privileges:true
+```
+
+### Base Images
+
+Use minimal images:
+- `python:3.x-slim`
+- `node:20-alpine`
+- `golang:1.x-alpine`
+
+### Secrets
+
+- NEVER hardcode in docker-compose.yml
+- Use `.env` files or secret mounts
+- No secrets in build args
+
+### Reverse Proxy
+
+If using Traefik/nginx:
+- Request size limits
+- Rate limiting
+- Forward only necessary headers
+- Block internal paths
 
 ---
 
-> **Mantra**: Simple → Minimal → Secure
+## 🏥 Health & Observability
+
+### Health Checks
+
+Every service must:
+- Expose `/health` or `/livez`
+- Have Docker healthcheck
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+```
+
+### Logging
+
+- Log to stdout/stderr (12-factor)
+- Structured JSON logs preferred
+- Optionally bind to `logs/` directory
+
+---
+
+## 🚀 Production Checklist
+
+- [ ] Non-root containers
+- [ ] Minimal base images
+- [ ] Health checks on all services
+- [ ] restart: unless-stopped
+- [ ] Networks properly isolated
+- [ ] Named volumes
+- [ ] No secrets in compose file
+- [ ] Resource limits (cpu/memory)
+
+---
+
+## 📝 Example compose.yml
+
+```yaml
+services:
+  backend:
+    build: ./backend
+    user: "1000:1000"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    networks:
+      - internal_net
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal_net
+    restart: unless-stopped
+
+networks:
+  internal_net:
+    internal: true
+  public_net:
+
+volumes:
+  db_data:
+```
+
+---
+
+**Mantra: Secure → Isolated → Observable → Minimal**

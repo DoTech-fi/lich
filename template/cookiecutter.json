@@ -19,7 +19,7 @@
   
   "landing_backend": ["static_only", "wordpress_api", "none"],
   
-  "use_temporal": ["no", "yes"],
+  "task_runner": ["none", "temporal", "celery"],
   
   "use_i18n": ["no", "yes"],
   
@@ -31,6 +31,12 @@
   
   "domain_name": "localhost",
   
+  "build_strategy": ["docker", "source"],
+  
+  "container_registry": ["none", "dockerhub", "ghcr", "ecr"],
+  
+  "object_storage": ["none", "s3", "minio"],
+  
   "_copy_without_render": [
     "*.png",
     "*.jpg",
@@ -39,3 +45,4 @@
     "*.woff2"
   ]
 }
+

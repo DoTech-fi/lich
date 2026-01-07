@@ -1,0 +1,137 @@
+name: Production Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - load
+          - e2e
+          - smoke
+
+env:
+  BASE_URL: ${{ "{{" }} inputs.environment == 'production' && secrets.PROD_URL || secrets.STAGING_URL {{ "}}" }}
+
+jobs:
+  # Smoke tests - quick health checks
+  smoke:
+    if: ${{ "{{" }} inputs.test_type == 'all' || inputs.test_type == 'smoke' {{ "}}" }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Health check
+        run: |
+          response=$(curl -sf "${{ "{{" }} env.BASE_URL {{ "}}" }}/health" || echo "failed")
+          if [ "$response" == "failed" ]; then
+            echo "❌ Health check failed"
+            exit 1
+          fi
+          echo "✅ Health check passed"
+      
+      - name: API endpoints check
+        run: |
+          endpoints=(
+            "/api/health"
+            "/api/docs"
+          )
+          for endpoint in "${endpoints[@]}"; do
+            status=$(curl -sf -o /dev/null -w "%{http_code}" "${{ "{{" }} env.BASE_URL {{ "}}" }}$endpoint" || echo "000")
+            if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then
+              echo "✅ $endpoint - $status"
+            else
+              echo "❌ $endpoint - $status"
+            fi
+          done
+
+  # Load tests with k6
+  load:
+    if: ${{ "{{" }} inputs.test_type == 'all' || inputs.test_type == 'load' {{ "}}" }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+      
+      - name: Run load tests
+        run: |
+          k6 run --out json=results.json tests/load/basic.js
+        env:
+          K6_BASE_URL: ${{ "{{" }} env.BASE_URL {{ "}}" }}
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: results.json
+
+  # E2E tests with Playwright
+  e2e:
+    if: ${{ "{{" }} inputs.test_type == 'all' || inputs.test_type == 'e2e' {{ "}}" }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tests/e2e/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: tests/e2e
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps
+      
+      - name: Run Playwright tests
+        working-directory: tests/e2e
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ "{{" }} env.BASE_URL {{ "}}" }}
+      
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/e2e/playwright-report/
+
+  # Summary
+  summary:
+    needs: [smoke, load, e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Summary
+        run: |
+          echo "## Production Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ "{{" }} inputs.environment {{ "}}" }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Type: ${{ "{{" }} inputs.test_type {{ "}}" }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Smoke | ${{ "{{" }} needs.smoke.result {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Load | ${{ "{{" }} needs.load.result {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E | ${{ "{{" }} needs.e2e.result {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY

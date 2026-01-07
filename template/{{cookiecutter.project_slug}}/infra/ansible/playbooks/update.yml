@@ -1,0 +1,53 @@
+# {{ cookiecutter.project_name }} - Deploy Updates Playbook
+# Run: ansible-playbook -i inventory/production.yml playbooks/update.yml
+---
+- name: Update {{ cookiecutter.project_name }} Application
+  hosts: all
+  become: yes
+  
+  vars:
+    run_migrations: true
+    
+  tasks:
+    - name: Pull latest code
+      synchronize:
+        src: "{{ playbook_dir }}/../../../"
+        dest: "{{ project_home }}/app/"
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=node_modules"
+          - "--exclude=__pycache__"
+          - "--exclude=.env"
+      delegate_to: "{{ inventory_hostname }}"
+      
+    - name: Rebuild and restart containers
+      docker_compose:
+        project_src: "{{ project_home }}/app"
+        build: yes
+        state: present
+        restarted: yes
+      become_user: "{{ project_user }}"
+      
+    - name: Run database migrations
+      command: docker compose exec -T backend alembic upgrade head
+      args:
+        chdir: "{{ project_home }}/app"
+      become_user: "{{ project_user }}"
+      when: run_migrations
+      register: migration_result
+      changed_when: "'Running upgrade' in migration_result.stdout"
+      
+    - name: Health check
+      uri:
+        url: "http://localhost:8000/health"
+        status_code: 200
+      retries: 30
+      delay: 2
+      register: health_check
+      until: health_check.status == 200
+      
+    - name: Display update info
+      debug:
+        msg: |
+          ✅ Update deployed successfully!
+          🔄 Migrations: {{ 'ran' if run_migrations else 'skipped' }}

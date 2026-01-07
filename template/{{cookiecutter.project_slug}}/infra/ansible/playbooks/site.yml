@@ -1,0 +1,27 @@
+# {{ cookiecutter.project_name }} - Full Site Setup Playbook
+# Run: ansible-playbook -i inventory/production.yml playbooks/site.yml
+---
+- name: Setup {{ cookiecutter.project_name }} Server
+  hosts: all
+  become: yes
+  
+  roles:
+    - common
+    - docker
+    - traefik
+    - postgres
+    - redis
+    - app
+    - backup
+  
+  post_tasks:
+    - name: Display deployment info
+      debug:
+        msg: |
+          ✅ {{ cookiecutter.project_name }} deployed successfully!
+          
+          🌐 Application: https://{{ app_domain }}
+          📊 Traefik Dashboard: http://{{ ansible_host }}:8080 (staging only)
+          
+          📁 Project home: {{ project_home }}
+          👤 User: {{ project_user }}

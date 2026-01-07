@@ -1,0 +1,8 @@
+# Traefik handlers
+---
+- name: Restart Traefik
+  docker_compose:
+    project_src: "{{ project_home }}/traefik"
+    state: present
+    restarted: yes
+  become_user: "{{ project_user }}"

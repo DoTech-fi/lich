@@ -1,0 +1,34 @@
+# PostgreSQL role - Database setup
+---
+- name: Create PostgreSQL directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0755'
+  loop:
+    - "{{ project_home }}/postgres"
+    - "{{ project_home }}/postgres/data"
+    - "{{ project_home }}/postgres/init"
+
+- name: Deploy PostgreSQL docker-compose
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ project_home }}/postgres/docker-compose.yml"
+    owner: "{{ project_user }}"
+    group: "{{ project_group }}"
+    mode: '0644'
+
+- name: Start PostgreSQL
+  docker_compose:
+    project_src: "{{ project_home }}/postgres"
+    state: present
+  become_user: "{{ project_user }}"
+
+- name: Wait for PostgreSQL to be ready
+  wait_for:
+    host: "{{ db_host }}"
+    port: "{{ db_port }}"
+    delay: 5
+    timeout: 60

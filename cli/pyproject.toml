@@ -40,8 +40,8 @@ dev = [
 lich = "lich.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/DoTech-fi/lich"
-Documentation = "https://github.com/DoTech-fi/lich/tree/main/docs/wiki"
+Homepage = "https://dotech-fi.github.io/lich/"
+Documentation = "https://dotech-fi.github.io/lich/"
 Repository = "https://github.com/DoTech-fi/lich.git"
 Issues = "https://github.com/DoTech-fi/lich/issues"
 Changelog = "https://github.com/DoTech-fi/lich/blob/main/CHANGELOG.md"

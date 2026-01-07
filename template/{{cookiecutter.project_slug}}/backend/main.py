@@ -83,6 +83,18 @@ app.add_middleware(
 # from api.middleware.rate_limit import RateLimitMiddleware
 # app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 
+# --- CSRF Protection: Protect against Cross-Site Request Forgery ---
+# from api.middleware.csrf import CSRFMiddleware
+# app.add_middleware(CSRFMiddleware, secret_key=settings.secret_key)
+
+# --- Audit Logging: Log all state-changing requests ---
+# from api.middleware.audit import AuditMiddleware
+# app.add_middleware(AuditMiddleware)
+
+# --- Input Sanitization: Prevent XSS attacks ---
+# from api.middleware.sanitize import SanitizeMiddleware
+# app.add_middleware(SanitizeMiddleware)
+
 # ============================================================
 
 # Include API routes

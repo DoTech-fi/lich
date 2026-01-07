@@ -57,9 +57,9 @@ frontend/
 
 ## 📖 Documentation
 
-- [CLI Reference](https://github.com/DoTech-fi/lich/blob/main/docs/wiki/CLI_REFERENCE.md)
-- [Architecture Guide](https://github.com/DoTech-fi/lich/blob/main/LICH_AI_PROMPT.md)
-- [Wiki](https://github.com/DoTech-fi/lich/tree/main/docs/wiki)
+- [Full Documentation](https://dotech-fi.github.io/lich/)
+- [CLI Reference](https://dotech-fi.github.io/lich/commands/)
+- [Architecture Guide](https://dotech-fi.github.io/lich/architecture/)
 
 ## 📄 License
 

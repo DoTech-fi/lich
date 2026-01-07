@@ -1,6 +1,6 @@
 # نمای کلی دستورات
 
-Lich CLI دستوراتی برای مدیریت پروژه، تولید کد و توسعه ارائه می‌دهد.
+Lich CLI دستوراتی برای مدیریت پروژه، تولید کد، DevOps و امنیت ارائه می‌دهد.
 
 ## دسته‌بندی دستورات
 
@@ -34,6 +34,23 @@ Lich CLI دستوراتی برای مدیریت پروژه، تولید کد و 
 |---------|-------------|
 | [`lich migration`](migration.md) | دستورات migration دیتابیس |
 | [`lich seed`](seed.md) | seed کردن دیتابیس |
+| [`lich backup`](backup.fa.md) | ایجاد/بازیابی بکاپ |
+
+### 🔒 امنیت
+
+| دستور | توضیحات |
+|---------|-------------|
+| [`lich security`](security.fa.md) | اجرای اسکن‌های امنیتی |
+| [`lich secret`](secret.fa.md) | مدیریت سکرت‌ها |
+| [`lich lint`](lint.fa.md) | لینت کردن کد |
+
+### 🚀 DevOps و CI/CD
+
+| دستور | توضیحات |
+|---------|-------------|
+| [`lich deploy`](deploy.fa.md) | دیپلوی با Ansible |
+| [`lich ci`](ci.fa.md) | اجرای بررسی‌های CI محلی |
+| [`lich production-ready`](production-ready.fa.md) | بررسی آمادگی پروداکشن |
 
 ### 🔧 ابزارها
 
@@ -52,6 +69,8 @@ Lich CLI دستوراتی برای مدیریت پروژه، تولید کد و 
 lich --help                  # کمک اصلی
 lich make --help             # کمک دستورات Make
 lich migration --help        # کمک Migration
+lich security --help         # کمک اسکن امنیتی
+lich deploy --help           # کمک دیپلوی
 ```
 
 ## زمینه دستور
@@ -65,3 +84,4 @@ lich make entity User     # ✅ کار می‌کند
 cd /some/other/folder
 lich make entity User     # ❌ پروژه لیچ نیست!
 ```
+

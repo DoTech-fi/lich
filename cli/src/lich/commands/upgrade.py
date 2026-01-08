@@ -15,6 +15,7 @@ from packaging import version
 import typer
 import requests
 from rich.console import Console
+from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 

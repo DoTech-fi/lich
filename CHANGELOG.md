@@ -2,6 +2,13 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.8.4] - 2026-01-08
+
+### Fixed
+- **MCP Protocol**: Fixed critical bug where startup message was printed to stdout, corrupting MCP JSON-RPC protocol. Antigravity/Cursor would show "invalid character 'ð' looking for beginning of value" error. Startup message now correctly goes to stderr.
+
+---
+
 ## [1.8.3] - 2026-01-08
 
 ### Changed

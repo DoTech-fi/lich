@@ -10,3 +10,5 @@
 - **UX Improvement**: Added a prominent reminder to run `lich setup` after upgrading.
 - Released v1.8.0 containing these UX improvements.
 - Released v1.8.1 to fix CI/CD pipeline issues (lint and tests).
+- Added `--version` and `-V` flags to CLI (industry standard).
+- **Critical Fix (v1.8.4)**: Fixed MCP protocol corruption bug - startup message was printing to stdout, breaking JSON-RPC protocol. Antigravity showed "invalid character 'ð'" error. Now prints to stderr.

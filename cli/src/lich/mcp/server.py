@@ -1,3 +1,5 @@
+import sys
+
 from mcp.server.fastmcp import FastMCP
 from lich.mcp.tools import (
     project, make, git, qa, ops,
@@ -53,5 +55,7 @@ utility.register_utility_tools(mcp)
 
 def start_server():
     """Start the MCP server on stdio."""
-    print("🤖 Lich MCP Server Starting...", flush=True)
+    # IMPORTANT: MCP uses stdio for JSON-RPC communication.
+    # All non-JSON output MUST go to stderr, not stdout.
+    print("🤖 Lich MCP Server Starting...", file=sys.stderr, flush=True)
     mcp.run()

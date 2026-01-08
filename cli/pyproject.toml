@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lich"
-version = "1.8.3"
+version = "1.8.4"
 description = "AI-Ready Full-Stack Project Generator"
 readme = "README.md"
 license = {text = "MIT"}

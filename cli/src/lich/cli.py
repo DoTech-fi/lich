@@ -3,6 +3,7 @@ Lich CLI - Main Typer application.
 """
 import typer
 from rich.console import Console
+from lich import __version__
 from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed, git
 from lich.commands.migration import migration_app
 from lich.commands.make import make_app
@@ -17,6 +18,14 @@ from lich.commands.ci import ci_app
 from lich.commands.setup import setup_app
 from lich.version_check import check_compatibility
 from lich.mcp import server as mcp_server
+
+
+def _version_callback(value: bool):
+    """Print version and exit."""
+    if value:
+        print(f"lich {__version__}")
+        raise typer.Exit()
+
 
 # Create main Typer app
 app = typer.Typer(
@@ -62,7 +71,14 @@ app.add_typer(setup_app, name="setup")
 
 
 @app.callback()
-def main():
+def main(
+    version: bool = typer.Option(
+        None, "--version", "-V",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show version and exit",
+    ),
+):
     """
     🧙 Lich Toolkit - AI-Ready Full-Stack Project Generator
     

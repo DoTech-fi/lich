@@ -14,6 +14,7 @@ from lich.commands.backup import backup_app
 from lich.commands.secret import secret_app
 from lich.commands.production_ready import production_ready_app
 from lich.commands.ci import ci_app
+from lich.commands.setup import setup_app
 from lich.version_check import check_compatibility
 from lich.mcp import server as mcp_server
 
@@ -57,6 +58,7 @@ app.add_typer(backup_app, name="backup")
 app.add_typer(secret_app, name="secret")
 app.add_typer(production_ready_app, name="production-ready")
 app.add_typer(ci_app, name="ci")
+app.add_typer(setup_app, name="setup")
 
 
 @app.callback()

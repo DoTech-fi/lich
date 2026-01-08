@@ -231,3 +231,34 @@ User requested comprehensive QA check and test coverage
 
 **Why Changed**: User requested to implement MCP (Model Context Protocol) support to allow AI assistants (Claude, Gemini) to interact with Lich CLI tools programmatically.
 
+---
+
+## 2026-01-08 - Easy AI Tool Setup Command 🔧
+
+**What Changed**:
+- **New `lich setup` command**: Interactive setup for AI tool MCP integration
+- **Supported tools**: Antigravity, Claude Desktop, Cursor, VS Code
+- **Features**:
+    - Interactive menu to select AI tool
+    - Auto OS detection (macOS, Linux, Windows)
+    - Config merging (preserves existing MCP servers)
+    - Backup before modification
+    - `lich setup status` to check configuration
+- **Files created**:
+    - `cli/src/lich/commands/setup.py`: Setup command implementation
+    - `cli/tests/test_setup.py`: Unit tests (OS detection, config paths, merging)
+    - `docs/wiki/SETUP_GUIDE.md`: Documentation
+
+**Why Changed**: User requested easy integration between Lich MCP and AI tools like Antigravity.
+
+---
+
+## 2026-01-08 - Documentation i18n Sync 🌐
+
+**What Changed**:
+- Created `site-docs/best-practices/git-workflow.fa.md` (Farsi translation)
+- Added Contact section to `site-docs/index.fa.md`
+- Verified all 83 documentation files have matching Farsi/English versions
+
+**Why Changed**: User requested Farsi and English documentation to be in sync.
+

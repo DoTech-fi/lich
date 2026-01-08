@@ -81,7 +81,8 @@ class TestConfigPaths:
 class TestConfigTemplates:
     """Test MCP config templates."""
     
-    def test_antigravity_config(self):
+    @patch("lich.commands.setup.get_lich_executable_path", return_value="lich")
+    def test_antigravity_config(self, mock_path):
         config = get_lich_mcp_config_antigravity()
         assert "mcpServers" in config
         assert "lich" in config["mcpServers"]
@@ -89,18 +90,21 @@ class TestConfigTemplates:
         assert config["mcpServers"]["lich"]["args"] == ["serve"]
         assert config["mcpServers"]["lich"]["transportType"] == "stdio"
     
-    def test_claude_config(self):
+    @patch("lich.commands.setup.get_lich_executable_path", return_value="lich")
+    def test_claude_config(self, mock_path):
         config = get_lich_mcp_config_claude()
         assert "mcpServers" in config
         assert "lich" in config["mcpServers"]
         assert config["mcpServers"]["lich"]["command"] == "lich"
     
-    def test_cursor_config(self):
+    @patch("lich.commands.setup.get_lich_executable_path", return_value="lich")
+    def test_cursor_config(self, mock_path):
         config = get_lich_mcp_config_cursor()
         assert "mcpServers" in config
         assert "lich" in config["mcpServers"]
     
-    def test_vscode_config(self):
+    @patch("lich.commands.setup.get_lich_executable_path", return_value="lich")
+    def test_vscode_config(self, mock_path):
         config = get_lich_mcp_config_vscode()
         assert "servers" in config
         assert "lich" in config["servers"]

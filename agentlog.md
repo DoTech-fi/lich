@@ -290,3 +290,10 @@ User requested comprehensive QA check and test coverage
 - **Self-Update**: `lich upgrade` now checks PyPI for newer CLI versions and offers to auto-upgrade using `pip`.
 
 **Why Changed**: To verify true "upgrade" behavior where the tool updates itself, not just the project files.
+
+## 2026-01-08 - v1.7.4 Release (CI Test Fixes) 🐛
+
+**What Changed**:
+- **Test Fixes**: Updated `cli/tests/test_setup.py` to correctly mock `get_lich_executable_path` during config template tests.
+
+**Why Changed**: To resolve CI failures where tests expected "lich" but received the full executable path.

@@ -262,3 +262,24 @@ User requested comprehensive QA check and test coverage
 
 **Why Changed**: User requested Farsi and English documentation to be in sync.
 
+---
+
+## 2026-01-08T13:16:00 - Fixed Antigravity MCP Integration 🐛
+
+**What Changed**:
+- Fixed `cli/src/lich/commands/setup.py`: 
+  1. Antigravity config path changed from `~/.gemini/antigravity/mcp_config.json` to `~/.gemini/settings.json`
+  2. Added `get_lich_executable_path()` function using `shutil.which()` to get full path to lich
+  3. All MCP config templates now use full path instead of just "lich"
+
+**Why Changed**: 
+- Antigravity reads MCP configuration from `~/.gemini/settings.json`, not `mcp_config.json`
+- Antigravity subprocesses don't have access to pyenv shims, so full path is required
+
+## 2026-01-08 - v1.7.2 Release (Antigravity MCP Path Fix) 🚀
+
+**What Changed**:
+- **Version Bump**: Updated `cli/pyproject.toml` to v1.7.2.
+- **Antigravity Path Fix**: Updated setup command to use full executable path for `lich` and correct config file path for Antigravity settings.
+
+**Why Changed**: To ensure Antigravity correctly detects and executes the Lich MCP server.

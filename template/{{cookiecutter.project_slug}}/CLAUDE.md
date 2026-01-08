@@ -47,20 +47,35 @@ Read `.lich/rules/` for detailed rules on each area.
 
 When asked to do something, check `.lich/workflows/` for step-by-step guides.
 
-## Important Rules
-
-1. **Always update `agentlog.md`** after changes
-2. **Follow Lich Architecture** in `.lich/rules/backend.md`
-3. **Security first** - see `.lich/rules/security.md`
-4. **Simple > Complex** - don't over-engineer
-
-## Quick Commands
-
-```bash
-./dev-start.sh      # Start all services
-./dev-stop.sh       # Stop all services
-cd backend && pytest  # Run tests
-```
+## 🚨 AI Rules (MANDATORY)
+ 
+ 1. **LICH-FIRST POLICY**: If a `lich` command exists for a task, you **MUST** use it.
+    - Creating an entity? Use `lich make entity` (NOT manual file creation)
+    - Migrating DB? Use `lich migration create` (NOT alembic direct)
+    - Running tests? Use `lich test` (NOT pytest direct)
+ 2. **Context**: Read `.lich/rules/ai-behavior.md` for the full decision tree.
+ 3. **Agent Log**: Always append to `agentlog.md` after changes.
+ 
+ ## 🛠️ Lich CLI Reference
+ 
+ | Category | Command | Use For |
+ |----------|---------|---------|
+ | **Dev** | `lich start` | Start backend, frontend, db, docker |
+ | | `lich stop` | Stop everything & clean ports |
+ | | `lich check` | Validate project structure |
+ | **Make** | `lich make entity <name>` | Generate Entity + Port + Adapter |
+ | | `lich make service <name>` | Generate Service (Use Case) |
+ | | `lich make api <name>` | Generate FastAPI Router |
+ | | `lich make dto <name>` | Generate Pydantic DTOs |
+ | | `lich make job <name>` | Generate Background Job |
+ | **DB** | `lich migration create "msg"` | Create migration file |
+ | | `lich migration up` | Apply migrations |
+ | | `lich seed` | Seed database |
+ | **QA** | `lich test` | Run tests |
+ | | `lich lint` | Run linters (Ruff/ESLint) |
+ | | `lich security` | Run security scans |
+ | **Ops** | `lich deploy` | Deploy via Ansible |
+ | | `lich production-ready` | Pre-deploy checks |
 
 ## Service URLs
 

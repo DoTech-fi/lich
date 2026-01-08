@@ -116,3 +116,43 @@ lich make policy Resource
 ---
 
 > **Mantra**: Generate → Customize → Ship
+
+---
+
+## 🤖 MCP Tools
+
+If you are an AI agents with access to the `lich` MCP server, you can use these tools directly instead of running CLI commands via shell:
+
+| CLI Command | MCP Tool |
+|-------------|----------|
+| `lich check` | `mcp_lich_lich_check_project` |
+| `lich version` | `mcp_lich_lich_version` |
+| `lich start` | `mcp_lich_lich_dev_start` |
+| `lich stop` | `mcp_lich_lich_dev_stop` |
+| `lich make entity` | `mcp_lich_lich_make_entity` |
+| `lich make service` | `mcp_lich_lich_make_service` |
+| `lich make api` | `mcp_lich_lich_make_api` |
+| `lich make dto` | `mcp_lich_lich_make_dto` |
+| `lich make job` | `mcp_lich_lich_make_job` |
+| `lich make middleware` | `mcp_lich_lich_make_middleware` |
+| `lich make factory` | `mcp_lich_lich_make_factory` |
+| `lich make event` | `mcp_lich_lich_make_event` |
+| `lich make listener` | `mcp_lich_lich_make_listener` |
+| `lich make policy` | `mcp_lich_lich_make_policy` |
+| `lich migration init` | `mcp_lich_lich_migration_init` |
+| `lich migration create` | `mcp_lich_lich_migration_create` |
+| `lich migration up` | `mcp_lich_lich_migration_up` |
+| `lich migration down` | `mcp_lich_lich_migration_down` |
+| `lich migration heads` | `mcp_lich_lich_migration_heads` |
+| `lich migration status` | `mcp_lich_lich_migration_status` |
+| `lich seed` | `mcp_lich_lich_seed` |
+| `lich backup` | `mcp_lich_lich_backup` |
+| `lich test` | `mcp_lich_lich_test` |
+| `lich lint` | `mcp_lich_lich_lint_backend` / `_frontend` |
+| `lich security` | `mcp_lich_lich_security_scan` |
+| `lich ci` | `mcp_lich_lich_ci_all` |
+| `lich production-ready` | `mcp_lich_lich_production_ready_check` |
+| `lich deploy` | `mcp_lich_lich_deploy` |
+| `lich routes` | `mcp_lich_lich_routes` |
+| `lich secret generate` | `mcp_lich_lich_secret_generate` |
+| `lich secret rotate` | `mcp_lich_lich_secret_rotate` |

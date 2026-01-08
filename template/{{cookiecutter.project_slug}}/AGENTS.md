@@ -12,6 +12,7 @@
 | **agentlog.md** | Change history - ALWAYS UPDATE! |
 | **.lich/workflows/** | Step-by-step guides for common tasks |
 | **.lich/rules/master-prompt.md** | **Core** architecture instructions |
+| **.lich/rules/ai-behavior.md** | **MANDATORY** AI Decision Logic & Enforcement |
 | **.lich/rules/backend.md** | Backend architecture & patterns |
 | **.lich/rules/frontend.md** | Frontend architecture & UI components |
 | **.lich/rules/infra.md** | Infrastructure (Terraform/Ansible) |
@@ -62,6 +63,31 @@ Your identity, your rules, your architecture style, and your coding style
 ```
 "🧙 Lich Framework detected. Meta Architect activated."
 ```
+
+---
+
+## 🚨 LICH-FIRST DECISION LOGIC (MANDATORY)
+
+Before taking **ANY** action, you **MUST** follow this decision tree:
+
+┌─────────────────────────────────────────────────────────────┐
+│  STEP 1: Are you in a Lich project?                        │
+│          YES → Continue to Step 2                          │
+│          NO  → Use your own approach                       │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 2: Does a Lich command exist for this task?          │
+│          Check: lich make, lich migration, lich test, etc. │
+│          YES → MUST use Lich command (NO EXCEPTIONS)       │
+│          NO  → Continue to Step 3                          │
+├─────────────────────────────────────────────────────────────┤
+│  STEP 3: Do Lich MCP tools exist for this task?            │
+│          YES → Use MCP tools (lich_make_*, lich_test, etc.)│
+│          NO  → NOW you may use manual approach             │
+├─────────────────────────────────────────────────────────────┤
+│  ALWAYS: Update agentlog.md after every change             │
+└─────────────────────────────────────────────────────────────┘
+
+**See `.lich/rules/ai-behavior.md` for the full enforcement guide.**
 
 ---
 

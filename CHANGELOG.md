@@ -2,6 +2,14 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.9.0] - 2026-01-08
+
+### Added
+- **Lich-First AI Enforcement**: New rules (`.lich/rules/ai-behavior.md`) and updates to `AGENTS.md`/`CLAUDE.md` to force AI agents to prioritise Lich CLI/MCP tools.
+- **MCP Tool Reference**: Added comprehensive map of CLI commands to MCP tools in `lich-cli.md`.
+
+---
+
 ## [1.8.4] - 2026-01-08
 
 ### Fixed

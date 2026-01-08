@@ -2,6 +2,13 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.8.2] - 2026-01-08
+
+### Fixed
+- **Upgrade Command**: Fixed an infinite loop in `lich upgrade` caused by a hardcoded version string. The CLI now dynamically determines its version from package metadata.
+
+---
+
 ## [1.8.1] - 2026-01-08
 
 ### Fixed

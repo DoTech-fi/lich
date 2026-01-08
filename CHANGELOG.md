@@ -2,6 +2,13 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.7.9] - 2026-01-08
+
+### Fixed
+- **MCP Setup**: Fixed incorrect Antigravity configuration path in `lich setup` command.
+
+---
+
 ## [1.6.0] - 2026-01-07
 
 ### Added

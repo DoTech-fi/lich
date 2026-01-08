@@ -18,7 +18,10 @@ pip install lich
 
 === "Antigravity (Google)"
 
-    Add to your Antigravity MCP settings:
+    **Recommended:** Run `lich setup antigravity` to automatically configure.
+
+    **Manual Configuration:**
+    Create/Edit `~/.gemini/antigravity/mcp_config.json`:
 
     ```json
     {
@@ -31,8 +34,6 @@ pip install lich
       }
     }
     ```
-
-    **Location:** Settings → MCP Servers → Add Server
 
 === "Claude Desktop"
 

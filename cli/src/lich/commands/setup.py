@@ -47,11 +47,10 @@ def get_home_dir() -> Path:
     return Path.home()
 
 
-def get_antigravity_config_path() -> Path:
     """Get Antigravity (Gemini CLI) config path."""
     home = get_home_dir()
-    # Antigravity reads MCP config from ~/.gemini/settings.json
-    return home / ".gemini" / "settings.json"
+    # Antigravity reads MCP config from ~/.gemini/antigravity/mcp_config.json
+    return home / ".gemini" / "antigravity" / "mcp_config.json"
 
 
 def get_claude_config_path() -> Path:

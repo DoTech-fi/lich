@@ -18,7 +18,10 @@ pip install lich
 
 === "Antigravity (گوگل)"
 
-    به تنظیمات MCP اضافه کنید:
+    **توصیه شده:** دستور `lich setup antigravity` را اجرا کنید.
+
+    **تنظیم دستی:**
+    فایل `~/.gemini/antigravity/mcp_config.json` را ویرایش/ایجاد کنید:
 
     ```json
     {

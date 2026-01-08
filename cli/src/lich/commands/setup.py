@@ -50,6 +50,7 @@ def get_home_dir() -> Path:
 def get_antigravity_config_path() -> Path:
     """Get Antigravity (Gemini CLI) config path."""
     home = get_home_dir()
+    # Antigravity reads MCP config from ~/.gemini/settings.json
     return home / ".gemini" / "settings.json"
 
 
@@ -79,12 +80,26 @@ def get_vscode_config_path() -> Path:
 # Lich MCP Configuration Templates
 # ============================================================================
 
+def get_lich_executable_path() -> str:
+    """Get the full path to lich executable.
+    
+    This is important because AI tools (Antigravity, Claude, etc.) may not
+    have access to pyenv shims or other shell environment customizations.
+    """
+    lich_path = shutil.which("lich")
+    if lich_path:
+        return lich_path
+    # Fallback to just "lich" if which fails
+    return "lich"
+
+
 def get_lich_mcp_config_antigravity() -> dict:
     """Lich MCP config for Antigravity."""
+    lich_cmd = get_lich_executable_path()
     return {
         "mcpServers": {
             "lich": {
-                "command": "lich",
+                "command": lich_cmd,
                 "args": ["serve"],
                 "transportType": "stdio"
             }
@@ -94,10 +109,11 @@ def get_lich_mcp_config_antigravity() -> dict:
 
 def get_lich_mcp_config_claude() -> dict:
     """Lich MCP config for Claude Desktop."""
+    lich_cmd = get_lich_executable_path()
     return {
         "mcpServers": {
             "lich": {
-                "command": "lich",
+                "command": lich_cmd,
                 "args": ["serve"]
             }
         }
@@ -106,10 +122,11 @@ def get_lich_mcp_config_claude() -> dict:
 
 def get_lich_mcp_config_cursor() -> dict:
     """Lich MCP config for Cursor."""
+    lich_cmd = get_lich_executable_path()
     return {
         "mcpServers": {
             "lich": {
-                "command": "lich",
+                "command": lich_cmd,
                 "args": ["serve"]
             }
         }
@@ -118,10 +135,11 @@ def get_lich_mcp_config_cursor() -> dict:
 
 def get_lich_mcp_config_vscode() -> dict:
     """Lich MCP config for VS Code."""
+    lich_cmd = get_lich_executable_path()
     return {
         "servers": {
             "lich": {
-                "command": "lich",
+                "command": lich_cmd,
                 "args": ["serve"],
                 "type": "stdio"
             }

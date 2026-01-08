@@ -318,3 +318,10 @@ User requested comprehensive QA check and test coverage
 - **Versioning**: Synced `__version__` in `src/lich/__init__.py` to match `pyproject.toml`.
 
 **Why Changed**: Fixed issue where `lich version` reported 1.7.1 even after successful upgrades.
+
+## 2026-01-08 - v1.7.8 Release (Commit Missing Fixes) 🗝️
+
+**What Changed**:
+- **Setup Command**: FINALLY committed the modifications to `cli/src/lich/commands/setup.py` that use the full executable path for Antigravity integration.
+
+**Why Changed**: Previous releases (v1.7.2+) claimed to include this fix, but the file was accidentally left uncommitted in the working directory. v1.7.8 guarantees this code is present.

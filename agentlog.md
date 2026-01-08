@@ -297,3 +297,10 @@ User requested comprehensive QA check and test coverage
 - **Test Fixes**: Updated `cli/tests/test_setup.py` to correctly mock `get_lich_executable_path` during config template tests.
 
 **Why Changed**: To resolve CI failures where tests expected "lich" but received the full executable path.
+
+## 2026-01-08 - v1.7.5 Release (Lint Fix) 🧹
+
+**What Changed**:
+- **Linting**: Fixed import ordering in `cli/src/lich/commands/upgrade.py` to satisfy Ruff linter.
+
+**Why Changed**: To resolve CI lint failures (E402).

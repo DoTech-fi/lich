@@ -8,6 +8,9 @@ import tempfile
 import zipfile
 from pathlib import Path
 from typing import Optional
+import sys
+import subprocess
+from packaging import version
 
 import typer
 import requests
@@ -135,9 +138,6 @@ def _parse_versions() -> list:
     return versions
 
 
-import sys
-import subprocess
-from packaging import version
 
 def _check_and_update_cli(dry_run: bool = False):
     """Check PyPI for updates and offer to upgrade CLI."""

@@ -171,7 +171,7 @@ def _check_and_update_cli(dry_run: bool = False):
         if Confirm.ask(f"Allow [bold cyan]lich upgrade[/bold cyan] to install v{target_version} first?"):
             console.print("[dim]Upgrading CLI...[/dim]")
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", f"lich=={target_version}"])
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", "--upgrade", f"lich=={target_version}"])
                 console.print(f"[green]✅ CLI upgraded to v{target_version}![/green]")
                 console.print("[bold]Please re-run the command to use the new version.[/bold]")
                 raise typer.Exit(0)

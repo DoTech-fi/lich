@@ -2,7 +2,6 @@
 MCP Tools for Production Readiness Checks.
 """
 import subprocess
-import json
 
 
 def register_production_tools(mcp):

@@ -2,7 +2,6 @@
 MCP Tools for Routes - List all API routes.
 """
 import subprocess
-import json
 
 
 def register_routes_tools(mcp):

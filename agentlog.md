@@ -311,3 +311,10 @@ User requested comprehensive QA check and test coverage
 - **Upgrade Command**: Fixed a bug where `typer.Exit(0)` was being caught by a broad exception handler, causing the upgrade command to continue running with the old code after updating libraries.
 
 **Why Changed**: Users reported `lich upgrade` said it upgraded successfully but `lich version` remained unchanged immediately after.
+
+## 2026-01-08 - v1.7.7 Release (Version Sync Fix) 🔢
+
+**What Changed**:
+- **Versioning**: Synced `__version__` in `src/lich/__init__.py` to match `pyproject.toml`.
+
+**Why Changed**: Fixed issue where `lich version` reported 1.7.1 even after successful upgrades.

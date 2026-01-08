@@ -304,3 +304,10 @@ User requested comprehensive QA check and test coverage
 - **Linting**: Fixed import ordering in `cli/src/lich/commands/upgrade.py` to satisfy Ruff linter.
 
 **Why Changed**: To resolve CI lint failures (E402).
+
+## 2026-01-08 - v1.7.6 Release (Upgrade Exit Fix) 🐛
+
+**What Changed**:
+- **Upgrade Command**: Fixed a bug where `typer.Exit(0)` was being caught by a broad exception handler, causing the upgrade command to continue running with the old code after updating libraries.
+
+**Why Changed**: Users reported `lich upgrade` said it upgraded successfully but `lich version` remained unchanged immediately after.

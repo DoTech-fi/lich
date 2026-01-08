@@ -141,34 +141,44 @@ def _parse_versions() -> list:
 
 def _check_and_update_cli(dry_run: bool = False):
     """Check PyPI for updates and offer to upgrade CLI."""
+    target_version = None
+    
+    # 1. Check for updates (safely)
     try:
         response = requests.get("https://pypi.org/pypi/lich/json", timeout=3)
-        if response.status_code != 200:
+        if response.status_code == 200:
+            data = response.json()
+            latest_version_str = data["info"]["version"]
+            
+            current_ver = version.parse(__version__)
+            latest_ver = version.parse(latest_version_str)
+
+            if latest_ver > current_ver:
+                target_version = latest_version_str
+    except Exception as e:
+        console.print(f"[dim]Note: Failed to check for updates: {e}[/dim]")
+        return
+
+    # 2. Perform update (outside try/except)
+    if target_version:
+        console.print(f"\n[bold yellow]🚀 New Lich CLI version available: v{target_version}[/bold yellow]")
+        console.print(f"[dim]Current version: v{__version__}[/dim]\n")
+        
+        if dry_run:
+            console.print(f"[cyan]Would run: pip install --upgrade lich=={target_version}[/cyan]")
             return
 
-        data = response.json()
-        latest_version_str = data["info"]["version"]
-        
-        current_ver = version.parse(__version__)
-        latest_ver = version.parse(latest_version_str)
-
-        if latest_ver > current_ver:
-            console.print(f"\n[bold yellow]🚀 New Lich CLI version available: v{latest_version_str}[/bold yellow]")
-            console.print(f"[dim]Current version: v{__version__}[/dim]\n")
-            
-            if dry_run:
-                console.print(f"[cyan]Would run: pip install --upgrade lich=={latest_version_str}[/cyan]")
-                return
-
-            if Confirm.ask(f"Allow [bold cyan]lich upgrade[/bold cyan] to install v{latest_version_str} first?"):
-                console.print("[dim]Upgrading CLI...[/dim]")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", f"lich=={latest_version_str}"])
-                console.print(f"[green]✅ CLI upgraded to v{latest_version_str}![/green]")
+        if Confirm.ask(f"Allow [bold cyan]lich upgrade[/bold cyan] to install v{target_version} first?"):
+            console.print("[dim]Upgrading CLI...[/dim]")
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", f"lich=={target_version}"])
+                console.print(f"[green]✅ CLI upgraded to v{target_version}![/green]")
                 console.print("[bold]Please re-run the command to use the new version.[/bold]")
                 raise typer.Exit(0)
-    except Exception as e:
-        # Don't block if network/pypi fails
-        console.print(f"[dim]Note: Failed to check for updates: {e}[/dim]")
+            except subprocess.CalledProcessError as e:
+                console.print(f"[red]❌ Failed to upgrade CLI: {e}[/red]")
+                # Continue with project upgrade if CLI upgrade fails? Or stop? 
+                # Probably better to just warn and continue.
 
 
 def upgrade_project(

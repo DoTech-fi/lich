@@ -9,3 +9,4 @@
 - **UX Improvement**: `lich upgrade` now automatically restarts itself after updating the CLI.
 - **UX Improvement**: Added a prominent reminder to run `lich setup` after upgrading.
 - Released v1.8.0 containing these UX improvements.
+- Released v1.8.1 to fix CI/CD pipeline issues (lint and tests).

@@ -2,6 +2,13 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.8.1] - 2026-01-08
+
+### Fixed
+- **CI/CD**: Resolved linting errors (`Panel` import) and unit test failures (`get_antigravity_config_path` check) in the CI pipeline.
+
+---
+
 ## [1.8.0] - 2026-01-08
 
 ### Added

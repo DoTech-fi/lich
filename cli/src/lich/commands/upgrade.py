@@ -330,4 +330,9 @@ def upgrade_project(
             console.print(f"   [red]❌ Failed to update {dst_rel}: {e}[/red]")
 
     console.print("\n[green]✅ Project configuration upgraded successfully![/green]")
+    console.print(Panel.fit(
+        "[bold yellow]⚠️  Important:[/bold yellow] Please run [bold cyan]lich setup[/bold cyan] to ensure your AI tool configurations are up to date.\n"
+        "This is especially important if you are upgrading to v1.7.9+.",
+        border_style="yellow"
+    ))
     console.print("[dim]You may now need to run `lich start` or check `AGENTS.md` for new commands.[/dim]")

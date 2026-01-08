@@ -2,6 +2,14 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.8.3] - 2026-01-08
+
+### Changed
+- **Upgrade Command**: Updates `pip` to the latest version before upgrading the Lich CLI.
+- **UX**: Post-upgrade message now explicitly emphasizes restarting the AI tool (Antigravity/Cursor/VSCode).
+
+---
+
 ## [1.8.2] - 2026-01-08
 
 ### Fixed

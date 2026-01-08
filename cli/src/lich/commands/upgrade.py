@@ -172,6 +172,10 @@ def _check_and_update_cli(dry_run: bool = False):
         if Confirm.ask(f"Allow [bold cyan]lich upgrade[/bold cyan] to install v{target_version} first?"):
             console.print("[dim]Upgrading CLI...[/dim]")
             try:
+                # Upgrade pip first to ensure we can install packages correctly
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
+                
+                # Now upgrade lich
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", "--upgrade", f"lich=={target_version}"])
                 console.print(f"[green]✅ CLI upgraded to v{target_version}! Restarting...[/green]")
                 
@@ -332,8 +336,8 @@ def upgrade_project(
 
     console.print("\n[green]✅ Project configuration upgraded successfully![/green]")
     console.print(Panel.fit(
-        "[bold yellow]⚠️  Important:[/bold yellow] Please run [bold cyan]lich setup[/bold cyan] to ensure your AI tool configurations are up to date.\n"
-        "This is especially important if you are upgrading to v1.7.9+.",
-        border_style="yellow"
+        "[bold yellow]⚠️  Important:[/bold yellow] You MUST run [bold cyan]lich setup[/bold cyan] now.\n\n"
+        "Then, [bold red]RESTART[/bold red] this AI tool (Antigravity/Cursor/VSCode) to apply changes.",
+        border_style="yellow",
+        title="Next Steps"
     ))
-    console.print("[dim]You may now need to run `lich start` or check `AGENTS.md` for new commands.[/dim]")

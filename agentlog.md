@@ -7,3 +7,4 @@
 - Added `--no-cache-dir` to `lich upgrade` to prevent "distribution not found" errors.
 - **UX Improvement**: `lich upgrade` now automatically restarts itself after updating the CLI.
 - **UX Improvement**: Added a prominent reminder to run `lich setup` after upgrading.
+- Released v1.8.0 containing these UX improvements.

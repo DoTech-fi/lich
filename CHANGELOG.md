@@ -2,6 +2,17 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.8.0] - 2026-01-08
+
+### Added
+- **Seamless Upgrade**: `lich upgrade` now automatically restarts the process after updating the CLI.
+- **Setup Reminder**: Added a colored reminder to run `lich setup` after a successful upgrade.
+
+### Fixed
+- **Upgrade Reliability**: Added `--no-cache-dir` to `lich upgrade` to prevent issues when a new version is not yet in the local pip cache.
+
+---
+
 ## [1.7.9] - 2026-01-08
 
 ### Fixed

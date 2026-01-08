@@ -51,8 +51,9 @@ class TestConfigPaths:
     
     def test_antigravity_path(self):
         path = get_antigravity_config_path()
-        assert path.name == "settings.json"
+        assert path.name == "mcp_config.json"
         assert ".gemini" in str(path)
+        assert "antigravity" in str(path)
     
     @patch("lich.commands.setup.get_os_type", return_value="macos")
     def test_claude_path_macos(self, mock_os):
@@ -183,7 +184,7 @@ class TestConfigureAntigravity:
     """Test Antigravity configuration."""
     
     def test_configure_antigravity_creates_config(self, tmp_path):
-        config_path = tmp_path / ".gemini" / "settings.json"
+        config_path = tmp_path / ".gemini" / "antigravity" / "mcp_config.json"
         
         with patch("lich.commands.setup.get_antigravity_config_path", return_value=config_path):
             from lich.cli import app
@@ -199,7 +200,7 @@ class TestConfigureAntigravity:
             assert "lich" in config["mcpServers"]
     
     def test_configure_antigravity_merges_existing(self, tmp_path):
-        config_path = tmp_path / ".gemini" / "settings.json"
+        config_path = tmp_path / ".gemini" / "antigravity" / "mcp_config.json"
         config_path.parent.mkdir(parents=True)
         
         # Create existing config with another server

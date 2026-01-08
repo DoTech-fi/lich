@@ -170,3 +170,64 @@ User requested comprehensive QA check and test coverage
 - **Emberboard CI**: Fixed 178+ lint errors, corrected `memory_service.py` corruption, and verified backend tests pass (119/119).
 
 **Why Changed**: To ensure all CI pipelines pass and Docker images are built efficiently without unnecessary context bloat.
+
+---
+
+## 2026-01-08 - Documentation Site Redesign 📚
+
+**What Changed**:
+- **index.md**: Complete redesign with exciting landing page
+  - Lich MCP highlight with 47 tools
+  - Full-stack architecture ASCII diagram
+  - Monolithic + Microservice flexibility
+  - One SSH deployment story
+  - SEO-first landing with WordPress API
+- **integrations/mcp.md**: Comprehensive MCP integration guide
+  - Setup for Antigravity, Claude, Cursor, VS Code
+  - Complete 47-tool reference table
+  - Example AI conversations
+  - Troubleshooting guide
+
+**Why Changed**: User requested an exciting landing page highlighting all Lich features and MCP integration guides.
+
+---
+
+## 2026-01-08 - Complete MCP Tools Implementation 🤖 (47 Tools!)
+
+**What Changed**:
+- **Expanded from 21 to 47 MCP tools** across 14 modules
+- **New tool modules created**:
+    - `routes.py`: `lich_routes`
+    - `seed.py`: `lich_seed`, `lich_seed_list`
+    - `migration.py`: `lich_migration_init`, `lich_migration_create`, `lich_migration_up`, `lich_migration_down`, `lich_migration_status`, `lich_migration_heads`
+    - `secret.py`: `lich_secret_generate`, `lich_secret_rotate`, `lich_secret_check`
+    - `production.py`: `lich_production_ready_check`, `lich_production_ready_fix`
+    - `ci.py`: `lich_ci_all`, `lich_ci_backend`, `lich_ci_web`, `lich_ci_admin`
+    - `mw.py`: `lich_middleware_list`, `lich_middleware_enable`, `lich_middleware_disable`
+    - `dev.py`: `lich_dev_start`, `lich_dev_stop`
+    - `utility.py`: `lich_adopt`, `lich_upgrade`, `lich_version`
+- **Updated tests**: 17 tests verifying all 47 tools are registered and callable
+
+**Why Changed**: User requested complete MCP implementation covering all CLI commands.
+
+---
+
+## 2026-01-08 - MCP Server Implementation 🤖
+
+**What Changed**:
+- **MCP Dependency**: Added `mcp>=0.1.0` to `cli/pyproject.toml`.
+- **Server Core**: Created `cli/src/lich/mcp/server.py` using FastMCP.
+- **Modular Tools**: Split tools into `cli/src/lich/mcp/tools/` modules:
+    - `project.py`: `lich_init`, `lich_check_project`
+    - `make.py`: `lich_make_service`, `lich_make_entity`, `lich_make_api`, etc.
+    - `git.py`: `lich_git_commit`, `lich_git_tag`, `lich_git_push`
+    - `qa.py`: `lich_lint_backend`, `lich_lint_frontend`, `lich_security_scan`, `lich_test`
+    - `ops.py`: `lich_deploy`, `lich_backup`
+- **CLI Registration**: Registered `lich serve` command in `cli.py`.
+- **Testing**:
+    - `cli/tests/test_mcp_server.py`: Verifies all 21 tools are registered.
+    - `cli/tests/test_mcp_integration.py`: Confirms tool wiring to underlying CLI functions.
+- **Documentation**: Created `site-docs/integrations/mcp.md` and updated `mkdocs.yml`.
+
+**Why Changed**: User requested to implement MCP (Model Context Protocol) support to allow AI assistants (Claude, Gemini) to interact with Lich CLI tools programmatically.
+

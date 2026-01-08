@@ -81,10 +81,10 @@ def git_commit(
     code, stdout, stderr = _run_command(["git", "commit", "-m", final_message])
     
     if code == 0:
-        console.print(f"[green]✓ Commit successful![/green]")
+        console.print("[green]✓ Commit successful![/green]")
         console.print(stdout)
     else:
-        console.print(f"[red]✗ Commit failed:[/red]")
+        console.print("[red]✗ Commit failed:[/red]")
         console.print(stderr)
         raise typer.Exit(1)
 
@@ -139,6 +139,6 @@ def git_push(
         console.print(stdout)
         console.print(stderr)
     else:
-        console.print(f"[red]✗ Push failed:[/red]")
+        console.print("[red]✗ Push failed:[/red]")
         console.print(stderr)
         raise typer.Exit(1)

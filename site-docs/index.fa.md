@@ -1,103 +1,329 @@
 # 🧙 لیچ تولکیت
 
 <div align="center">
-<h2>تولیدکننده پروژه Full-Stack آماده برای هوش مصنوعی</h2>
-<p>اپلیکیشن‌های آماده تولید با FastAPI، Next.js و DevOps کامل را در چند ثانیه بسازید.</p>
+
+<h1 style="font-size: 3rem; margin-bottom: 0;">فریم‌ورک فول‌استک هوش مصنوعی</h1>
+
+<p style="font-size: 1.3rem; color: #888; margin-top: 10px;">
+یک CLI. یک معماری. بی‌نهایت امکانات.<br/>
+<strong>انسان و هوش مصنوعی یک زبان صحبت می‌کنند.</strong>
+</p>
+
+<div style="margin: 2rem 0;">
+<a href="getting-started/quickstart/" class="md-button md-button--primary" style="margin: 5px;">🚀 شروع کنید</a>
+<a href="integrations/mcp/" class="md-button" style="margin: 5px;">🤖 یکپارچه‌سازی MCP</a>
+</div>
+
 </div>
 
 ---
 
-## ✨ لیچ چیست؟
+## 🎯 چرا لیچ؟
 
-لیچ تولکیت یک **تولیدکننده پروژه** و **ابزار CLI** است که اپلیکیشن‌های full-stack می‌سازد:
+<div class="grid cards" markdown>
 
-- 🏗️ **بک‌اند FastAPI** - API پایتون با عملکرد بالا
-- ⚛️ **فرانت‌اند Next.js** - ری‌اکت مدرن با TypeScript
-- 🗃️ **PostgreSQL + Redis** - دیتابیس و کشینگ
-- 🐳 **آماده Docker** - دیپلوی تولید شامل شده
-- 🤖 **آماده هوش مصنوعی** - قوانین از پیش تنظیم‌شده برای دستیارهای کدنویسی AI
+-   :material-robot:{ .lg .middle } **توسعه با هوش مصنوعی**
 
-## 🚀 شروع سریع
+    ---
+    
+    Lich MCP به دستیارهای هوش مصنوعی (Antigravity، Claude، Cursor) اجازه می‌دهد کل استک شما را با **۴۷ ابزار MCP** کنترل کنند.
 
-```bash
-# نصب Lich CLI
-pip install lich
+-   :material-swap-horizontal:{ .lg .middle } **مونولیتیک و میکروسرویس**
 
-# ساخت پروژه جدید
-lich init
+    ---
+    
+    به عنوان مونولیت شروع کنید، به میکروسرویس مقیاس دهید. **Docker Compose** برای توسعه، **Docker Swarm** برای تولید.
 
-# رفتن به پروژه و شروع توسعه
-cd your-project
-lich dev
+-   :material-rocket-launch:{ .lg .middle } **یک SSH = دیپلوی شد**
+
+    ---
+    
+    `lich deploy production` - همین! Ansible همه چیز را مدیریت می‌کند: SSL، پراکسی معکوس، دیتابیس، بکاپ.
+
+-   :material-magnify:{ .lg .middle } **Landing سئو-محور**
+
+    ---
+    
+    صفحه فرود Astro با backbone وردپرس. رندر سمت سرور، فوق‌العاده سریع، **امتیاز Lighthouse ۱۰۰**.
+
+</div>
+
+---
+
+## ⚡ استک کامل
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         پروژه شما                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   🎨 طراحی    →    ⚛️ فرانت‌اند    →    🐍 بک‌اند    →    🚀 دیپلوی   │
+│                                                                 │
+│   ┌─────────┐     ┌───────────┐     ┌──────────┐     ┌───────┐ │
+│   │ Figma   │     │ Next.js   │     │ FastAPI  │     │Ansible│ │
+│   │         │     │ + Admin   │     │ + Redis  │     │+ SSH  │ │
+│   └─────────┘     └───────────┘     └──────────┘     └───────┘ │
+│                                                                 │
+│   ┌─────────┐     ┌───────────┐     ┌──────────┐     ┌───────┐ │
+│   │ Landing │     │TypeScript │     │PostgreSQL│     │Traefik│ │
+│   │ (Astro) │     │+ Tailwind │     │+ Alembic │     │+ SSL  │ │
+│   └─────────┘     └───────────┘     └──────────┘     └───────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              ↕
+                    🤖 Lich MCP (۴۷ ابزار)
+                              ↕
+              ┌───────────────────────────────┐
+              │ Antigravity │ Claude │ Cursor │
+              └───────────────────────────────┘
 ```
 
-همین! الان یه **اپلیکیشن full-stack کامل** دارید:
+---
 
-### 🎁 چه چیزهایی دریافت می‌کنید
+## 🤖 Lich MCP - هوش مصنوعی با استک شما صحبت می‌کند
 
-| کامپوننت | توضیحات |
-|----------|---------|
-| 🖥️ **پنل ادمین** | داشبورد مدیریت Next.js آماده |
-| 🌐 **صفحه فرود** | لندینگ Astro با WordPress API اختیاری |
-| ⚛️ **اپ فرانت‌اند** | Next.js 14+ با App Router و TypeScript |
-| 🐍 **API بک‌اند** | FastAPI با معماری تمیز |
-| 🐳 **Docker Compose** | ست‌آپ کانتینری کامل |
-| 🔀 **Traefik Proxy** | پروکسی معکوس با SSL آماده |
-| 🗃️ **دیتابیس** | PostgreSQL یا MongoDB (انتخابی) |
-| ⚡ **Redis** | کش و session |
-| 🔐 **احراز هویت** | Keycloak SSO یا JWT داخلی |
-| 🤖 **قوانین AI** | از پیش تنظیم‌شده برای دستیارهای کدنویسی |
+!!! success "۴۷ ابزار MCP برای کنترل کامل"
 
-### 🌍 آدرس‌های توسعه
+دستیار هوش مصنوعی شما اکنون می‌تواند:
 
-| سرویس | آدرس |
-|-------|------|
-| فرانت‌اند | http://localhost:3000 |
-| پنل ادمین | http://localhost:3002 |
-| صفحه فرود | http://localhost:4321 |
-| API بک‌اند | http://localhost:8000 |
-| مستندات API | http://localhost:8000/docs |
-| داشبورد Traefik | http://localhost:8080 |
+| دسته‌بندی | کاری که AI انجام می‌دهد |
+|----------|---------------|
+| **تولید کد** | ایجاد entity، service، API، DTO، event، job |
+| **دیتابیس** | اجرای migration، seed داده، بررسی وضعیت |
+| **توسعه** | شروع/توقف محیط توسعه، مدیریت middleware |
+| **کیفیت** | Lint کد، اجرای تست، اسکن امنیتی |
+| **دیپلوی** | دیپلوی به staging/production، مدیریت بکاپ |
+| **رمزها** | تولید، چرخش، اعتبارسنجی secret‌ها |
 
-## 📦 ویژگی‌های کلیدی
+```bash
+# نصب MCP در ابزار AI شما
+pip install lich
+lich serve  # شروع سرور MCP
+```
 
-### 🚀 تولید پروژه
-با یک دستور پروژه کامل بسازید. استراتژی احراز هویت، دیتابیس و ویژگی‌ها را به صورت تعاملی انتخاب کنید.
+[:octicons-arrow-right-24: راهنمای کامل یکپارچه‌سازی MCP](integrations/mcp.md)
 
-### 🛠️ تولیدکننده‌های کد
-Entity، Service، API، DTO و موارد دیگر را با دستورات `lich make` بسازید.
+---
 
-### 🗃️ مایگریشن دیتابیس
-اسکیمای دیتابیس را با ادغام Alembic از طریق دستورات ساده CLI مدیریت کنید.
+## 🚀 از صفر تا Production در ۵ دقیقه
 
-### 🧪 ابزارهای تست
-تست‌ها را با pytest اجرا کنید، factory بسازید و دیتا seed کنید.
+=== "۱. نصب"
 
-## 🏛️ معماری
+    ```bash
+    pip install lich
+    ```
 
-لیچ پروژه‌هایی بر اساس اصول **معماری تمیز** تولید می‌کند:
+=== "۲. ایجاد پروژه"
+
+    ```bash
+    lich init
+    # چند سوال پاسخ دهید...
+    ```
+
+=== "۳. توسعه"
+
+    ```bash
+    cd my-project
+    lich start
+    # فرانت‌اند: http://localhost:3000
+    # ادمین: http://localhost:3002  
+    # بک‌اند: http://localhost:8000
+    ```
+
+=== "۴. دیپلوی"
+
+    ```bash
+    lich deploy production
+    # ✅ SSL تنظیم شد
+    # ✅ دیتابیس migrate شد
+    # ✅ بکاپ زمان‌بندی شد
+    ```
+
+---
+
+## 📦 چه چیزی دریافت می‌کنید
+
+<div class="grid" markdown>
+
+<div markdown>
+
+### استک فرانت‌اند
+
+- ⚛️ **Next.js 14+** - App Router، Server Components
+- 🎨 **Tailwind CSS** - استایل utility-first
+- 📝 **TypeScript** - امنیت نوع کامل
+- 🔐 **Auth آماده** - JWT یا Keycloak SSO
+- 📊 **پنل ادمین** - داشبورد از پیش ساخته شده
+
+</div>
+
+<div markdown>
+
+### استک بک‌اند
+
+- 🐍 **FastAPI** - Python پرفورمنس بالا
+- 🏛️ **معماری تمیز** - اصول SOLID
+- 🗃️ **PostgreSQL/MongoDB** - انتخاب شما
+- ⚡ **Redis** - کشینگ و session
+- 📋 **Alembic** - migration دیتابیس
+
+</div>
+
+<div markdown>
+
+### استک DevOps
+
+- 🐳 **Docker Compose** - توسعه محلی
+- 🐝 **Docker Swarm** - مقیاس‌دهی production
+- 🔒 **Traefik** - پراکسی معکوس + SSL
+- 📦 **Ansible** - دیپلوی یک‌دستوری
+- 🔄 **GitHub Actions** - پایپ‌لاین CI/CD
+
+</div>
+
+<div markdown>
+
+### استک SEO
+
+- ⭐ **Astro Landing** - استاتیک، سریع، بهینه‌شده SEO
+- 📝 **WordPress API** - مدیریت محتوا
+- 🔍 **Lighthouse 100** - امتیازات عالی
+- 🌐 **آماده i18n** - پشتیبانی چند زبانه
+
+</div>
+
+</div>
+
+---
+
+## 🏛️ معماری SOLID
+
+هر پروژه لیچ از اصول **Clean Architecture** پیروی می‌کند:
 
 ```
 backend/
-├── api/http/           # روترهای FastAPI
+├── api/http/           # کنترلرها (لایه نازک)
 ├── internal/
-│   ├── entities/       # مدل‌های دامین و قوانین
-│   ├── services/       # منطق کسب‌وکار (use cases)
-│   ├── ports/          # اینترفیس‌ها (انتزاعات)
-│   └── adapters/       # پیاده‌سازی‌ها (DB, cache)
-└── main.py
-
-frontend/
-└── Next.js 14+ with App Router
+│   ├── entities/       # مدل‌های دامنه و قوانین کسب‌وکار
+│   ├── services/       # Use caseها (منطق برنامه)
+│   ├── ports/          # اینترفیس‌ها (چه چیزی نیاز داریم)
+│   └── adapters/       # پیاده‌سازی‌ها (چگونه انجام می‌دهیم)
+├── dto/                # شکل Request/Response
+└── validators/         # اعتبارسنجی ورودی
 ```
 
-## 🤖 آماده هوش مصنوعی
+!!! tip "قوانین یکسان برای انسان و AI"
+    پوشه `.lich/rules/` شامل قوانین معماری است که هم توسعه‌دهندگان و هم دستیارهای AI از آن پیروی می‌کنند.
 
-هر پروژه لیچ شامل قوانین و پرامپت‌های AI است که به دستیارهای کدنویسی (Claude, GPT, Copilot) کمک می‌کند معماری را درک و رعایت کنند.
+[:octicons-arrow-right-24: مطالعه عمیق معماری](architecture/overview.md)
 
-## 📚 مراحل بعدی
+---
 
-1. [**نصب**](getting-started/installation.md) - نصب Lich CLI
-2. [**شروع سریع**](getting-started/quickstart.md) - ساخت اولین پروژه
-3. [**دستورات**](commands/overview.md) - یادگیری همه دستورات CLI
-4. [**معماری**](architecture/overview.md) - درک الگوها
+## 🔧 قدرت CLI
+
+<div class="grid cards" markdown>
+
+-   **دستورات پروژه**
+    
+    ```bash
+    lich init          # ایجاد پروژه
+    lich start         # شروع محیط توسعه
+    lich stop          # توقف همه چیز
+    lich upgrade       # آپدیت به آخرین نسخه
+    ```
+
+-   **تولیدکننده‌های کد**
+    
+    ```bash
+    lich make entity User
+    lich make service Order
+    lich make api Product
+    lich make job SendEmail
+    ```
+
+-   **عملیات دیتابیس**
+    
+    ```bash
+    lich migration create "add_users"
+    lich migration up
+    lich seed users
+    lich routes       # لیست همه APIها
+    ```
+
+-   **کیفیت و دیپلوی**
+    
+    ```bash
+    lich ci            # اجرای همه بررسی‌ها
+    lich production-ready
+    lich deploy staging
+    lich backup create
+    ```
+
+</div>
+
+[:octicons-arrow-right-24: مرجع همه دستورات](commands/overview.md)
+
+---
+
+## 🌐 URLهای توسعه
+
+وقتی `lich start` اجرا می‌کنید:
+
+| سرویس | URL | توضیحات |
+|---------|-----|-------------|
+| 🖥️ **فرانت‌اند** | http://localhost:3000 | اپلیکیشن وب اصلی |
+| 👔 **پنل ادمین** | http://localhost:3002 | داشبورد مدیریت |
+| 🚀 **Landing** | http://localhost:4321 | صفحه بازاریابی/SEO |
+| 🐍 **API بک‌اند** | http://localhost:8000 | بک‌اند FastAPI |
+| 📚 **مستندات API** | http://localhost:8000/docs | Swagger UI |
+| 🗃️ **Adminer** | http://localhost:8081 | ادمین دیتابیس |
+
+---
+
+## 📚 سفر خود را شروع کنید
+
+<div class="grid cards" markdown>
+
+-   :material-download:{ .lg .middle } **نصب**
+
+    ---
+
+    Lich CLI را روی سیستم خود نصب کنید.
+
+    [:octicons-arrow-right-24: همین الان نصب کنید](getting-started/installation.md)
+
+-   :material-play:{ .lg .middle } **شروع سریع**
+
+    ---
+
+    اولین پروژه خود را در ۵ دقیقه بسازید.
+
+    [:octicons-arrow-right-24: بزن بریم](getting-started/quickstart.md)
+
+-   :material-robot:{ .lg .middle } **یکپارچه‌سازی MCP**
+
+    ---
+
+    دستیار AI خود را به لیچ متصل کنید.
+
+    [:octicons-arrow-right-24: تنظیم MCP](integrations/mcp.md)
+
+-   :material-book:{ .lg .middle } **راهنمای معماری**
+
+    ---
+
+    الگوها و اصول را درک کنید.
+
+    [:octicons-arrow-right-24: بیشتر بخوانید](architecture/overview.md)
+
+</div>
+
+---
+
+<div align="center" style="margin-top: 3rem;">
+
+**ساخته شده با ❤️ توسط [DoTech](https://github.com/DoTech-fi)**
+
+*جایی که توسعه‌دهندگان و عامل‌های AI با هم می‌سازند.*
+
+</div>

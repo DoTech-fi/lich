@@ -15,6 +15,7 @@ from lich.commands.secret import secret_app
 from lich.commands.production_ready import production_ready_app
 from lich.commands.ci import ci_app
 from lich.version_check import check_compatibility
+from lich.mcp import server as mcp_server
 
 # Create main Typer app
 app = typer.Typer(
@@ -43,7 +44,6 @@ app.command(name="tag", help="Create a Version Tag")(git.git_tag)
 app.command(name="push", help="Push changes to remote")(git.git_push)
 
 # Register MCP Server
-from lich.mcp import server as mcp_server
 app.command(name="serve", help="Start Lich MCP Server")(mcp_server.start_server)
 
 # Register sub-apps

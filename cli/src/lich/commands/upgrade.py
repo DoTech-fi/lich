@@ -172,9 +172,10 @@ def _check_and_update_cli(dry_run: bool = False):
             console.print("[dim]Upgrading CLI...[/dim]")
             try:
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", "--upgrade", f"lich=={target_version}"])
-                console.print(f"[green]✅ CLI upgraded to v{target_version}![/green]")
-                console.print("[bold]Please re-run the command to use the new version.[/bold]")
-                raise typer.Exit(0)
+                console.print(f"[green]✅ CLI upgraded to v{target_version}! Restarting...[/green]")
+                
+                # Restart the process into the new version
+                os.execvp(sys.argv[0], sys.argv)
             except subprocess.CalledProcessError as e:
                 console.print(f"[red]❌ Failed to upgrade CLI: {e}[/red]")
                 # Continue with project upgrade if CLI upgrade fails? Or stop? 

@@ -4,4 +4,5 @@
 - Started debugging Lich MCP setup issue.
 - Fixed `lich setup antigravity` config path to point to `~/.gemini/antigravity/mcp_config.json` instead of `settings.json`.
 - Updated documentation and prepared release v1.7.9.
-- Added `--no-cache-dir` to `lich upgrade` to prevent "distribution not found" errors immediately after release.
+- Added `--no-cache-dir` to `lich upgrade` to prevent "distribution not found" errors.
+- **UX Improvement**: `lich upgrade` now automatically restarts itself after updating the CLI, removing the need for the user to manually re-run the command.

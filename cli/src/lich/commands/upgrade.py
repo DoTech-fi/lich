@@ -135,6 +135,42 @@ def _parse_versions() -> list:
     return versions
 
 
+import sys
+import subprocess
+from packaging import version
+
+def _check_and_update_cli(dry_run: bool = False):
+    """Check PyPI for updates and offer to upgrade CLI."""
+    try:
+        response = requests.get("https://pypi.org/pypi/lich/json", timeout=3)
+        if response.status_code != 200:
+            return
+
+        data = response.json()
+        latest_version_str = data["info"]["version"]
+        
+        current_ver = version.parse(__version__)
+        latest_ver = version.parse(latest_version_str)
+
+        if latest_ver > current_ver:
+            console.print(f"\n[bold yellow]🚀 New Lich CLI version available: v{latest_version_str}[/bold yellow]")
+            console.print(f"[dim]Current version: v{__version__}[/dim]\n")
+            
+            if dry_run:
+                console.print(f"[cyan]Would run: pip install --upgrade lich=={latest_version_str}[/cyan]")
+                return
+
+            if Confirm.ask(f"Allow [bold cyan]lich upgrade[/bold cyan] to install v{latest_version_str} first?"):
+                console.print("[dim]Upgrading CLI...[/dim]")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", f"lich=={latest_version_str}"])
+                console.print(f"[green]✅ CLI upgraded to v{latest_version_str}![/green]")
+                console.print("[bold]Please re-run the command to use the new version.[/bold]")
+                raise typer.Exit(0)
+    except Exception as e:
+        # Don't block if network/pypi fails
+        console.print(f"[dim]Note: Failed to check for updates: {e}[/dim]")
+
+
 def upgrade_project(
     to_version: str = typer.Option(None, "--to", help="Target version to upgrade to (informational)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without applying"),
@@ -153,6 +189,10 @@ def upgrade_project(
     
     It preserves your project code but ensures AI rules and workflows are up to date.
     """
+    # 0. Check for CLI updates first
+    if not local:
+        _check_and_update_cli(dry_run=dry_run)
+
     if not Path(".lich").exists():
         console.print("[red]❌ Not a Lich project (no .lich folder found)![/red]")
         raise typer.Exit(1)

@@ -283,3 +283,10 @@ User requested comprehensive QA check and test coverage
 - **Antigravity Path Fix**: Updated setup command to use full executable path for `lich` and correct config file path for Antigravity settings.
 
 **Why Changed**: To ensure Antigravity correctly detects and executes the Lich MCP server.
+
+## 2026-01-08 - v1.7.3 Release (Self-Updating Upgrade Command) 🚀
+
+**What Changed**:
+- **Self-Update**: `lich upgrade` now checks PyPI for newer CLI versions and offers to auto-upgrade using `pip`.
+
+**Why Changed**: To verify true "upgrade" behavior where the tool updates itself, not just the project files.

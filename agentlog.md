@@ -34,6 +34,8 @@
   - Added `-v`/`--verbose`, `-q`/`--quiet`, `--insecure-secrets` flags to all CI commands.
   - Added `-s`/`--secret` and `--var` inline flags to all CI commands.
   - Changed CI default to Docker/act; added `-l`/`--local` flag for local execution.
+  - Release v1.10.2: Verified secure release workflow with env token
+  - Release v1.10.3: Fixed `lich ci` command argument order for `act` (removed extra 'push')
   - Created separate workflow files: `ci-backend.yml`, `ci-web.yml`, `ci-admin.yml`, `ci-landing.yml`.
   - Updated `lich ci` commands to run their specific workflow files.
   

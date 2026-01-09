@@ -259,7 +259,13 @@ def run_act_workflow(
         True if workflow passed, False otherwise.
     """
     # Build act command
-    cmd = ["act", event, "-W", f".github/workflows/{workflow}"]
+    # Build act command
+    # act -W .github/workflows/workflow.yml
+    cmd = ["act", "-W", f".github/workflows/{workflow}"]
+    
+    # Only add event if explicitly provided and not default
+    if event and event != "push":
+        cmd.insert(1, event)
     
     if job:
         cmd.extend(["-j", job])

@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.3] - 2026-01-09
+
+### Fixed
+- **CI Command**: Fixed `lich ci` (act) command argument order. Removed explicit `push` event when not required, ensuring correct workflow execution with `-W`.
+
 ## [1.10.2] - 2026-01-09
 
 ### Fixed

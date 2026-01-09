@@ -36,6 +36,7 @@
   - Changed CI default to Docker/act; added `-l`/`--local` flag for local execution.
   - Release v1.10.2: Verified secure release workflow with env token
   - Release v1.10.3: Fixed `lich ci` command argument order for `act` (removed extra 'push')
+  - Release v1.10.4: Fixed corrupt workflow files in `upgrade` command (template rendering) and fixed CI logging.
   - Created separate workflow files: `ci-backend.yml`, `ci-web.yml`, `ci-admin.yml`, `ci-landing.yml`.
   - Updated `lich ci` commands to run their specific workflow files.
   

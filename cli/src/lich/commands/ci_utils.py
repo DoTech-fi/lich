@@ -309,7 +309,8 @@ def run_act_workflow(
         console.print(f"[red]Workflow not found: {workflow_path}[/red]")
         return False
     
-    console.print(f"[dim]Running: act {event} -W .github/workflows/{workflow}...[/dim]")
+    cmd_str = " ".join(cmd)
+    console.print(f"[dim]Running: {cmd_str}...[/dim]")
     
     try:
         result = subprocess.run(cmd, text=True)

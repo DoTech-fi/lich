@@ -2,6 +2,12 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.4] - 2026-01-09
+
+### Fixed
+- **Upgrade Command**: Fixed `lich upgrade` to properly render templates (e.g., GitHub Actions workflows) instead of raw copying, resolving syntax errors in CI files.
+- **CI Command**: Corrected log message to show the actual `act` command being executed.
+
 ## [1.10.3] - 2026-01-09
 
 ### Fixed

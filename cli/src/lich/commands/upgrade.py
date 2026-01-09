@@ -283,25 +283,46 @@ def upgrade_project(
     # 5.2 Sync other files
     # Helper to clean variables from templates if found
     def copy_and_render(src: Path, dst: Path):
-        content = src.read_text()
-        # Simple replacements for known upgrade targets
-        # This is a basic fallback to avoid raw {{cookiecutter}} strings in upgraded projects
-        # Ideally, we would reload the cookiecutter context, but that's complex to retrieve post-generation.
-        # We try to infer or leave them if not critical.
+        try:
+            content = src.read_text(encoding="utf-8")
+            
+            # 1. Project Slug replacement
+            current_slug = Path.cwd().name
+            content = content.replace("{{ cookiecutter.project_slug }}", current_slug)
+            content = content.replace("{{cookiecutter.project_slug}}", current_slug)
+            
+            # 2. Fix GitHub Actions escaped variables
+            # Template uses: ${{ "{{" }} env.VAR {{ "}}" }}
+            # We want: ${{ env.VAR }}
+            content = content.replace('{{ "{{" }}', '{{')
+            content = content.replace('{{ "}}" }}', '}}')
+            
+            # Simple fallback for other jinja-like tags that we don't know how to fill
+            # We leave them as is, or we could try to strip them if needed.
+            
+            dst.write_text(content, encoding="utf-8")
+            return True
+        except UnicodeDecodeError:
+            # Binary file? Just copy
+            shutil.copy2(src, dst)
+            return False
+
+    def recursive_copy(src_dir: Path, dst_dir: Path):
+        """Recursively copy and render files."""
+        if dst_dir.exists():
+            shutil.rmtree(dst_dir)
+        dst_dir.mkdir(parents=True)
         
-        # We only really care if we are copying AGENTS.md or CLAUDE.md on top of existing ones
-        # For now, we will assume the user has a valid project setup.
-        
-        # If the file has {{ cookiecutter.project_slug }}, we try to replace it with current dir name
-        current_slug = Path.cwd().name
-        content = content.replace("{{ cookiecutter.project_slug }}", current_slug)
-        content = content.replace("{{cookiecutter.project_slug}}", current_slug)
-        
-        # For other variables, if they exist in destination, we might want to keep destination?
-        # But upgrade is usually force-overwrite rules. 
-        # For documentation files like CLAUDE.md, it's risky to overwrite if they are customized.
-        
-        dst.write_text(content)
+        for item in src_dir.iterdir():
+            dst_item = dst_dir / item.name
+            if item.is_dir():
+                recursive_copy(item, dst_item)
+            else:
+                # Always try to render text files in templates
+                if item.suffix in ['.md', '.yml', '.yaml', '.json', '.py', '.js', '.ts', '.css', '.html']:
+                    copy_and_render(item, dst_item)
+                else:
+                    shutil.copy2(item, dst_item)
 
     for src_rel, dst_rel in sync_targets:
         src_path = source_dir / src_rel
@@ -313,24 +334,13 @@ def upgrade_project(
             
         try:
             if src_path.is_dir():
-                # For directories (rules/workflows), we treat them as pure rewrites/updates
-                # These shouldn't have per-project cookiecutter variables usually
-                if dst_path.exists():
-                    shutil.rmtree(dst_path)
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+                recursive_copy(src_path, dst_path)
                 console.print(f"   ✅ Updated directory: [cyan]{dst_rel}[/cyan]")
             else:
                 # File copy
                 dst_path.parent.mkdir(parents=True, exist_ok=True)
-                
-                # Check for templating
-                src_content = src_path.read_text()
-                if "{{" in src_content and "cookiecutter" in src_content:
-                     copy_and_render(src_path, dst_path)
-                     console.print(f"   ✅ Updated templated file: [cyan]{dst_rel}[/cyan]")
-                else:
-                     shutil.copy2(src_path, dst_path)
-                     console.print(f"   ✅ Updated file: [cyan]{dst_rel}[/cyan]")
+                copy_and_render(src_path, dst_path)
+                console.print(f"   ✅ Updated file: [cyan]{dst_rel}[/cyan]")
                 
         except Exception as e:
             console.print(f"   [red]❌ Failed to update {dst_rel}: {e}[/red]")

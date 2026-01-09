@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.1] - 2026-01-09
+
+### Fixed
+- **Upgrade Command**: Added `.github/workflows` to the synchronization list in `lich upgrade`. This ensures that new CI/CD workflows are correctly copied to existing projects during an upgrade.
+
 ## [1.10.0] - 2026-01-09
 
 ### Added

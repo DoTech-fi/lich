@@ -243,6 +243,7 @@ def upgrade_project(
         (".lich/LICH_AI_PROMPT.md", ".lich/LICH_AI_PROMPT.md"),
         ("AGENTS.md", "AGENTS.md"),
         ("CLAUDE.md", "CLAUDE.md"),
+        (".github/workflows", ".github/workflows"),
     ]
     
     # Check what will change

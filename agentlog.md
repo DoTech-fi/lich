@@ -50,4 +50,5 @@
   - Added git repo URL and private repo configuration to setup flow
   - Updated MCP tools (ci.py, ops.py) with new commands and flags
   - Updated site-docs: ci.md, ci.fa.md, deploy.md, deploy.fa.md
-  - Bumped version to 1.10.0 and updated CHANGELOG.md
+  - Fixed missing `.github/workflows` in `lich upgrade` sync targets
+  - Bumped version to 1.10.1 and updated CHANGELOG.md

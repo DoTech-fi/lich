@@ -2,6 +2,12 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.11.0] - 2026-01-09
+
+### Added
+- **New Feature**: Added `lich doctor` command to diagnose project health, structure, and configuration discrepancies.
+- **Documentation**: Updated `AGENTS.md` and `CLAUDE.md` to include `lich doctor`.
+
 ## [1.10.7] - 2026-01-09
 
 ### Added

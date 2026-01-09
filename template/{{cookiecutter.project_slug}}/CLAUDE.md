@@ -55,6 +55,7 @@ lich deploy prod backend -v v1.2.3  # Deploy to prod
 lich test            # Run tests
 lich lint --fix      # Fix linting
 lich security        # Security scan
+lich doctor          # Health check
 
 # Database
 lich migration create "msg"

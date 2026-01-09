@@ -40,6 +40,7 @@
   - Release v1.10.5: Added missing `.eslintrc.json` to admin template to prevent CI interactive prompts.
   - Release v1.10.6: Expanded `.eslintrc.json` fix to web and landing templates.
   - Release v1.10.7: Added "Smart File Injection" to `lich upgrade` to safely add missing config files to existing apps.
+  - Release v1.11.0: Added `lich doctor` command for project health checks.
   - Created separate workflow files: `ci-backend.yml`, `ci-web.yml`, `ci-admin.yml`, `ci-landing.yml`.
   - Updated `lich ci` commands to run their specific workflow files.
   

@@ -167,6 +167,7 @@ lich lint                    # Check code style (Ruff, Eslint)
 lich lint --fix              # Auto-fix code style issues
 lich security                # Run security scans (Bandit, Safety, Trivy)
 lich production-ready        # Final readiness check before deploy
+lich doctor                  # Diagnose project health (Config, Structure, Docker)
 ```
 
 ### 5. CI (Continuous Integration)
@@ -352,7 +353,8 @@ lich setup    # Configure AI tools (Antigravity, Claude, Cursor)
 If something goes wrong:
 
 ```bash
-lich check           # Validate project structure
+lich doctor          # Diagnose project health & structure
+lich check           # Validate project structure (legacy)
 lich lint --fix      # Fix code issues
 lich migration up    # Ensure DB is synced
 ```

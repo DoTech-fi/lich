@@ -4,7 +4,7 @@ Lich CLI - Main Typer application.
 import typer
 from rich.console import Console
 from lich import __version__
-from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed, git
+from lich.commands import init, dev, version, upgrade, adopt, shell, routes, test, seed, git, doctor
 from lich.commands.migration import migration_app
 from lich.commands.make import make_app
 from lich.commands.middleware import middleware_app
@@ -45,6 +45,7 @@ app.command(name="stop", help="Stop development environment")(dev.stop_dev)
 app.command(name="version", help="Show Lich version")(version.show_version)
 app.command(name="check", help="Validate project structure")(version.check_project)
 app.command(name="upgrade", help="Upgrade project to latest version")(upgrade.upgrade_project)
+app.command(name="doctor", help="Diagnose project health")(doctor.doctor)
 app.command(name="shell", help="Interactive Python shell")(shell.shell_command)
 app.command(name="routes", help="List all API routes")(routes.routes_command)
 app.command(name="test", help="Run project tests")(test.test_command)

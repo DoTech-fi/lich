@@ -1,0 +1,46 @@
+name: CI - Landing Page
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/landing/**'
+      - '.github/workflows/ci-landing.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/landing/**'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  landing-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ "{{" }} env.NODE_VERSION {{ "}}" }}
+          cache: 'npm'
+          cache-dependency-path: 'apps/landing/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./apps/landing
+        run: npm ci
+
+      - name: Run linting (ESLint)
+        working-directory: ./apps/landing
+        run: npm run lint
+
+      - name: Run type checking (TypeScript)
+        working-directory: ./apps/landing
+        run: npm run type-check
+
+      - name: Build
+        working-directory: ./apps/landing
+        run: npm run build

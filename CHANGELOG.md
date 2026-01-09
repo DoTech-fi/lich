@@ -2,6 +2,25 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.0] - 2026-01-09
+
+### Added
+- **Deploy System**: Full `lich deploy` suite with Ansible integration:
+  - `lich deploy setup`: Interactive setup for staging/production (SSH config, git repo)
+  - `lich deploy stage`: Deploy to staging environment
+  - `lich deploy prod`: Deploy to production (with confirmation)
+  - `lich deploy status`: View current deployment configuration
+  - Support for private repositories via `.secrets` (GITHUB_TOKEN)
+  - Live stdout streaming for real-time deployment logs
+- **CI Improvements**:
+  - `lich ci setup`: Interactive setup for local CI (act)
+  - Component-specific CI commands (`lich ci backend`, `web`, `admin`, `landing`)
+  - Local execution flag (`-l` / `--local`) to run without Docker
+  - Manual-only GitHub Actions workflow for main CI (`workflow_dispatch`)
+- **Documentation**:
+  - Validated and updated `AGENTS.md` and `CLAUDE.md` with new commands
+  - Updated site documentation (English & Farsi) for CI and Deploy commands
+
 ## [1.9.0] - 2026-01-08
 
 ### Added

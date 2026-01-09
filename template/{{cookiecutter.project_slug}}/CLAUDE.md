@@ -1,85 +1,86 @@
-# {{ cookiecutter.project_name }}
+# 🧙 CLAUDE.MD - AI AGENT CONFIGURATION
 
-> This file helps AI assistants (Claude, GPT, etc.) understand this project.
+> **⚠️ CRITICAL: This file is identical to `AGENTS.md`.**
+> **You MUST read `AGENTS.md` COMPLETELY for all rules and commands.**
 
-## Project Overview
+---
 
-**Name**: {{ cookiecutter.project_name }}
-**Type**: {{ cookiecutter.project_type }}
-**Description**: {{ cookiecutter.project_description }}
+## 📌 Purpose
 
-## Tech Stack
+This file exists so **Claude CLI** can automatically detect the project context.
 
-- **Backend**: FastAPI (Python)
-- **Frontend**: Next.js (TypeScript)
-- **Landing**: Astro
-- **Database**: {{ cookiecutter.database }}
-{%- if cookiecutter.use_redis == 'yes' %}
-- **Cache**: Redis
-{%- endif %}
-- **Auth**: {{ cookiecutter.auth_strategy }}
+**All rules, CLI commands, and architecture guidelines are in `AGENTS.md`.**
 
-## Architecture
+---
 
-This project follows **Lich Architecture** principles.
-Read `.lich/rules/` for detailed rules on each area.
+## 🚨 MANDATORY STEPS
 
-## Key Files
+When you open this project:
 
+1. **READ `AGENTS.md` COMPLETELY** - It contains all Lich Framework rules
+2. **READ `.lich/rules/ai-behavior.md`** - Lich-first decision logic
+3. **READ `agentlog.md`** - Project change history
+
+---
+
+## ⚡ Quick Reference
+
+```bash
+# First time setup
+lich setup           # Configure AI tools
+
+# Development
+lich start           # Start dev environment
+lich stop            # Stop everything
+
+# Code Generation (MANDATORY - never write manually)
+lich make entity <name>
+lich make service <name>
+lich make api <name>
+
+# CI (Continuous Integration)
+lich ci setup        # Setup act for local CI
+lich ci backend      # Backend CI (Docker)
+lich ci backend -l   # Backend CI (local, fast)
+lich ci web          # Web CI
+lich ci admin        # Admin CI
+lich ci landing      # Landing CI
+
+# Deploy
+lich deploy setup            # Configure SSH, paths
+lich deploy stage admin      # Deploy to staging
+lich deploy prod backend -v v1.2.3  # Deploy to prod
+
+# Quality
+lich test            # Run tests
+lich lint --fix      # Fix linting
+lich security        # Security scan
+
+# Database
+lich migration create "msg"
+lich migration up
 ```
-.lich/
-├── AI_CONTEXT.md         # This project's context & config
-├── LICH_AI_PROMPT.md     # Master architecture prompt
-├── PROJECT_CONFIG.yaml   # Machine-readable config
-└── rules/                # Architecture rules
-    ├── security.md
-    ├── ui-ux.md
-    ├── docker.md
-    ├── backend.md
-    ├── frontend.md
-    ├── devops.md
-    ├── platform.md
-    ├── testing.md
-    └── documentation.md
-```
 
-## Workflows
+---
 
-When asked to do something, check `.lich/workflows/` for step-by-step guides.
+## 📚 Files to Read
 
-## 🚨 AI Rules (MANDATORY)
- 
- 1. **LICH-FIRST POLICY**: If a `lich` command exists for a task, you **MUST** use it.
-    - Creating an entity? Use `lich make entity` (NOT manual file creation)
-    - Migrating DB? Use `lich migration create` (NOT alembic direct)
-    - Running tests? Use `lich test` (NOT pytest direct)
- 2. **Context**: Read `.lich/rules/ai-behavior.md` for the full decision tree.
- 3. **Agent Log**: Always append to `agentlog.md` after changes.
- 
- ## 🛠️ Lich CLI Reference
- 
- | Category | Command | Use For |
- |----------|---------|---------|
- | **Dev** | `lich start` | Start backend, frontend, db, docker |
- | | `lich stop` | Stop everything & clean ports |
- | | `lich check` | Validate project structure |
- | **Make** | `lich make entity <name>` | Generate Entity + Port + Adapter |
- | | `lich make service <name>` | Generate Service (Use Case) |
- | | `lich make api <name>` | Generate FastAPI Router |
- | | `lich make dto <name>` | Generate Pydantic DTOs |
- | | `lich make job <name>` | Generate Background Job |
- | **DB** | `lich migration create "msg"` | Create migration file |
- | | `lich migration up` | Apply migrations |
- | | `lich seed` | Seed database |
- | **QA** | `lich test` | Run tests |
- | | `lich lint` | Run linters (Ruff/ESLint) |
- | | `lich security` | Run security scans |
- | **Ops** | `lich deploy` | Deploy via Ansible |
- | | `lich production-ready` | Pre-deploy checks |
+| Priority | File | Purpose |
+|----------|------|---------|
+| 🔴 HIGH | `AGENTS.md` | **Master AI prompt - READ FIRST** |
+| 🔴 HIGH | `agentlog.md` | Change history - ALWAYS UPDATE |
+| 🔴 HIGH | `.lich/rules/ai-behavior.md` | Lich-first decision logic |
+| 🟡 MED | `.lich/rules/backend.md` | Backend architecture |
+| 🟡 MED | `.lich/rules/frontend.md` | Frontend architecture |
+| 🟡 MED | `.lich/rules/ui-ux.md` | UI/UX design rules |
+| 🟢 LOW | `.lich/workflows/` | Step-by-step guides |
 
-## Service URLs
+---
 
-- Web: http://localhost:3000
-- Admin: http://localhost:3002
-- Landing: http://localhost:4321
-- API: http://localhost:8000/api/docs
+## 🔗 Reminder
+
+**AGENTS.md = CLAUDE.md**
+
+Both files enforce the same rules. If you're reading this, go read `AGENTS.md`.
+
+**🧙 Meta Architect Activated.**

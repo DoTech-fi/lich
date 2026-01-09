@@ -1,10 +1,9 @@
-name: CI/CD Pipeline
+name: CI - All (Manual)
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
+    # Run manually from GitHub Actions UI
+    # Individual CI workflows run automatically on push
 
 env:
   PYTHON_VERSION: '3.12'

@@ -1,68 +1,98 @@
 # lich deploy
 
-The `lich deploy` command deploys your project using Ansible.
+The `lich deploy` command deploys components to staging or production.
+
+## Setup
+
+```bash
+# Interactive setup (one time)
+lich deploy setup
+```
+
+Setup asks:
+- Environment (staging/production/both)
+- Connection method (SSH config or manual)
+- Deploy path on server
+- Runtime (docker-compose or bare-metal)
+- Git repository URL
 
 ## Usage
 
 ```bash
 # Deploy to staging
-lich deploy --env staging
+lich deploy stage backend
+lich deploy stage admin
 
-# Deploy to production
-lich deploy --env production
+# Deploy to production (with confirmation)
+lich deploy prod backend
+lich deploy prod admin --version v1.2.3
 
-# Deploy with specific host
-lich deploy --host user@server.com
-
-# Dry run (show what would happen)
-lich deploy --dry-run
+# Skip confirmation
+lich deploy prod backend --force
 ```
 
-## Requirements
+## Commands
 
-- **Ansible** installed locally
-- SSH access to target servers
-- Configured inventory in `infra/ansible/inventory/`
+| Command | Description |
+|---------|-------------|
+| `lich deploy setup` | Interactive configuration |
+| `lich deploy stage <component>` | Deploy to staging |
+| `lich deploy prod <component>` | Deploy to production |
+| `lich deploy status` | Show current configuration |
+
+## Components
+
+Valid components: `backend`, `web`, `admin`, `landing`
 
 ## Options
 
 | Option | Description |
 |--------|-------------|
-| `--env, -e` | Environment: `staging`, `production` |
-| `--host, -h` | Target host (user@hostname) |
-| `--key, -k` | SSH private key path |
-| `--dry-run` | Show what would happen without executing |
-| `--playbook, -p` | Specific playbook to run |
+| `--version, -v` | Specific version/tag to deploy |
+| `--dry-run` | Preview without deploying |
+| `--force, -f` | Skip confirmation (prod only) |
 
-## Playbooks
+## Configuration
 
-| Playbook | Description |
-|----------|-------------|
-| `site.yml` | Full server setup |
-| `update.yml` | Deploy code updates |
-| `backup.yml` | Create backup |
-| `rollback.yml` | Rollback to previous version |
+Saved to `.lich/deploy.yml`:
+
+```yaml
+staging:
+  connection: ssh-config
+  ssh_name: myserver-stage
+  path: /opt/app
+  runtime: docker-compose
+
+production:
+  connection: ssh-config
+  ssh_name: myserver-prod
+  path: /opt/app
+  runtime: docker-compose
+
+git_repo: git@github.com:user/repo.git
+private_repo: true
+```
+
+## Secrets
+
+For private repos, add to `.secrets`:
+
+```
+GITHUB_TOKEN=ghp_your_token_here
+```
 
 ## Examples
 
 ```bash
-# Full deployment
-lich deploy --env production
+# Deploy admin to staging
+lich deploy stage admin
 
-# Update only
-lich deploy --env production --playbook update.yml
+# Deploy backend v1.2.3 to production
+lich deploy prod backend --version v1.2.3
 
-# Test without executing
-lich deploy --env staging --dry-run
-```
+# Preview deployment
+lich deploy stage web --dry-run
 
-## Configuration
-
-Edit `infra/ansible/group_vars/all.yml`:
-
-```yaml
-project_name: myproject
-app_domain: example.com
-db_name: myproject_db
-ssl_enabled: true
+# Check configuration
+lich deploy status
 ```

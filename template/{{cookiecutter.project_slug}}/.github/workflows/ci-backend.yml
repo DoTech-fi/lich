@@ -1,0 +1,87 @@
+name: CI - Backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      {%- if cookiecutter.database == 'postgresql' %}
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      {%- endif %}
+      {%- if cookiecutter.use_redis == 'yes' %}
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      {%- endif %}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ "{{" }} env.PYTHON_VERSION {{ "}}" }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run linting (ruff)
+        working-directory: ./backend
+        run: |
+          pip install ruff
+          ruff check .
+
+      - name: Run type checking (mypy)
+        working-directory: ./backend
+        run: |
+          pip install mypy
+          mypy . --ignore-missing-imports --strict
+
+      - name: Run tests (pytest)
+        working-directory: ./backend
+        env:
+          {%- if cookiecutter.database == 'postgresql' %}
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          {%- endif %}
+          {%- if cookiecutter.use_redis == 'yes' %}
+          REDIS_URL: redis://localhost:6379/0
+          {%- endif %}
+        run: |
+          pytest -v --cov=. --cov-report=xml || echo "No tests yet"

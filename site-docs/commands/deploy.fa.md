@@ -1,68 +1,98 @@
 # lich deploy
 
-دستور `lich deploy` پروژه شما را با استفاده از Ansible دیپلوی می‌کند.
+دستور `lich deploy` برای دیپلوی کردن کامپوننت‌ها به staging یا production.
+
+## راه‌اندازی
+
+```bash
+# راه‌اندازی اولیه (یک بار)
+lich deploy setup
+```
+
+Setup سوال میپرسه:
+- محیط (staging/production/both)
+- روش اتصال (SSH config یا دستی)
+- مسیر deploy در سرور
+- Runtime (docker-compose یا bare-metal)
+- آدرس Git repository
 
 ## استفاده
 
 ```bash
-# دیپلوی به staging
-lich deploy --env staging
+# Deploy به staging
+lich deploy stage backend
+lich deploy stage admin
 
-# دیپلوی به production
-lich deploy --env production
+# Deploy به production (با تایید)
+lich deploy prod backend
+lich deploy prod admin --version v1.2.3
 
-# دیپلوی با هاست خاص
-lich deploy --host user@server.com
-
-# اجرای آزمایشی
-lich deploy --dry-run
+# بدون تایید
+lich deploy prod backend --force
 ```
 
-## پیش‌نیازها
+## دستورات
 
-- **Ansible** نصب شده
-- دسترسی SSH به سرورها
-- Inventory پیکربندی شده در `infra/ansible/inventory/`
+| دستور | توضیح |
+|-------|-------|
+| `lich deploy setup` | کانفیگ اولیه |
+| `lich deploy stage <component>` | Deploy به staging |
+| `lich deploy prod <component>` | Deploy به production |
+| `lich deploy status` | نمایش کانفیگ فعلی |
 
-## آپشن‌ها
+## کامپوننت‌ها
 
-| آپشن | توضیحات |
-|------|---------|
-| `--env, -e` | محیط: `staging`, `production` |
-| `--host, -h` | سرور هدف (user@hostname) |
-| `--key, -k` | مسیر کلید SSH |
-| `--dry-run` | نمایش عملیات بدون اجرا |
-| `--playbook, -p` | پلی‌بوک خاص |
+کامپوننت‌های معتبر: `backend`, `web`, `admin`, `landing`
 
-## پلی‌بوک‌ها
+## فلگ‌ها
 
-| پلی‌بوک | توضیحات |
-|---------|---------|
-| `site.yml` | ستاپ کامل سرور |
-| `update.yml` | بروزرسانی کد |
-| `backup.yml` | ایجاد بکاپ |
-| `rollback.yml` | بازگشت به نسخه قبلی |
+| فلگ | توضیح |
+|-----|-------|
+| `--version, -v` | نسخه/تگ خاص |
+| `--dry-run` | پیش‌نمایش بدون اجرا |
+| `--force, -f` | بدون تایید (فقط prod) |
+
+## کانفیگ
+
+ذخیره در `.lich/deploy.yml`:
+
+```yaml
+staging:
+  connection: ssh-config
+  ssh_name: myserver-stage
+  path: /opt/app
+  runtime: docker-compose
+
+production:
+  connection: ssh-config
+  ssh_name: myserver-prod
+  path: /opt/app
+  runtime: docker-compose
+
+git_repo: git@github.com:user/repo.git
+private_repo: true
+```
+
+## Secrets
+
+برای repo خصوصی، اضافه کن به `.secrets`:
+
+```
+GITHUB_TOKEN=ghp_your_token_here
+```
 
 ## مثال‌ها
 
 ```bash
-# دیپلوی کامل
-lich deploy --env production
+# Deploy ادمین به staging
+lich deploy stage admin
 
-# فقط بروزرسانی
-lich deploy --env production --playbook update.yml
+# Deploy backend نسخه v1.2.3 به production
+lich deploy prod backend --version v1.2.3
 
-# تست بدون اجرا
-lich deploy --env staging --dry-run
-```
+# پیش‌نمایش deployment
+lich deploy stage web --dry-run
 
-## پیکربندی
-
-ویرایش `infra/ansible/group_vars/all.yml`:
-
-```yaml
-project_name: myproject
-app_domain: example.com
-db_name: myproject_db
-ssl_enabled: true
+# بررسی کانفیگ
+lich deploy status
 ```

@@ -51,11 +51,19 @@ Your identity, your rules, your architecture style, and your coding style
 
 3. **INFRA** (Docker, Compose, Terraform, Ansible):
    - Activate **infra-architect mode**
-   - Read `.lich/rules/docker.md`
+   - Read `.lich/rules/docker.md` + `.lich/rules/infra.md`
    - Secure, modular, production-ready infra
    - Non-root containers, minimal images, healthchecks
 
-4. **FULL-STACK**:
+4. **UI/UX DESIGN** (Page layouts, components, user flows):
+   - Activate **ui-ux-architect mode**
+   - Read `.lich/rules/ui-ux.md`
+   - Think like **Senior Product Designer at Apple**
+   - Prioritize clarity, elegance, user delight
+   - Accessible, responsive, beautiful interfaces
+   - No UI noise, meaningful animations
+
+5. **FULL-STACK**:
    - Combine all modes
    - Ensure consistency across layers
 
@@ -158,20 +166,41 @@ lich test --coverage         # Run tests with coverage report
 lich lint                    # Check code style (Ruff, Eslint)
 lich lint --fix              # Auto-fix code style issues
 lich security                # Run security scans (Bandit, Safety, Trivy)
-lich ci                      # Run full local CI pipeline (Lint + Test + Security)
 lich production-ready        # Final readiness check before deploy
 ```
 
-### 5. Deployment & DevOps
+### 5. CI (Continuous Integration)
 ```bash
-lich deploy                  # Deploy via Ansible
-lich deploy --dry-run        # Test deployment
-lich secret generate         # Generate strong secrets
-lich secret rotate           # Rotate application secrets
+lich ci setup                # Setup act for local CI (creates .secrets, .actrc)
+lich ci backend              # Backend CI with Docker/act
+lich ci web                  # Web CI with Docker/act
+lich ci admin                # Admin CI with Docker/act
+lich ci landing              # Landing CI with Docker/act
+
+# Local execution (without Docker)
+lich ci backend -l           # Fast local backend CI
+lich ci web -l               # Fast local web CI
+
+# Inline secrets/variables
+lich ci backend -s GITHUB_TOKEN=xxx --var NODE_ENV=test
 ```
 
-### 6. Utilities
+### 6. Deployment
 ```bash
+lich deploy setup            # Setup deploy (SSH config, paths, git repo)
+lich deploy stage <comp>     # Deploy to staging (backend, web, admin, landing)
+lich deploy prod <comp>      # Deploy to production
+lich deploy status           # Show deploy configuration
+
+# Examples
+lich deploy stage admin                  # Admin to staging
+lich deploy prod backend --version v1.2.3  # Backend to prod with tag
+```
+
+### 7. Secrets & Utilities
+```bash
+lich secret generate         # Generate strong secrets
+lich secret rotate           # Rotate application secrets
 lich shell                   # Open interactive Python shell
 lich routes                  # List all API routes
 ```
@@ -303,9 +332,29 @@ If documentation is missing → OUTPUT IS INVALID.
 
 ## 🚀 START NOW!
 
+### First Time Setup
+
+If this is your first time in this project:
+
+```bash
+lich setup    # Configure AI tools (Antigravity, Claude, Cursor)
+```
+
+### Every Time
+
 1. Read `.lich/rules/` for detailed rules
 2. **USE `lich` COMMANDS FOR EVERYTHING**
 3. Update `agentlog.md` after every change
 4. Follow the architecture strictly
+
+### Recovery
+
+If something goes wrong:
+
+```bash
+lich check           # Validate project structure
+lich lint --fix      # Fix code issues
+lich migration up    # Ensure DB is synced
+```
 
 **🧙 Meta Architect Activated.**

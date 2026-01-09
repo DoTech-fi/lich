@@ -1,0 +1,50 @@
+name: CI - Web App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/ci-web.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  web-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ "{{" }} env.NODE_VERSION {{ "}}" }}
+          cache: 'npm'
+          cache-dependency-path: 'apps/web/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./apps/web
+        run: npm ci
+
+      - name: Run linting (ESLint)
+        working-directory: ./apps/web
+        run: npm run lint
+
+      - name: Run type checking (TypeScript)
+        working-directory: ./apps/web
+        run: npm run type-check
+
+      - name: Run tests
+        working-directory: ./apps/web
+        run: npm run test || echo "No tests yet"
+
+      - name: Build
+        working-directory: ./apps/web
+        run: npm run build

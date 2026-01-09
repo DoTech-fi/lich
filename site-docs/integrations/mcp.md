@@ -88,6 +88,56 @@ pip install lich
 
 ---
 
+## 🚀 Recommended Setup Flow
+
+After installing Lich, follow these steps to integrate with your AI tool:
+
+### Step 1: Run Setup Command
+
+```bash
+lich setup
+```
+
+This interactive command will:
+
+- Detect your operating system
+- Ask which AI tools you want to configure
+- Automatically update the correct config files
+
+### Step 2: Restart Your AI Tool
+
+!!! warning "Important"
+    After setup completes, you must **completely quit and relaunch** your AI tool (Antigravity, Claude, Cursor, etc.)
+
+### Step 3: First Prompt to AI
+
+Start with this prompt to verify connection:
+
+> "Do you know the Lich MCP server?"
+
+If yes, follow up with:
+
+> "Go read AGENTS.md completely to update yourself based on the project."
+
+This ensures your AI assistant understands the project architecture and rules.
+
+---
+
+## ⬆️ Upgrading Lich
+
+To upgrade to the latest version:
+
+```bash
+lich upgrade
+```
+
+After upgrade:
+
+1. Run `lich setup` again to update AI tool configurations
+2. Restart your AI tool completely
+
+---
+
 ## 🛠️ Available Tools (47 Total)
 
 ### Project Management

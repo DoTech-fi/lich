@@ -1,69 +1,83 @@
 # lich ci
 
-دستور `lich ci` بررسی‌های CI را به صورت محلی قبل از push اجرا می‌کند.
+دستور `lich ci` برای اجرای تست‌های CI به صورت لوکال با Docker/act یا مستقیم.
+
+## راه‌اندازی
+
+```bash
+# راه‌اندازی اولیه (ساخت .secrets، .actrc)
+lich ci setup
+```
 
 ## استفاده
 
 ```bash
-# اجرای همه بررسی‌ها
-lich ci
-
-# اجرای هدف خاص
+# اجرا با Docker/act (پیش‌فرض)
 lich ci backend
 lich ci web
 lich ci admin
 lich ci landing
+
+# اجرا بدون Docker (لوکال)
+lich ci backend -l
+lich ci web -l
 ```
 
-## چه چیزی بررسی می‌شود
+## دستورات
 
-### بک‌اند
-- **لینت** (ruff/flake8)
-- **تایپ چکینگ** (mypy)
-- **تست‌ها** (pytest)
-- **امنیت** (bandit)
+| دستور | توضیح |
+|-------|-------|
+| `lich ci setup` | راه‌اندازی act و ساخت .secrets |
+| `lich ci backend` | CI پایتون (backend) |
+| `lich ci web` | CI وب (TypeScript) |
+| `lich ci admin` | CI پنل ادمین |
+| `lich ci landing` | CI صفحه لندینگ |
 
-### فرانت‌اند
-- **لینت** (eslint)
-- **تایپ چکینگ** (tsc)
-- **بیلد** (next build)
-- **آدیت** (npm audit)
+## فلگ‌ها
 
-## زیردستورها
-
-| دستور | توضیحات |
-|-------|---------|
-| `lich ci` | همه بررسی‌ها |
-| `lich ci backend` | فقط بک‌اند |
-| `lich ci web` | فقط وب اپ |
-| `lich ci admin` | فقط پنل ادمین |
-| `lich ci landing` | فقط لندینگ |
+| فلگ | توضیح |
+|-----|-------|
+| `-l, --local` | اجرا بدون Docker |
+| `-v, --verbose` | خروجی بیشتر |
+| `-q, --quiet` | حالت ساکت |
+| `-s, --secret KEY=VALUE` | پاس دادن secret |
+| `--var KEY=VALUE` | پاس دادن variable |
+| `--insecure-secrets` | نمایش secret در لاگ |
 
 ## مثال‌ها
 
 ```bash
-# بررسی سریع قبل از کامیت
-lich ci
-
-# فقط تغییرات بک‌اند
+# Backend با Docker (پیش‌فرض)
 lich ci backend
 
-# بررسی کامل فرانت‌اند
-lich ci web
+# Backend لوکال (سریع‌تر)
+lich ci backend -l
+
+# پاس دادن secret
+lich ci backend -s GITHUB_TOKEN=ghp_xxx
+
+# پاس دادن variable
+lich ci backend --var NODE_ENV=test
 ```
 
-## کدهای خروج
+## فایل‌های Workflow
 
-| کد | معنی |
-|----|------|
-| `0` | همه بررسی‌ها پاس شد |
-| `1` | یک یا چند بررسی فیل شد |
+هر کامپوننت workflow جداگانه با path-based trigger داره:
 
-## یکپارچه‌سازی
+| کامپوننت | Workflow | مسیر Trigger |
+|----------|----------|--------------|
+| Backend | `ci-backend.yml` | `backend/**` |
+| Web | `ci-web.yml` | `apps/web/**` |
+| Admin | `ci-admin.yml` | `apps/admin/**` |
+| Landing | `ci-landing.yml` | `apps/landing/**` |
 
-اضافه به git pre-push hook:
+فایل اصلی `ci.yml` فقط دستی از GitHub Actions UI اجرا میشه.
 
-```bash
-#!/bin/sh
-lich ci || exit 1
-```
+## فایل‌های ساخته‌شده با Setup
+
+| فایل | کاربرد |
+|------|--------|
+| `.actrc` | تنظیمات act |
+| `.secrets` | توکن GitHub و secret ها |
+| `.ci-vars` | متغیرهای CI (اختیاری) |
+| `.ci-env` | Environment کانتینر (اختیاری) |

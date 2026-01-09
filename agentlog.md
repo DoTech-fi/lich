@@ -39,6 +39,7 @@
   - Release v1.10.4: Fixed corrupt workflow files in `upgrade` command (template rendering) and fixed CI logging.
   - Release v1.10.5: Added missing `.eslintrc.json` to admin template to prevent CI interactive prompts.
   - Release v1.10.6: Expanded `.eslintrc.json` fix to web and landing templates.
+  - Release v1.10.7: Added "Smart File Injection" to `lich upgrade` to safely add missing config files to existing apps.
   - Created separate workflow files: `ci-backend.yml`, `ci-web.yml`, `ci-admin.yml`, `ci-landing.yml`.
   - Updated `lich ci` commands to run their specific workflow files.
   

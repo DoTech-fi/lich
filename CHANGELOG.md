@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.7] - 2026-01-09
+
+### Added
+- **Upgrade Command**: Added "Smart File Injection" to `lich upgrade`. It now checks for and adds specifc missing framework configuration files (e.g., `.eslintrc.json` in apps) to existing projects without overwriting user code.
+
 ## [1.10.6] - 2026-01-09
 
 ### Fixed

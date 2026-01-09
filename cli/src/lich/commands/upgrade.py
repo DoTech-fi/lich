@@ -245,12 +245,24 @@ def upgrade_project(
         ("CLAUDE.md", "CLAUDE.md"),
         (".github/workflows", ".github/workflows"),
     ]
+
+    # Files to add ONLY if they are missing (safe injection)
+    missing_targets = [
+        ("apps/admin/.eslintrc.json", "apps/admin/.eslintrc.json"),
+        ("apps/web/.eslintrc.json", "apps/web/.eslintrc.json"),
+        ("apps/landing/.eslintrc.json", "apps/landing/.eslintrc.json"),
+    ]
     
     # Check what will change
     console.print("\n[bold]The following components will be updated/overwritten:[/bold]")
     for src, dst in sync_targets:
         exists = "exists" if Path(dst).exists() else "new"
         console.print(f"   • {dst} ({exists})")
+
+    console.print("\n[bold]The following files will be added if missing:[/bold]")
+    for src, dst in missing_targets:
+        if not Path(dst).exists():
+             console.print(f"   • {dst} (missing - will be created)")
         
     if dry_run:
         console.print("\n[yellow]Dry run mode - no changes will be made.[/yellow]")
@@ -344,6 +356,26 @@ def upgrade_project(
                 
         except Exception as e:
             console.print(f"   [red]❌ Failed to update {dst_rel}: {e}[/red]")
+
+    # 5.3 Inject missing files
+    console.print("\n[bold]Checking for new framework files...[/bold]")
+    for src_rel, dst_rel in missing_targets:
+        src_path = source_dir / src_rel
+        dst_path = Path(dst_rel)
+        
+        if dst_path.exists():
+            continue
+            
+        if not src_path.exists():
+             # Silent skip if source doesn't have it either (maybe older template version?)
+             continue
+
+        try:
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            copy_and_render(src_path, dst_path)
+            console.print(f"   ✅ Created missing file: [cyan]{dst_rel}[/cyan]")
+        except Exception as e:
+            console.print(f"   [red]❌ Failed to create {dst_rel}: {e}[/red]")
 
     console.print("\n[green]✅ Project configuration upgraded successfully![/green]")
     console.print(Panel.fit(

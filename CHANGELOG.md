@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.5] - 2026-01-09
+
+### Fixed
+- **Templates**: Added missing `.eslintrc.json` to `apps/admin` template to prevent interactive prompts during CI (`next lint`).
+
 ## [1.10.4] - 2026-01-09
 
 ### Fixed

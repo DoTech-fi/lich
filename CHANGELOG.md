@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.10.2] - 2026-01-09
+
+### Fixed
+- **Release Workflow**: Validated automated release workflow utilizing environment variables for PyPI authentication.
+
 ## [1.10.1] - 2026-01-09
 
 ### Fixed

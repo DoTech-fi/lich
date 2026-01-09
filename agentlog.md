@@ -38,6 +38,7 @@
   - Release v1.10.3: Fixed `lich ci` command argument order for `act` (removed extra 'push')
   - Release v1.10.4: Fixed corrupt workflow files in `upgrade` command (template rendering) and fixed CI logging.
   - Release v1.10.5: Added missing `.eslintrc.json` to admin template to prevent CI interactive prompts.
+  - Release v1.10.6: Expanded `.eslintrc.json` fix to web and landing templates.
   - Created separate workflow files: `ci-backend.yml`, `ci-web.yml`, `ci-admin.yml`, `ci-landing.yml`.
   - Updated `lich ci` commands to run their specific workflow files.
   

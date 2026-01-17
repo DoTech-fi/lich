@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.8] - 2026-01-17
+
+### Fixed
+- **Deploy Setup**: Fixed blocking `input()` call that caused `lich deploy setup` to hang in non-interactive terminals or AI agent sessions. Replaced with `Prompt.ask()` for consistent behavior.
+
 ## [1.12.7] - 2026-01-17
 
 ### Added

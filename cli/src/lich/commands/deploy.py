@@ -416,7 +416,7 @@ def deploy_setup():
                 console.print("  3. Paste the key above")
                 console.print("  4. ✓ Enable 'Allow read access' only")
                 
-                input("\n  Press Enter when done...")
+                Prompt.ask("\n  Press Enter when done", default="")
                 
                 # Verify access
                 console.print("  Verifying GitHub access...", end=" ")

@@ -102,15 +102,15 @@ def _generate_secure_string(length: int = 32) -> str:
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
-def _run_ssh_command(ssh_host: str, command: str, capture: bool = True) -> tuple[int, str]:
+def _run_ssh_command(ssh_host: str, command: str, capture: bool = True, timeout: int = 120) -> tuple[int, str]:
     """Run a command on remote server via SSH."""
     ssh_cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", ssh_host, command]
     try:
         if capture:
-            result = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=timeout)
             return result.returncode, result.stdout + result.stderr
         else:
-            result = subprocess.run(ssh_cmd, timeout=300)
+            result = subprocess.run(ssh_cmd, timeout=timeout)
             return result.returncode, ""
     except subprocess.TimeoutExpired:
         return 1, "Connection timeout"
@@ -532,7 +532,7 @@ def deploy_init(
                     curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
                     chmod +x /usr/local/bin/docker-compose
                 """
-                code, output = _run_ssh_command(ssh_host, docker_install_cmd)
+                code, output = _run_ssh_command(ssh_host, docker_install_cmd, timeout=300)
                 if code != 0:
                     progress.stop()
                     console.print(f"[red]✗ Failed to install Docker: {output}[/red]")

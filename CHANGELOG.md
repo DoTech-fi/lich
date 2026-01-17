@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.1] - 2026-01-17
+
+### Fixed
+- **Deploy Init**: Fixed timeout issue during Docker installation. Increased SSH command timeout from 30s to 120s default, and 300s for Docker installation.
+
 ## [1.12.0] - 2026-01-17
 
 ### Added

@@ -2,6 +2,14 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.6] - 2026-01-17
+
+### Improved
+- **Deploy Prod**: Now shows docker compose output during deployment so users can see what's happening.
+- **Deploy Prod**: Verifies containers are actually running after deploy and shows their status.
+- **Deploy Prod**: Fails properly with error output if docker compose fails.
+- **Deploy Prod**: Added 300s timeout for container builds.
+
 ## [1.12.5] - 2026-01-17
 
 ### Fixed

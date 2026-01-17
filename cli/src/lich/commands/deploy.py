@@ -923,20 +923,57 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
             
             deploy_cmd = f"""
                 cd {deploy_path} && \
-                docker compose pull {comp} 2>/dev/null; \
-                docker compose up -d --build {comp}
+                docker compose pull {comp} 2>&1; \
+                docker compose up -d --build {comp} 2>&1
             """
-            code, output = _run_ssh_command(ssh_host, deploy_cmd)
-            
-            if code != 0:
-                progress.update(task, description=f"[yellow]⚠ {comp} may have issues")
-            else:
-                progress.update(task, description=f"[green]✓ {comp} deployed")
+            code, output = _run_ssh_command(ssh_host, deploy_cmd, timeout=300)
             
             progress.remove_task(task)
+            
+            if code != 0:
+                progress.stop()
+                console.print(f"\n[red]✗ Failed to deploy {comp}[/red]")
+                console.print(f"[dim]Output:[/dim]\n{output}")
+                raise typer.Exit(1)
+            else:
+                console.print(f"[green]✓[/green] Deployed {comp}")
+                if output.strip():
+                    # Show relevant output lines
+                    for line in output.strip().split('\n')[-5:]:
+                        if line.strip():
+                            console.print(f"  [dim]{line}[/dim]")
     
-    console.print(f"\n[green]✓ Deployment complete![/green]")
-    console.print("[dim]Run 'lich deploy status' to verify[/dim]")
+    # Verify containers are running
+    console.print("\n[cyan]Verifying containers...[/cyan]")
+    code, output = _run_ssh_command(
+        ssh_host,
+        f"cd {deploy_path} && docker compose ps --format '{{{{.Name}}}}|{{{{.Status}}}}'"
+    )
+    
+    if code == 0 and output.strip():
+        running = 0
+        failed = 0
+        for line in output.strip().split('\n'):
+            if '|' in line:
+                name, status = line.split('|', 1)
+                if 'up' in status.lower():
+                    console.print(f"  [green]✓[/green] {name.strip()}: {status.strip()}")
+                    running += 1
+                else:
+                    console.print(f"  [red]✗[/red] {name.strip()}: {status.strip()}")
+                    failed += 1
+        
+        if failed > 0:
+            console.print(f"\n[yellow]⚠ {failed} container(s) not running. Check logs:[/yellow]")
+            console.print(f"  [cyan]lich deploy logs[/cyan]")
+        elif running > 0:
+            console.print(f"\n[green]✓ All {running} container(s) running![/green]")
+        else:
+            console.print(f"\n[yellow]⚠ No containers found. Check docker-compose.yml[/yellow]")
+    else:
+        console.print(f"[yellow]⚠ Could not verify containers[/yellow]")
+    
+    console.print("[dim]Run 'lich deploy status' for full status[/dim]")
 
 
 @deploy_app.command(name="stage")

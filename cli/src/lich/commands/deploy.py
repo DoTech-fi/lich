@@ -917,14 +917,25 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
         progress.update(task, description="[green]✓ Code updated")
         progress.remove_task(task)
         
+        # Determine which compose file to use (prefer .prod.yml for production)
+        compose_file_check = f"test -f {deploy_path}/docker-compose.prod.yml && echo 'prod' || echo 'dev'"
+        code, compose_type = _run_ssh_command(ssh_host, compose_file_check)
+        
+        if "prod" in compose_type:
+            compose_cmd = "docker compose -f docker-compose.prod.yml"
+            console.print("[dim]Using docker-compose.prod.yml[/dim]")
+        else:
+            compose_cmd = "docker compose"
+            console.print("[dim]Using docker-compose.yml[/dim]")
+        
         # Rebuild and restart containers
         for comp in components:
             task = progress.add_task(f"[cyan]Deploying {comp}...", total=None)
             
             deploy_cmd = f"""
                 cd {deploy_path} && \
-                docker compose pull {comp} 2>&1; \
-                docker compose up -d --build {comp} 2>&1
+                {compose_cmd} pull {comp} 2>&1; \
+                {compose_cmd} up -d --build {comp} 2>&1
             """
             code, output = _run_ssh_command(ssh_host, deploy_cmd, timeout=300)
             

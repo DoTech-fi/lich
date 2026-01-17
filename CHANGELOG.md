@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.7] - 2026-01-17
+
+### Added
+- **Deploy Prod**: Auto-detects and uses `docker-compose.prod.yml` for production deploys. Falls back to `docker-compose.yml` if not found.
+
 ## [1.12.6] - 2026-01-17
 
 ### Improved

@@ -2,6 +2,23 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.0] - 2026-01-17
+
+### Added
+- **Complete Deployment Workflow**: Major overhaul of `lich deploy` command suite:
+  - `lich deploy setup`: Enhanced setup with SSH key generation, domain config, env vars
+  - `lich deploy init <env>`: NEW - Initialize server (Docker install, clone, Traefik, SSL)
+  - `lich deploy status`: Real SSH-based status check with container health, resources
+  - `lich deploy logs <env>`: NEW - View deployment logs with follow mode
+  - `lich deploy prod all`: Deploy all components at once
+- **SSH Deploy Key**: Auto-generate ED25519 deploy key for private repos with GitHub instructions
+- **Domain Configuration**: Configure main, API, and admin subdomains during setup
+- **Environment Variables**: Collect from `.env.example` with auto-generated secrets
+- **Traefik Auto-Setup**: Configure Traefik with Let's Encrypt SSL on server init
+
+### Fixed
+- Fixed `AttributeError` in deploy setup/status when config contains non-dict values
+
 ## [1.11.0] - 2026-01-09
 
 ### Added

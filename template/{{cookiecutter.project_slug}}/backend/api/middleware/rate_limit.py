@@ -31,8 +31,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.requests: Dict[str, list] = {}
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Get client IP
-        client_ip = request.client.host if request.client else "unknown"
+        # Get client IP - respect X-Forwarded-For header for proxied requests
+        # This is critical when running behind Traefik, Nginx, or any reverse proxy
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+            # The first IP is the original client
+            client_ip = forwarded.split(",")[0].strip()
+        else:
+            client_ip = request.client.host if request.client else "unknown"
         
         # Skip rate limiting for health checks
         if request.url.path in ["/health", "/api/health"]:

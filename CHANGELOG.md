@@ -2,6 +2,20 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.9] - 2026-01-17
+
+### Fixed
+- **Rate Limiter**: Added `X-Forwarded-For` header support for proper client IP detection behind reverse proxies (Traefik, Nginx). Fixes rate limit blocking all users when behind a load balancer.
+
+### Added
+- **Logout Page**: Added `/logout` page template to web app. Prevents 404 when clicking "Logout" in sidebar.
+
+### Learnings from EmberBoard Production (documented in agentlog.md)
+- `traefik.docker.network` label required on all services with multiple networks
+- Next.js needs `ENV HOSTNAME="0.0.0.0"` in Dockerfile for health checks
+- Build args (`ARG NEXT_PUBLIC_API_URL`) must be before `npm run build`
+- Use separate ports for admin (3002) vs web (3000)
+
 ## [1.12.8] - 2026-01-17
 
 ### Fixed

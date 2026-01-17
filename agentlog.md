@@ -59,3 +59,32 @@
   - Updated site-docs: ci.md, ci.fa.md, deploy.md, deploy.fa.md
   - Fixed missing `.github/workflows` in `lich upgrade` sync targets
   - Bumped version to 1.10.1 and updated CHANGELOG.md
+
+## 2026-01-17 - Production Deployment Learnings from EmberBoard
+
+Applied learnings from EmberBoard production deployment to Lich Framework:
+
+### Changes Applied
+1. **Rate Limiter X-Forwarded-For Fix** (`template/.../api/middleware/rate_limit.py`)
+   - Added X-Forwarded-For header parsing for proper client IP detection behind Traefik/Nginx
+   - Without this fix, all traffic appears to come from proxy IP, triggering global rate limits
+
+2. **Logout Page Template** (`template/.../apps/web/src/app/logout/page.tsx`)
+   - Added missing logout page that clears tokens and redirects to login
+   - Prevents 404 when clicking "Logout" in sidebar
+
+### Documented Learnings (for future template updates)
+- **`traefik.docker.network` label**: Required on all services exposed via Traefik when using multiple networks
+- **Next.js HOSTNAME env**: Add `ENV HOSTNAME="0.0.0.0"` to Dockerfiles for proper health checks
+- **Build Args for URLs**: Next.js needs `ARG NEXT_PUBLIC_API_URL` before `npm run build` in Dockerfile
+- **Admin Port 3002**: Use different port from web app to avoid conflicts
+- **Multi-environment structure**: Separate docker-compose.{env}.yml and .env.{env} files
+
+### Why These Changes
+- EmberBoard production deployment had multiple issues:
+  - 502 errors from Traefik routing confusion
+  - 429 rate limit blocking all users (saw proxy IP)
+  - 404 on logout page
+  - localhost links in production
+- These fixes are now baked into Lich templates for future projects.
+

@@ -2,6 +2,12 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.2] - 2026-01-17
+
+### Added
+- **Deploy Setup**: Option to use existing SSH key or create new deploy key
+- **UX**: Added recommendation message for creating new deploy key (more secure)
+
 ## [1.12.1] - 2026-01-17
 
 ### Fixed

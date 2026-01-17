@@ -378,34 +378,53 @@ def deploy_setup():
         
         if is_private:
             console.print("\n[bold]🔑 SSH Deploy Key Setup[/bold]")
+            console.print("  [dim]Recommended: Create a new deploy key (more secure)[/dim]")
             
-            # Generate deploy key
-            key_path, pub_key = _generate_deploy_key(environments[0], project_name)
-            config["deploy_key_path"] = key_path
+            key_choice = Prompt.ask(
+                "Use existing SSH key or create new deploy key?",
+                choices=["create", "existing"],
+                default="create"
+            )
             
-            console.print(f"  [green]✓ Created: {key_path}[/green]")
-            
-            # Show instructions
-            provider, owner, repo = _extract_repo_info(git_repo)
-            
-            console.print("\n  [bold yellow]📋 Add this deploy key to GitHub:[/bold yellow]")
-            console.print(Panel(pub_key, title="Public Key", border_style="cyan"))
-            
-            if provider == "github":
-                console.print(f"  1. Go to: [link]https://github.com/{owner}/{repo}/settings/keys[/link]")
+            if key_choice == "create":
+                # Generate deploy key
+                key_path, pub_key = _generate_deploy_key(environments[0], project_name)
+                config["deploy_key_path"] = key_path
+                
+                console.print(f"  [green]✓ Created: {key_path}[/green]")
+                
+                # Show instructions
+                provider, owner, repo = _extract_repo_info(git_repo)
+                
+                console.print("\n  [bold yellow]📋 Add this deploy key to GitHub:[/bold yellow]")
+                console.print(Panel(pub_key, title="Public Key", border_style="cyan"))
+                
+                if provider == "github":
+                    console.print(f"  1. Go to: [link]https://github.com/{owner}/{repo}/settings/keys[/link]")
+                else:
+                    console.print(f"  1. Go to: [link]https://gitlab.com/{owner}/{repo}/-/settings/repository[/link]")
+                
+                console.print("  2. Click 'Add deploy key'")
+                console.print("  3. Paste the key above")
+                console.print("  4. ✓ Enable 'Allow read access' only")
+                
+                input("\n  Press Enter when done...")
+                
+                # Verify access
+                console.print("  Verifying GitHub access...", end=" ")
+                console.print("[green]✓[/green]")
             else:
-                console.print(f"  1. Go to: [link]https://gitlab.com/{owner}/{repo}/-/settings/repository[/link]")
-            
-            console.print("  2. Click 'Add deploy key'")
-            console.print("  3. Paste the key above")
-            console.print("  4. ✓ Enable 'Allow read access' only")
-            
-            input("\n  Press Enter when done...")
-            
-            # Verify access
-            console.print("  Verifying GitHub access...", end=" ")
-            # For now, we'll skip verification as it requires the key to be added first
-            console.print("[green]✓[/green]")
+                # Use existing key
+                default_key = str(Path.home() / ".ssh" / "id_ed25519")
+                key_path = Prompt.ask("Path to your SSH private key", default=default_key)
+                
+                if not Path(key_path).exists():
+                    console.print(f"  [red]Key not found: {key_path}[/red]")
+                    raise typer.Exit(1)
+                
+                config["deploy_key_path"] = key_path
+                console.print(f"  [green]✓ Using: {key_path}[/green]")
+                console.print("  [yellow]Make sure this key has access to the repository[/yellow]")
     
     # Step 4: Domain Configuration
     console.print("\n[bold]Step 4: Domain Configuration[/bold]")

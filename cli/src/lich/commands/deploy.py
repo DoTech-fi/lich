@@ -694,10 +694,10 @@ EOF
         
         start_cmd = f"""
             cd {deploy_path} && \
-            docker-compose pull && \
-            docker-compose up -d
+            docker compose pull && \
+            docker compose up -d
         """
-        code, output = _run_ssh_command(ssh_host, start_cmd)
+        code, output = _run_ssh_command(ssh_host, start_cmd, timeout=180)
         
         if code != 0:
             progress.update(task, description="[yellow]⚠ Services may need manual start")
@@ -923,8 +923,8 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
             
             deploy_cmd = f"""
                 cd {deploy_path} && \
-                docker-compose pull {comp} 2>/dev/null; \
-                docker-compose up -d --build {comp}
+                docker compose pull {comp} 2>/dev/null; \
+                docker compose up -d --build {comp}
             """
             code, output = _run_ssh_command(ssh_host, deploy_cmd)
             
@@ -1013,7 +1013,7 @@ def deploy_logs(
     console.print(f"[dim]Connecting to {ssh_host}...[/dim]\n")
     
     follow_flag = "-f" if follow else ""
-    log_cmd = f"cd {deploy_path} && docker-compose logs {follow_flag} --tail={lines} {component}"
+    log_cmd = f"cd {deploy_path} && docker compose logs {follow_flag} --tail={lines} {component}"
     
     # Run interactively for follow mode
     ssh_cmd = ["ssh", "-t", ssh_host, log_cmd]

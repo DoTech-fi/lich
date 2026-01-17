@@ -2,6 +2,12 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.5] - 2026-01-17
+
+### Fixed
+- **Docker Commands**: Replaced all `docker-compose` with modern `docker compose` syntax in deploy init, deploy prod, and deploy logs commands.
+- **Deploy Init**: Added 180s timeout for service startup.
+
 ## [1.12.4] - 2026-01-17
 
 ### Improved

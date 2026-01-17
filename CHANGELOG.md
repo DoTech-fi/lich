@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.3] - 2026-01-17
+
+### Fixed
+- **Deploy Setup**: Fixed bug where Step 3 (Git Repository) was skipped when config already existed. Now asks if user wants to reconfigure git settings.
+
 ## [1.12.2] - 2026-01-17
 
 ### Added

@@ -357,8 +357,16 @@ def deploy_setup():
         config[env] = env_config
     
     # Step 3: Git Repository (once, shared across environments)
-    if "git_repo" not in config:
+    reconfigure_git = True
+    if "git_repo" in config:
+        console.print(f"\n[bold]Step 3: Git Repository[/bold]")
+        console.print(f"  [dim]Current: {config['git_repo']}[/dim]")
+        reconfigure_git = Confirm.ask("Reconfigure git settings?", default=False)
+    
+    if reconfigure_git and "git_repo" not in config:
         console.print("\n[bold]Step 3: Git Repository[/bold]")
+    
+    if reconfigure_git:
         
         # Try to get from git remote
         try:

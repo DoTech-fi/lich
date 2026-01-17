@@ -2,6 +2,12 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.4] - 2026-01-17
+
+### Improved
+- **Deploy Status**: Enhanced container status display. Now shows "No containers running" when services aren't started, with guidance to run `lich deploy prod all`.
+- **Docker Compose**: Use modern `docker compose` command (without hyphen) with fallback to `docker-compose`.
+
 ## [1.12.3] - 2026-01-17
 
 ### Fixed

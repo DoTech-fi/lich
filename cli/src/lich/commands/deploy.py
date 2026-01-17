@@ -797,24 +797,28 @@ def deploy_status(
         if code == 0 and output.strip():
             console.print(f"│  [blue]🏷️ Version: {output.strip()}[/blue]")
         
-        # Get container status
+        # Get container status using modern docker compose
         code, output = _run_ssh_command(
             ssh_host,
-            f"cd {deploy_path} && docker-compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}' 2>/dev/null"
+            f"cd {deploy_path} && docker compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}|{{{{.Service}}}}' 2>/dev/null || docker-compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}' 2>/dev/null"
         )
         
+        console.print("│")
+        console.print("│  [bold]Services:[/bold]")
+        
+        running_services = []
         if code == 0 and output.strip():
-            console.print("│")
-            console.print("│  [bold]Containers:[/bold]")
-            for line in output.strip().split("\n")[1:]:  # Skip header
+            lines = output.strip().split("\n")[1:]  # Skip header
+            for line in lines:
                 if "|" in line:
-                    name, status = line.split("|", 1)
-                    name = name.strip()
-                    status = status.strip().lower()
+                    parts = line.split("|")
+                    name = parts[0].strip()
+                    status = parts[1].strip().lower() if len(parts) > 1 else ""
                     
                     if "up" in status:
                         icon = "🟢"
                         color = "green"
+                        running_services.append(name)
                     elif "exit" in status:
                         icon = "🔴"
                         color = "red"
@@ -823,6 +827,10 @@ def deploy_status(
                         color = "yellow"
                     
                     console.print(f"│  ├─ {icon} [{color}]{name}[/{color}]: {status}")
+        
+        if not running_services:
+            console.print("│  └─ [yellow]⚠ No containers running[/yellow]")
+            console.print("│      Run: [cyan]lich deploy prod all[/cyan] to start services")
         
         # Get resource usage
         code, output = _run_ssh_command(

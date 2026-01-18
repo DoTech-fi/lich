@@ -25,7 +25,7 @@ tls: {{ cookiecutter.use_tls }}
 domain: {{ cookiecutter.domain_name }}
 structured_logging: {{ cookiecutter.use_structured_logging }}
 landing_backend: {{ cookiecutter.landing_backend }}
-temporal: {{ cookiecutter.use_temporal }}
+temporal: {% if cookiecutter.task_runner == 'temporal' %}yes{% else %}no{% endif %}
 ```
 
 ## Architecture Type

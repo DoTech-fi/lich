@@ -23,7 +23,7 @@ stack:
 features:
   i18n: {{ cookiecutter.use_i18n }}
   tls: {{ cookiecutter.use_tls }}
-  temporal: {{ cookiecutter.use_temporal }}
+  temporal: {% if cookiecutter.task_runner == 'temporal' %}yes{% else %}no{% endif %}
   wordpress: {% if cookiecutter.landing_backend == 'wordpress_api' %}yes{% else %}no{% endif %}
   structured_logging: {{ cookiecutter.use_structured_logging }}
 
@@ -40,5 +40,5 @@ ports:
 {% if cookiecutter.database == 'postgresql' %}  postgres: 5432{% else %}  mongodb: 27017{% endif %}
 {% if cookiecutter.use_redis == 'yes' %}  redis: 6379{% endif %}
 {% if cookiecutter.auth_strategy == 'keycloak' %}  keycloak: 8080{% endif %}
-{% if cookiecutter.use_temporal == 'yes' %}  temporal: 7233
+{% if cookiecutter.task_runner == 'temporal' %}  temporal: 7233
   temporal_ui: 8088{% endif %}

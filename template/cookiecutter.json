@@ -40,12 +40,18 @@
   
   "object_storage": ["none", "s3", "minio"],
   
+  "_lich_version": "1.12.12",
+
   "_copy_without_render": [
     "*.png",
     "*.jpg",
     "*.ico",
     "*.woff",
-    "*.woff2"
+    "*.woff2",
+    "*.tsx",
+    "*.jsx",
+    "*.ts",
+    "infra/ansible/**/*"
   ]
 }
 

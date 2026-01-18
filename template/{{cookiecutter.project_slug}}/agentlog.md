@@ -23,7 +23,7 @@ New project initialization based on {{ cookiecutter.project_description }}
 {%- if cookiecutter.use_redis == 'yes' %}
 - Cache: Redis
 {%- endif %}
-{%- if cookiecutter.use_temporal == 'yes' %}
+{%- if cookiecutter.task_runner == 'temporal' %}
 - Background Jobs: Temporal
 {%- endif %}
 - i18n: {{ cookiecutter.use_i18n }}

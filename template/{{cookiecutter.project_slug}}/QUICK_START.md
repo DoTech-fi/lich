@@ -57,7 +57,7 @@ To setup Keycloak:
 ```
 {%- endif %}
 
-{%- if cookiecutter.use_temporal == 'yes' %}
+{%- if cookiecutter.task_runner == 'temporal' %}
 
 ### Background Jobs
 

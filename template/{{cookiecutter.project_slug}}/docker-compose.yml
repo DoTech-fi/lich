@@ -150,7 +150,7 @@ services:
       retries: 5
 {%- endif %}
 
-{%- if cookiecutter.use_temporal == 'yes' %}
+{%- if cookiecutter.task_runner == 'temporal' %}
 
   # ===========================================
   # TEMPORAL - Workflow Engine

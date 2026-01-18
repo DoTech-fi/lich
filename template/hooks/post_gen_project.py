@@ -85,7 +85,7 @@ def main():
     {%- if cookiecutter.auth_strategy == 'keycloak' %}
     print("   Keycloak:       http://localhost:8080")
     {%- endif %}
-    {%- if cookiecutter.use_temporal == 'yes' %}
+    {%- if cookiecutter.task_runner == 'temporal' %}
     print("   Temporal UI:    http://localhost:8088")
     {%- endif %}
     {%- if cookiecutter.landing_backend == 'wordpress_api' %}

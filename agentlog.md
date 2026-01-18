@@ -88,3 +88,17 @@ Applied learnings from EmberBoard production deployment to Lich Framework:
   - localhost links in production
 - These fixes are now baked into Lich templates for future projects.
 
+## 2026-01-18 - Template Variable Fix (v1.12.10)
+
+### Bug Fixed
+- **`lich init` failing when `task_runner=temporal`**: Template files were using the old variable name `cookiecutter.use_temporal == 'yes'` instead of the new `cookiecutter.task_runner == 'temporal'`.
+
+### Files Fixed
+1. `template/{{cookiecutter.project_slug}}/agentlog.md` - Line 26
+2. `template/hooks/post_gen_project.py` - Line 88
+3. `template/{{cookiecutter.project_slug}}/docker-compose.yml` - Line 153
+4. `template/{{cookiecutter.project_slug}}/QUICK_START.md` - Line 60
+
+### Root Cause
+The `cookiecutter.json` was changed to use `task_runner` with values `['none', 'temporal', 'celery']` but the template files still referenced the old boolean `use_temporal` variable.
+

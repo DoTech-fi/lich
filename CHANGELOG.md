@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.10] - 2026-01-18
+
+### Fixed
+- **Template Bug**: Fixed `lich init` failure when selecting `task_runner=temporal`. Template files were using deprecated `cookiecutter.use_temporal == 'yes'` instead of `cookiecutter.task_runner == 'temporal'`. Affected files: `agentlog.md`, `post_gen_project.py`, `docker-compose.yml`, `QUICK_START.md`.
+
 ## [1.12.9] - 2026-01-17
 
 ### Fixed

@@ -102,3 +102,10 @@ Applied learnings from EmberBoard production deployment to Lich Framework:
 ### Root Cause
 The `cookiecutter.json` was changed to use `task_runner` with values `['none', 'temporal', 'celery']` but the template files still referenced the old boolean `use_temporal` variable.
 
+## 2026-01-18 - Template Variable Fix v2 (v1.12.11)
+
+### Additional File Fixed
+- **`.env.example` Line 69**: Was still using `cookiecutter.use_temporal == 'yes'` instead of `cookiecutter.task_runner == 'temporal'`.
+
+This file was missed in the v1.12.10 fix. Now all template files correctly use `task_runner` variable.
+

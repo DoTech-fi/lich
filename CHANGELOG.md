@@ -2,6 +2,11 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.11] - 2026-01-18
+
+### Fixed
+- **Template Bug**: Fixed additional `use_temporal` reference in `.env.example` (line 69) that was missed in v1.12.10 fix.
+
 ## [1.12.10] - 2026-01-18
 
 ### Fixed

@@ -2,6 +2,13 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.12.15] - 2026-01-21
+
+### Fixed
+- **MCP Tools**: Fixed JSON parsing errors when calling MCP tools like `lich_deploy_prod`. CLI output containing ANSI escape codes and emoji was breaking MCP protocol.
+- **Solution**: Added `clean_cli_output()` and `run_lich_command()` shared utilities in `mcp/tools/__init__.py`. All subprocess outputs are now sanitized before returning to MCP.
+- **Improvement**: Added `NO_COLOR=1` environment variable to disable Rich formatting in subprocess calls.
+
 ## [1.12.11] - 2026-01-18
 
 ### Fixed

@@ -143,3 +143,24 @@ This file was missed in the v1.12.10 fix. Now all template files correctly use `
 - `cli/src/lich/commands/upgrade.py` - removed workflow sync
 - `cli/pyproject.toml` - version bump to 1.12.14
 
+
+
+## 2026-01-21T16:15 - MCP Output Cleaning Fix
+
+### WHAT
+- Added run_lich_command() and clean_cli_output() utilities to MCP tools
+- All subprocess outputs are now cleaned of ANSI escape codes and spinner characters
+- Added NO_COLOR=1 environment variable to disable Rich formatting
+
+### WHY
+- MCP was failing with 'invalid character' JSON parsing errors
+- CLI output contains emoji and ANSI codes that break JSON serialization
+- This allows MCP tools like lich_deploy_prod to work correctly
+
+### FILES
+- cli/src/lich/mcp/tools/__init__.py - Added shared utilities
+- cli/src/lich/mcp/tools/ops.py - Refactored to use shared utilities
+
+### VERSION
+- Bumped to 1.12.15
+

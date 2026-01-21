@@ -1,7 +1,7 @@
 """
 MCP Tools for Ops (Deploy/Backup).
 """
-import subprocess
+from . import run_lich_command
 
 
 def register_ops_tools(mcp):
@@ -19,10 +19,10 @@ def register_ops_tools(mcp):
             "Deploy setup is interactive. Run manually:\n\n"
             "  lich deploy setup\n\n"
             "This will ask:\n"
-            "• Environment (staging/production)\n"
-            "• SSH config or manual connection\n"
-            "• Deploy path on server\n"
-            "• Git repository URL"
+            "- Environment (staging/production)\n"
+            "- SSH config or manual connection\n"
+            "- Deploy path on server\n"
+            "- Git repository URL"
         )
 
     @mcp.tool()
@@ -40,12 +40,7 @@ def register_ops_tools(mcp):
             cmd.extend(["--version", version])
         if dry_run:
             cmd.append("--dry-run")
-            
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            return res.stdout + res.stderr
-        except FileNotFoundError:
-            return "lich command not found"
+        return run_lich_command(cmd)
 
     @mcp.tool()
     def lich_deploy_prod(component: str, version: str = None, dry_run: bool = False) -> str:
@@ -64,12 +59,7 @@ def register_ops_tools(mcp):
             cmd.extend(["--version", version])
         if dry_run:
             cmd.append("--dry-run")
-            
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            return res.stdout + res.stderr
-        except FileNotFoundError:
-            return "lich command not found"
+        return run_lich_command(cmd)
 
     @mcp.tool()
     def lich_deploy_status() -> str:
@@ -78,13 +68,7 @@ def register_ops_tools(mcp):
         
         Displays configured environments and their connection settings.
         """
-        cmd = ["lich", "deploy", "status"]
-            
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            return res.stdout + res.stderr
-        except FileNotFoundError:
-            return "lich command not found"
+        return run_lich_command(["lich", "deploy", "status"])
 
     @mcp.tool()
     def lich_backup(list_backups: bool = False) -> str:
@@ -92,9 +76,4 @@ def register_ops_tools(mcp):
         cmd = ["lich", "backup"]
         if list_backups:
             cmd.append("--list")
-            
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            return res.stdout + res.stderr
-        except FileNotFoundError:
-            return "lich command not found"
+        return run_lich_command(cmd)

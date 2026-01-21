@@ -109,3 +109,19 @@ The `cookiecutter.json` was changed to use `task_runner` with values `['none', '
 
 This file was missed in the v1.12.10 fix. Now all template files correctly use `task_runner` variable.
 
+
+
+## 2026-01-21T14:15 — v1.12.13 BUGFIX: Token Exposure Fix
+
+### WHAT
+- Fixed bug in `cli/src/lich/commands/ci_utils.py`
+- Removed automatic `-s GITHUB_TOKEN=...` injection in `run_act_workflow()`
+
+### WHY
+- Lich was adding the token directly to the command line, exposing it in logs
+- The `.actrc` file already has `--secret-file=.secrets` which provides the token securely
+
+### FILES
+- `cli/src/lich/commands/ci_utils.py` - removed lines 301-304
+- `cli/pyproject.toml` - version bump to 1.12.13
+

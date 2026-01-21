@@ -298,10 +298,10 @@ def run_act_workflow(
         for var in vars:
             cmd.extend(["--var", var])
     
-    # Add GitHub token if available (and not already provided)
-    token = get_github_token()
-    if token and not any(s.startswith("GITHUB_TOKEN=") for s in (secrets or [])):
-        cmd.extend(["-s", f"GITHUB_TOKEN={token}"])
+    # Note: We do NOT automatically add GITHUB_TOKEN here because:
+    # 1. .actrc already has --secret-file=.secrets which provides GITHUB_TOKEN
+    # 2. Adding -s GITHUB_TOKEN=... duplicates and exposes the token in logs
+    # If user needs to override, they can use: lich ci web -s GITHUB_TOKEN=xxx
     
     # Check workflow file exists
     workflow_path = Path.cwd() / ".github" / "workflows" / workflow

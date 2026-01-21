@@ -237,13 +237,17 @@ def upgrade_project(
         raise typer.Exit(1)
 
     # 2. Define Sync Targets (Source Relative -> Dest Relative)
+    # NOTE: .github/workflows is intentionally NOT included here because:
+    # - Workflows are rendered during `lich init` with cookiecutter variables
+    # - Each project has customized workflows based on their database, redis, etc.
+    # - Overwriting them would break the project's CI configuration
     sync_targets = [
         (".lich/rules", ".lich/rules"),
         (".lich/workflows", ".lich/workflows"),
         (".lich/LICH_AI_PROMPT.md", ".lich/LICH_AI_PROMPT.md"),
         ("AGENTS.md", "AGENTS.md"),
         ("CLAUDE.md", "CLAUDE.md"),
-        (".github/workflows", ".github/workflows"),
+        # (".github/workflows", ".github/workflows"),  # REMOVED - project-specific
     ]
 
     # Files to add ONLY if they are missing (safe injection)

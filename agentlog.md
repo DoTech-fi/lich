@@ -125,3 +125,21 @@ This file was missed in the v1.12.10 fix. Now all template files correctly use `
 - `cli/src/lich/commands/ci_utils.py` - removed lines 301-304
 - `cli/pyproject.toml` - version bump to 1.12.13
 
+
+
+## 2026-01-21T14:33 — v1.12.14 BUGFIX: Upgrade Command Skips Workflows
+
+### WHAT
+- Modified `cli/src/lich/commands/upgrade.py`
+- Removed `.github/workflows` from `sync_targets` list
+
+### WHY
+- Workflows are rendered during `lich init` with cookiecutter variables
+- Each project has customized workflows based on database, redis, etc.
+- `lich upgrade` was overwriting them with raw templates containing Jinja syntax
+- This broke existing CI configurations
+
+### FILES
+- `cli/src/lich/commands/upgrade.py` - removed workflow sync
+- `cli/pyproject.toml` - version bump to 1.12.14
+

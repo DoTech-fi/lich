@@ -65,14 +65,14 @@ Strict rules:
 
 The v2 plans were written by parallel authors; these overlaps are REAL and must be reconciled:
 
-1. **`cli/src/lich/memory/index.py`** — created by **v2 P1b Task 2** AND **v2 P2–4 Task 2.3**. Resolution: P1b's version is canonical (it ships first). When executing P2–4 Task 2.3, treat it as *extend the existing `MemoryIndex`* (add whatever `assembler.py` needs, e.g. `load()`/`save()`/`neighbors()` if missing) — do not recreate the file. Diff the two designs first.
+1. **`cli/src/lich/memory/index.py`** — created by **v2 P1b Task 2** AND **v2 P2–4 Task 2.3**. Resolution: P1b's version is canonical (it ships first). The designs genuinely diverge (verified 2026-07-10): P1b uses instance methods (`load()`/`save()` mutating self, edges as `list`), P2–4 uses `@classmethod` factories (`build(vault)`, `load(path)` returning a new instance, edges as `set`). **Before executing P2–4 Task 2.3, pick one:** (A) extend P1b's `MemoryIndex` with P2–4's classmethod factories (dual API), or (B) refactor `assembler.py` to P1b's instance API. Document the choice, then treat Task 2.3 as *extending* the existing file — never recreate it.
 2. **`cli/src/lich/cli.py` wiring** — touched by v2 P1a Task 16 (`lich config`), P1b Task 4 (`lich memory`) and Task 11 (`lich tui`). Sequential execution is fine; each task adds one `add_typer` line. Conflict only if run out of order.
 3. **`make.py`** — modified by v1 P1 (identifier validation), v1 P3 (common.py extraction), v2 P1a Task 12 (`--fields` wiring), v2 P1b Task 10 (TUI import). Execute in that order; each later task must re-read the file ([RE-VERIFY] marks say so).
 
 ## Opus Double-Check Checklist (before executing each v2 plan)
 
 - [ ] Re-read every **[RE-VERIFY]** task against the file as it exists post-v1-hardening; update snippets/line refs.
-- [ ] Resolve the 4 **OPEN QUESTION**s in the P2–4 plan: FairBroker provisioning contract, marketplace interim home (GitHub org?), v2 version scheme (2.0.0-alpha vs 1.x), guardian auto-fix safety scope.
+- [ ] Resolve the **OPEN QUESTION**s in the P2–4 plan: FairBroker provisioning contract (Task 4.2), marketplace interim home (Task 4.4, GitHub org?), v2 version scheme (2.0.0-alpha vs 1.x), guardian auto-fix safety scope (Task 3.7 — three are explicitly labeled in the plan, the guardian one is implicit in the task text).
 - [ ] Reconcile `memory/index.py` designs (Known Conflict 1).
 - [ ] Sanity-check the 9 Jinja templates in P1a against the template backend as it exists after v1 P2's template fixes.
 - [ ] Confirm lich-core extras/deps in P0 Task 1 still match template requirements after v1 changes.

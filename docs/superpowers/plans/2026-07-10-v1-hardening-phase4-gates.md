@@ -426,7 +426,7 @@ SERVER = StdioServerParameters(
 )
 
 # Keep in sync with test_mcp_server.py's canonical count.
-MIN_EXPECTED_TOOLS = 51
+MIN_EXPECTED_TOOLS = 52
 
 
 async def _run_smoke() -> tuple[list[str], str]:
@@ -556,7 +556,7 @@ The current version badge is hardcoded to `1.3.1` (README.md:7) — years stale.
 - [ ] **Step 2: Verify no stale tool-count claims survived Phase 2**
 
 Run: `grep -rn "47 MCP\|47 tools" README.md docs/ site-docs/ mkdocs.yml 2>/dev/null || echo CLEAN`
-Expected: `CLEAN`. If matches appear, update each to the canonical count from `cli/tests/test_mcp_server.py` (51 after Phase 2) and include those files in this commit.
+Expected: `CLEAN`. If matches appear, update each to the canonical count from `cli/tests/test_mcp_server.py` (52 after Phase 2 — Phase 2 adds lich_ci_all to the original 51) and include those files in this commit.
 
 - [ ] **Step 3: Verify no hardcoded version badge remains**
 

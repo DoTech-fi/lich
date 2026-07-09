@@ -1548,7 +1548,7 @@ def build_tool_registry(project_root: Path, ai_provider: object | None = None) -
     """
     Registry maps step tool names -> callables (spec section 8).
     ai_provider duck-types Phase 1a's AIProvider (async ask/ask_structured).
-    [RE-VERIFY: once Phase 1a lands, import AIProvider for the type hint.]
+    [RE-VERIFY: once Phase 1a lands, import it: `from lich.ai.provider import AIProvider`; signature: `async def ask(self, prompt: str) -> str`.]
     """
     root = Path(project_root)
 

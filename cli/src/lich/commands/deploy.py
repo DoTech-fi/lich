@@ -20,6 +20,13 @@ from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from lich.commands._validate import (
+    ValidationError,
+    validate_deploy_path,
+    validate_domain,
+    validate_git_ref,
+    validate_git_url,
+)
 
 console = Console()
 
@@ -66,6 +73,16 @@ def _check_lich_project():
     if not (Path(".lich").exists() or Path("backend").exists()):
         console.print("[red]Error: Not in a Lich project directory[/red]")
         raise typer.Exit(1)
+
+
+def _prompt_validated(prompt_text: str, validator, default: str = None):
+    """Prompt.ask in a loop until the validator accepts the value."""
+    while True:
+        value = Prompt.ask(prompt_text, default=default) if default is not None else Prompt.ask(prompt_text)
+        try:
+            return validator(value)
+        except ValidationError as e:
+            console.print(f"  [red]{e}[/red]")
 
 
 def _load_deploy_config() -> dict:
@@ -345,7 +362,7 @@ def deploy_setup():
             env_config["user"] = user
         
         # Deploy path
-        deploy_path = Prompt.ask("Deploy path on server", default="/opt/app")
+        deploy_path = _prompt_validated("Deploy path on server", validate_deploy_path, default="/opt/app")
         env_config["path"] = deploy_path
         
         # Runtime
@@ -380,7 +397,7 @@ def deploy_setup():
         except Exception:
             default_repo = "git@github.com:user/repo.git"
         
-        git_repo = Prompt.ask("Git repo URL (SSH format)", default=default_repo)
+        git_repo = _prompt_validated("Git repo URL (SSH format)", validate_git_url, default=default_repo)
         config["git_repo"] = git_repo
         
         is_private = Confirm.ask("Is this a private repo?", default=True)
@@ -439,9 +456,9 @@ def deploy_setup():
     # Step 4: Domain Configuration
     console.print("\n[bold]Step 4: Domain Configuration[/bold]")
     
-    domain = Prompt.ask("Main domain", default=f"{project_name}.com")
-    api_subdomain = Prompt.ask("API subdomain", default=f"api.{domain}")
-    admin_subdomain = Prompt.ask("Admin subdomain", default=f"admin.{domain}")
+    domain = _prompt_validated("Main domain", validate_domain, default=f"{project_name}.com")
+    api_subdomain = _prompt_validated("API subdomain", validate_domain, default=f"api.{domain}")
+    admin_subdomain = _prompt_validated("Admin subdomain", validate_domain, default=f"admin.{domain}")
     
     config["domains"] = {
         "main": domain,
@@ -526,7 +543,15 @@ def deploy_init(
     
     deploy_path = env_config.get("path", "/opt/app")
     git_repo = config.get("git_repo")
-    
+
+    try:
+        deploy_path = validate_deploy_path(deploy_path)
+        if git_repo:
+            git_repo = validate_git_url(git_repo)
+    except ValidationError as e:
+        console.print(f"[red]Invalid value in {DEPLOY_CONFIG_PATH}: {e}[/red]")
+        raise typer.Exit(1)
+
     console.print(Panel.fit(f"🚀 Initializing {environment.upper()} Server", style="bold blue"))
     
     with Progress(
@@ -780,7 +805,13 @@ def deploy_status(
             ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
         
         deploy_path = env_config.get("path", "/opt/app")
-        
+
+        try:
+            deploy_path = validate_deploy_path(deploy_path)
+        except ValidationError as e:
+            console.print(f"│  [red]Invalid deploy path in config: {e}[/red]")
+            continue
+
         # Check connection
         if not _check_ssh_connection(ssh_host):
             console.print(f"│  [red]🔴 Server: Offline[/red]")
@@ -879,7 +910,15 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
         ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
     
     deploy_path = env_config.get("path", "/opt/app")
-    
+
+    try:
+        deploy_path = validate_deploy_path(deploy_path)
+        if version and version != "latest":
+            version = validate_git_ref(version)
+    except ValidationError as e:
+        console.print(f"[red]Invalid value: {e}[/red]")
+        raise typer.Exit(1)
+
     console.print(Panel.fit(f"🚀 Deploy {component} → {env}", style="bold blue"))
     console.print(f"  [blue]Server: {ssh_host}[/blue]")
     console.print(f"  [blue]Component: {component}[/blue]")
@@ -1059,9 +1098,16 @@ def deploy_logs(
         ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
     
     deploy_path = env_config.get("path", "/opt/app")
-    
+
+    _validate_component(component)
+    try:
+        deploy_path = validate_deploy_path(deploy_path)
+    except ValidationError as e:
+        console.print(f"[red]Invalid deploy path in config: {e}[/red]")
+        raise typer.Exit(1)
+
     console.print(f"[dim]Connecting to {ssh_host}...[/dim]\n")
-    
+
     follow_flag = "-f" if follow else ""
     log_cmd = f"cd {deploy_path} && docker compose logs {follow_flag} --tail={lines} {component}"
     

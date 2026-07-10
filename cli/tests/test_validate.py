@@ -8,6 +8,7 @@ from lich.commands._validate import (
     validate_git_url,
     validate_git_ref,
     validate_domain,
+    validate_ssh_destination,
 )
 
 
@@ -176,3 +177,30 @@ class TestDomainLength:
     def test_rejects_overlong_domain(self):
         with pytest.raises(ValidationError):
             validate_domain(".".join(["abcdefgh"] * 32) + ".com")
+
+
+class TestValidateSshDestination:
+    def test_accepts_ssh_config_alias(self):
+        assert validate_ssh_destination("prod-server") == "prod-server"
+
+    def test_accepts_user_at_host(self):
+        assert validate_ssh_destination("deploy@203.0.113.7") == "deploy@203.0.113.7"
+
+    def test_accepts_fqdn(self):
+        assert validate_ssh_destination("web.example.com") == "web.example.com"
+
+    def test_rejects_option_smuggling(self):
+        with pytest.raises(ValidationError):
+            validate_ssh_destination("-oProxyCommand=evil")
+
+    def test_rejects_shell_metacharacters(self):
+        with pytest.raises(ValidationError):
+            validate_ssh_destination("host; rm -rf /")
+
+    def test_rejects_embedded_whitespace(self):
+        with pytest.raises(ValidationError):
+            validate_ssh_destination("user@host extra")
+
+    def test_rejects_empty(self):
+        with pytest.raises(ValidationError):
+            validate_ssh_destination("")

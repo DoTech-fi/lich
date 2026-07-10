@@ -14,6 +14,7 @@ _GIT_SSH_RE = re.compile(r"^git@[a-zA-Z0-9.-]+:[a-zA-Z0-9._-]+(/[a-zA-Z0-9._-]+)
 _GIT_HTTPS_RE = re.compile(r"^https://[a-zA-Z0-9.-]+(/[a-zA-Z0-9._-]+)+(\.git)?$")
 _GIT_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 _DOMAIN_RE = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$")
+_SSH_DEST_RE = re.compile(r"^(?:[a-zA-Z0-9._-]+@)?[a-zA-Z0-9._-]+$")
 
 
 class ValidationError(ValueError):
@@ -62,6 +63,19 @@ def validate_git_ref(ref: str) -> str:
             "not starting with '-' (e.g. v1.2.3, feature/login)."
         )
     return ref
+
+
+def validate_ssh_destination(dest: str) -> str:
+    """Validate an SSH destination ('host', 'user@host', or an ssh-config alias)."""
+    dest = (dest or "").strip()
+    # The regex cannot match a leading '-', but keep the explicit check as
+    # belt-and-braces defense: this guards against ssh option smuggling.
+    if not _SSH_DEST_RE.fullmatch(dest) or dest.startswith("-"):
+        raise ValidationError(
+            f"Invalid SSH destination {dest!r}: use host, user@host or an ssh-config "
+            "alias (letters, digits, '.', '_', '-')."
+        )
+    return dest
 
 
 def validate_domain(domain: str) -> str:

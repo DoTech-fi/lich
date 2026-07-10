@@ -1,4 +1,6 @@
 """Tests for safe subprocess helpers."""
+import pytest
+
 from lich.commands._shell import run_local, run_remote, quote
 
 
@@ -26,6 +28,10 @@ class TestRunLocal:
         assert code == 1
         assert "timeout" in output.lower()
 
+    def test_rejects_string_command(self):
+        with pytest.raises(TypeError):
+            run_local("echo hello")
+
 
 class TestRunRemote:
     def test_builds_ssh_command_as_list(self, monkeypatch):
@@ -42,6 +48,14 @@ class TestRunRemote:
         assert captured["cmd"][-1] == "docker ps"
         assert "prod-server" in captured["cmd"]
 
+    def test_rejects_leading_dash_host(self):
+        with pytest.raises(ValueError):
+            run_remote("-oProxyCommand=evil", "ls")
+
+    def test_rejects_empty_host(self):
+        with pytest.raises(ValueError):
+            run_remote("", "ls")
+
 
 class TestQuote:
     def test_quote_neutralizes_injection(self):
@@ -50,3 +64,8 @@ class TestQuote:
         # shlex.quote wraps in single quotes so the shell treats it as one token
         assert quoted.startswith("'")
         assert quoted.endswith("'")
+
+    def test_quote_round_trips_as_single_token(self):
+        import shlex
+        hostile = '/opt/app"; rm -rf / #'
+        assert shlex.split(quote(hostile)) == [hostile]

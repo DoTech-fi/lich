@@ -7,6 +7,7 @@ Rules enforced here:
   interpolated value MUST be quoted with quote() at the call site.
 """
 import subprocess
+from pathlib import Path
 from shlex import quote  # re-exported: call sites use `from lich.commands._shell import quote`
 
 __all__ = ["run_local", "run_remote", "quote"]
@@ -14,15 +15,18 @@ __all__ = ["run_local", "run_remote", "quote"]
 
 def run_local(
     cmd: list[str],
-    cwd=None,
+    cwd: str | Path | None = None,
     timeout: int | None = None,
     capture: bool = True,
 ) -> tuple[int, str]:
     """Run a local command (argument list, never a shell string).
 
-    Returns (returncode, combined stdout+stderr). Never raises for
-    missing binaries or timeouts - returns (1, message) instead.
+    Returns (returncode, combined stdout+stderr). Execution-environment
+    errors (missing binary, bad cwd, permissions, timeout) do not raise -
+    they return (1, message) instead.
     """
+    if isinstance(cmd, str):
+        raise TypeError("cmd must be an argument list, not a string")
     try:
         if capture:
             result = subprocess.run(
@@ -35,6 +39,8 @@ def run_local(
         return 1, "Command timeout"
     except FileNotFoundError:
         return 1, f"Command not found: {cmd[0]}"
+    except (NotADirectoryError, PermissionError) as e:
+        return 1, f"Cannot execute {cmd[0]}: {e}"
 
 
 def run_remote(
@@ -48,6 +54,8 @@ def run_remote(
     The script runs in the remote shell: every value interpolated into it
     must be pre-quoted with quote().
     """
+    if not ssh_host or ssh_host.startswith("-"):
+        raise ValueError(f"Invalid SSH host: {ssh_host!r}")
     ssh_cmd = [
         "ssh",
         "-o", "BatchMode=yes",

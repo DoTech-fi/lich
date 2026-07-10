@@ -59,6 +59,6 @@ def check_compatibility():
             )
              console.print(Panel(message, title="Compatibility Warning", border_style="yellow"))
 
-    except Exception:
-        # If parsing fails, ignore.
+    except (OSError, ValueError, version.InvalidVersion):
+        # If reading the version file or parsing fails, ignore.
         pass

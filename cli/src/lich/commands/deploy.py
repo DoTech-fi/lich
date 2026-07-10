@@ -384,7 +384,7 @@ def _configure_git_repo(config: dict, environments: list[str], project_name: str
             capture_output=True, text=True,
         )
         default_repo = result.stdout.strip() if result.returncode == 0 else "git@github.com:user/repo.git"
-    except Exception:
+    except (FileNotFoundError, OSError):
         default_repo = "git@github.com:user/repo.git"
 
     # Security: validate git URL before storing
@@ -429,7 +429,7 @@ def _configure_git_repo(config: dict, environments: list[str], project_name: str
                 console.print("[green]✓[/green]")
             else:
                 console.print("[yellow]⚠ could not verify yet (continuing)[/yellow]")
-        except Exception:
+        except (subprocess.SubprocessError, FileNotFoundError, OSError):
             console.print("[yellow]⚠ verification skipped (continuing)[/yellow]")
     else:
         default_key = str(Path.home() / ".ssh" / "id_ed25519")

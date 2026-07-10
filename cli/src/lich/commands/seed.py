@@ -137,6 +137,7 @@ async def run(db_session):
                     console.print(f"   [green]✅ {seeder_name} complete[/green]")
             else:
                 console.print("   [yellow]No run() function found[/yellow]")
+        # intentionally broad: runs user-authored seeder code that may raise anything
         except Exception as e:
             console.print(f"   [red]❌ Error: {e}[/red]")
     

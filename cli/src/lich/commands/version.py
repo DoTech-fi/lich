@@ -45,7 +45,7 @@ def show_version(
                 config = yaml.safe_load(f)
             project_name = config.get("project", {}).get("name", "Unknown")
             console.print(f"[dim]📁 In project: {project_name}[/dim]")
-        except Exception:
+        except (yaml.YAMLError, OSError):
             pass
     
     # Show changelog/history
@@ -121,7 +121,7 @@ def _parse_changelog() -> list:
                 "date": date,
                 "highlights": highlights
             })
-    except Exception:
+    except (OSError, ValueError, KeyError):
         versions = [{"version": __version__, "date": "current", "highlights": "Current version"}]
     
     return versions

@@ -40,7 +40,7 @@ def routes_command(
         try:
             content = py_file.read_text()
             routes.extend(_parse_fastapi_routes(py_file.name, content))
-        except Exception as e:
+        except (OSError, UnicodeDecodeError) as e:
             if verbose:
                 console.print(f"[dim]Error parsing {py_file}: {e}[/dim]")
     

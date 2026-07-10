@@ -80,7 +80,7 @@ def _detect_databases() -> dict:
                     "container": config.get("container_name", name),
                 }
     
-    except Exception as e:
+    except (yaml.YAMLError, OSError, KeyError) as e:
         console.print(f"[yellow]Warning: Could not parse docker-compose: {e}[/yellow]")
     
     return databases

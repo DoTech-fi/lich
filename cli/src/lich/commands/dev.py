@@ -33,8 +33,8 @@ def _kill_port(port: int):
             for pid in pids:
                 subprocess.run(["kill", "-9", pid], check=False)
             console.print(f"[green]✅ Freed port {port}[/green]")
-    except Exception:
-        pass
+    except (subprocess.SubprocessError, FileNotFoundError, OSError):
+        console.print(f"[dim]Could not free port {port}[/dim]")
 
 def _ensure_dirs():
     PID_DIR.mkdir(exist_ok=True)
@@ -154,7 +154,7 @@ def stop_dev(
                 console.print(f"Killed process {pid} ({pid_file.stem})")
             except ProcessLookupError:
                 pass
-            except Exception as e:
+            except (ValueError, PermissionError, OSError) as e:
                 console.print(f"Error killing {pid_file}: {e}")
             finally:
                 pid_file.unlink()

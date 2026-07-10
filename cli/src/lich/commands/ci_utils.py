@@ -181,7 +181,7 @@ def install_act() -> bool:
             console.print(f"[red]Installation failed: {result.stderr}[/red]")
             return False
             
-    except Exception as e:
+    except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
         console.print(f"[red]Installation error: {e}[/red]")
         return False
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from cookiecutter.exceptions import CookiecutterException
 from cookiecutter.main import cookiecutter
 from rich.console import Console
 
@@ -70,6 +71,6 @@ def init_project(
         console.print(f"   cd {project_name}")
         console.print("   lich dev")
         
-    except Exception as e:
+    except (CookiecutterException, OSError) as e:
         console.print(f"[red]❌ Error: {e}[/red]")
         raise typer.Exit(1)

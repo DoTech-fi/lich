@@ -188,7 +188,7 @@ def write_config(config_path: Path, config: dict, tool_name: str) -> bool:
             json.dump(config, f, indent=2)
         console.print(f"✅ Configured {tool_name} at [cyan]{config_path}[/cyan]")
         return True
-    except Exception as e:
+    except OSError as e:
         console.print(f"❌ Failed to configure {tool_name}: {e}", style="red")
         return False
 
@@ -341,7 +341,7 @@ def show_status():
                     status = "[green]✅ Configured[/green]"
                 else:
                     status = "[yellow]⚠️ File exists, Lich not configured[/yellow]"
-            except Exception:
+            except (json.JSONDecodeError, OSError):
                 status = "[red]❌ Invalid config[/red]"
         else:
             status = "[dim]Not configured[/dim]"

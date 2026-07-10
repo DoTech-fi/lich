@@ -4,6 +4,7 @@ lich adopt - Adopt an existing Python project into Lich architecture.
 from pathlib import Path
 
 import typer
+from cookiecutter.exceptions import CookiecutterException
 from rich.console import Console
 from rich.table import Table
 from rich.prompt import Confirm
@@ -204,6 +205,6 @@ def adopt_project(
         console.print("   3. Migrate models to backend/internal/entities/")
         console.print("   4. Run: lich dev")
     
-    except Exception as e:
+    except (CookiecutterException, OSError) as e:
         console.print(f"[red]❌ Error: {e}[/red]")
         raise typer.Exit(1)

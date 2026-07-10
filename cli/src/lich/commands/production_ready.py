@@ -72,7 +72,7 @@ class ProductionReadinessChecker:
         """Read file content safely."""
         try:
             return path.read_text()
-        except Exception:
+        except OSError:
             return ""
     
     # ========== Security Checks ==========

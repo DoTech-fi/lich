@@ -77,7 +77,7 @@ def _parse_versions() -> list:
                 "date": date,
                 "highlights": highlights
             })
-    except Exception:
+    except (OSError, ValueError, KeyError):
         versions = [{"version": __version__, "date": "current", "highlights": "Current version"}]
 
     return versions
@@ -99,7 +99,7 @@ def _check_and_update_cli(dry_run: bool = False):
 
             if latest_ver > current_ver:
                 target_version = latest_version_str
-    except Exception as e:
+    except (requests.RequestException, KeyError, version.InvalidVersion) as e:
         console.print(f"[dim]Note: Failed to check for updates: {e}[/dim]")
         return
 

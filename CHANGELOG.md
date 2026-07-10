@@ -2,6 +2,28 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.13.0] - 2026-07-10
+
+Security sprint — Phase 1 of the v1 hardening roadmap. Closes every known injection and default-secret vulnerability across the CLI, the MCP server, and the generated project template. Two new modules (`_validate.py`, `_shell.py`) form the security boundary: all user/config input is validated against strict allowlists at entry points, and all remote scripts are shell-quoted as defense-in-depth.
+
+### Security — CLI
+- **Shell injection fixed** (`deploy.py`): deploy-key verification no longer uses `shell=True` — runs as an argument list. It also now actually runs (previously the "✓" was faked) with a 15s timeout, advisory (never aborts setup).
+- **SSH option-smuggling fixed** (`deploy.py`): a malicious `.lich/deploy.yml` from a cloned repo could set `ssh_name: -oProxyCommand=…` and execute local code at connect time (local RCE). SSH destinations are now validated (`validate_ssh_destination`) at every config-read and prompt site; scp key/env-file paths reject `-`-prefixed option smuggling.
+- **Input validation everywhere** (new `_validate.py`): generator names (`lich make`), deploy paths, git URLs, git refs, domains, and `lich deploy logs -c` components are validated against strict allowlists at every entry point (prompts, options, config files). `validate_git_ref` closes `git tag --delete` argument injection.
+- **Quoted remote scripts** (new `_shell.py`): every value interpolated into an SSH script is `shlex.quote()`d; `run_local`/`run_remote` never use `shell=True`. Production deploys pin `-f docker-compose.yml`.
+
+### Security — MCP server
+- `lich_make_*`, `lich_migration_create`, `lich_seed`, and `lich_git_tag` validate their name/ref arguments; `lich_git_commit`/`lich_adopt` reject `-`-prefixed option smuggling; `lich_secret_generate` bounds length (≤256) and count (≤20).
+- `.secrets` and `.lich/*.env` are gitignored by `lich deploy setup`.
+
+### Security — generated template
+- **Production secret guard**: apps refuse to boot with `environment=production` while `secret_key`/`jwt_secret_key` still contain the `change-me` default.
+- **No default admin password**: the `admin` default is removed; a random password is generated at project creation (printed once), and the seed script refuses empty/`admin` at runtime (env `ADMIN_PASSWORD` wins).
+- **OAuth CSRF**: the Google OAuth flow now issues an HMAC-signed, time-bounded `state` bound to a per-session HttpOnly cookie nonce (double-submit) and rejects invalid/expired/replayed state at the callback. The cookie's `Secure` flag is environment-aware so localhost dev still works.
+- **Traefik dashboard is dev-only**: `--api.insecure=true` and port 8090 moved to a `docker-compose.override.yml` that `lich deploy` never loads in production.
+
+**Breaking change:** `/google/callback` now requires the `state` parameter (and the `oauth_state` cookie) — frontends generated before v1.13.0 must persist and echo the `state` returned by `/google/url`.
+
 ## [1.12.15] - 2026-01-21
 
 ### Fixed

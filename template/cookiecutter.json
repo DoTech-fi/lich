@@ -40,7 +40,7 @@
   
   "object_storage": ["none", "s3", "minio"],
   
-  "_lich_version": "1.12.12",
+  "_lich_version": "1.13.0",
 
   "_copy_without_render": [
     "*.png",

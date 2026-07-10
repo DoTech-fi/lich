@@ -29,6 +29,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.requests: Dict[str, list] = {}
+        self._last_sweep = time.time()
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Get client IP - respect X-Forwarded-For header for proxied requests
@@ -48,7 +49,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Current time
         now = time.time()
         minute_ago = now - 60
-        
+
+        # Evict stale IPs to prevent unbounded memory growth
+        self._sweep_stale(now)
+
         # Clean old requests
         if client_ip in self.requests:
             self.requests[client_ip] = [
@@ -76,5 +80,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         remaining = self.requests_per_minute - len(self.requests[client_ip])
         response.headers["X-RateLimit-Limit"] = str(self.requests_per_minute)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
-        
+
         return response
+
+    def _sweep_stale(self, now: float) -> None:
+        """Evict IPs with no requests in the last minute (prevents unbounded growth)."""
+        if now - self._last_sweep < 60:
+            return
+        minute_ago = now - 60
+        stale = [
+            ip for ip, timestamps in self.requests.items()
+            if not timestamps or timestamps[-1] <= minute_ago
+        ]
+        for ip in stale:
+            del self.requests[ip]
+        self._last_sweep = now

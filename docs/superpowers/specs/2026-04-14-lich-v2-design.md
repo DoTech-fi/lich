@@ -1016,6 +1016,10 @@ app.command(name="insights")(insights.show_insights)
 | D14 | Knowledge graph memory scope = project + session (Feature 12) | Structural knowledge AND session history make any BYOA model instantly productive | 2026-07-10 |
 | D15 | Memory = plain markdown + wikilinks, Obsidian-compatible; no embeddings in v2 | Zero infra, deterministic retrieval, git-diffable, human-usable as a vault; vector search deferred to v3 | 2026-07-10 |
 | D16 | v1 hardening (separate spec) ships before/parallel to Phase 0 | Public PyPI security holes can't wait on v2 | 2026-07-10 |
+| D17 | lich CLI v2 = `2.0.0-alpha.N` pre-releases; lich-core starts `0.1.0` -> `1.0.0` at v2 GA | Honest semver signal to PyPI users; core API free to break pre-1.0 | 2026-07-10 |
+| D18 | Spec marketplace interim home = public GitHub repo `DoTech-fi/lich-specs`, publish-by-PR | Zero infra/cost, human review built in; website deferred to v3 | 2026-07-10 |
+| D19 | Guardian auto-fix is conservative: imports + formatting only; logic report-only; AI fixes only via TUI approval | A framework that silently rewrites user logic destroys trust | 2026-07-10 |
+| D20 | FairBroker deploy adapter ships interface-only in v2; Zenith adapter uses its REST API (`POST /api/v1/deploy`, deploy tokens) | Verified in both codebases: FairBroker has no provisioning API (Temporal-internal only); Zenith is production-ready | 2026-07-10 |
 
 ---
 

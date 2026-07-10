@@ -12,6 +12,7 @@
 
 | Document | Role |
 |----------|------|
+| `2026-07-10-CONTRACTS.md` | **FROZEN cross-plan interfaces — required reading before any v2 plan; contracts win over plan text** |
 | `../specs/2026-07-10-lich-v1-hardening-design.md` | v1 spec — WHY and WHAT for phases 1–4 |
 | `../specs/2026-04-14-lich-v2-design.md` | v2 spec — full vision, 12 features, Phase 0 + decisions log D1–D16 |
 | `2026-07-10-v1-hardening-phase1-security.md` | v1.13.0 — EXECUTE FIRST |
@@ -65,14 +66,15 @@ Strict rules:
 
 The v2 plans were written by parallel authors; these overlaps are REAL and must be reconciled:
 
-1. **`cli/src/lich/memory/index.py`** — created by **v2 P1b Task 2** AND **v2 P2–4 Task 2.3**. Resolution: P1b's version is canonical (it ships first). The designs genuinely diverge (verified 2026-07-10): P1b uses instance methods (`load()`/`save()` mutating self, edges as `list`), P2–4 uses `@classmethod` factories (`build(vault)`, `load(path)` returning a new instance, edges as `set`). **Before executing P2–4 Task 2.3, pick one:** (A) extend P1b's `MemoryIndex` with P2–4's classmethod factories (dual API), or (B) refactor `assembler.py` to P1b's instance API. Document the choice, then treat Task 2.3 as *extending* the existing file — never recreate it.
+1. **`cli/src/lich/memory/index.py`** — **RESOLVED 2026-07-10 via `2026-07-10-CONTRACTS.md` §C3** (option A, dual API): P1b's instance API is canonical; P2–4 Task 2.3 was rewritten to EXTEND it (`@classmethod build()`, `resolve_mentions()`, `walk()` returning note names; edges migrate `list`→`set`; no `@classmethod load(path)` — name-clash). Task 2.4's assembler was aligned (reads bodies via `notes.read_note`). Executors follow the contract file, not older drafts.
 2. **`cli/src/lich/cli.py` wiring** — touched by v2 P1a Task 16 (`lich config`), P1b Task 4 (`lich memory`) and Task 11 (`lich tui`). Sequential execution is fine; each task adds one `add_typer` line. Conflict only if run out of order.
 3. **`make.py`** — modified by v1 P1 (identifier validation), v1 P3 (common.py extraction), v2 P1a Task 12 (`--fields` wiring), v2 P1b Task 10 (TUI import). Execute in that order; each later task must re-read the file ([RE-VERIFY] marks say so).
 
 ## Opus Double-Check Checklist (before executing each v2 plan)
 
 - [ ] Re-read every **[RE-VERIFY]** task against the file as it exists post-v1-hardening; update snippets/line refs.
-- [ ] Resolve the **OPEN QUESTION**s in the P2–4 plan: FairBroker provisioning contract (Task 4.2), marketplace interim home (Task 4.4, GitHub org?), v2 version scheme (2.0.0-alpha vs 1.x), guardian auto-fix safety scope (Task 3.7 — three are explicitly labeled in the plan, the guardian one is implicit in the task text).
+- [ ] Verify every v2 plan task against `2026-07-10-CONTRACTS.md` — any task that contradicts a contract is wrong; fix the task, not the contract.
+- [ ] ~~Open questions~~ — ALL FOUR resolved 2026-07-10: versioning (D17), marketplace home (D18), guardian fix scope (D19), FairBroker/Zenith deploy contract (D20 — FairBroker interface-only until it exposes a provisioning API; Zenith verified READY via REST API). Verify the resolutions still hold at execution time.
 - [ ] Reconcile `memory/index.py` designs (Known Conflict 1).
 - [ ] Sanity-check the 9 Jinja templates in P1a against the template backend as it exists after v1 P2's template fixes.
 - [ ] Confirm lich-core extras/deps in P0 Task 1 still match template requirements after v1 changes.

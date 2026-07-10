@@ -75,7 +75,7 @@ Create `core/tests/test_package.py`:
 def test_version_importable():
     import lich_core
 
-    assert lich_core.__version__ == "2.0.0a1"
+    assert lich_core.__version__ == "0.1.0"
 
 
 def test_public_api_surface():
@@ -102,7 +102,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lich-core"
-version = "2.0.0a1"
+version = "0.1.0"  # D17: lich-core starts 0.1.0, reaches 1.0.0 at v2 GA
 description = "Lich runtime library: clean-architecture base classes, middleware, auth, and app factory"
 readme = "README.md"
 license = { text = "MIT" }
@@ -141,7 +141,7 @@ Public API is re-exported here; anything not exported from this module
 is private and may change without a deprecation period (see VERSIONING.md).
 """
 
-__version__ = "2.0.0a1"
+__version__ = "0.1.0"
 ```
 
 Create `core/src/lich_core/py.typed` (empty file) and `core/tests/__init__.py` (empty file).
@@ -2053,7 +2053,7 @@ those copies get *deleted* here in favor of the lich-core versions that already 
 In `backend/requirements.txt`, add at the top (keep the Jinja conditionals that select extras):
 
 ```
-lich-core[{% if cookiecutter.database == 'postgresql' %}postgres{% else %}mongo{% endif %}{% if cookiecutter.use_redis == 'yes' %},redis{% endif %}{% if cookiecutter.auth_strategy != 'none' %},auth{% endif %}]>=2.0.0a1
+lich-core[{% if cookiecutter.database == 'postgresql' %}postgres{% else %}mongo{% endif %}{% if cookiecutter.use_redis == 'yes' %},redis{% endif %}{% if cookiecutter.auth_strategy != 'none' %},auth{% endif %}]>=0.1.0
 ```
 
 - [ ] **Step 2: Rewrite main.py on create_app**
@@ -2173,7 +2173,7 @@ git commit -m "feat(template)!: shrink to skeleton + domain code on lich-core (g
 
 lich-core is not on PyPI during development, so the generated project's Docker build must find it
 locally: build the wheel, drop it into the generated backend as `vendor/`, and let pip's
-`--find-links` resolve `lich-core>=2.0.0a1` from there (falls back to PyPI transparently after
+`--find-links` resolve `lich-core>=0.1.0` from there (falls back to PyPI transparently after
 the first `core-v*` release).
 
 - [ ] **Step 1: Add wheel vendoring to e2e_local.sh**
@@ -2266,10 +2266,10 @@ Expected: all core tests pass; e2e passes.
 
 - [ ] **Step 3: Changelog + commit**
 
-Add to `CHANGELOG.md` under a new `## lich-core [2.0.0a1]` heading:
+Add to `CHANGELOG.md` under a new `## lich-core [0.1.0]` heading:
 
 ```markdown
-## lich-core [2.0.0a1] - <today's date>
+## lich-core [0.1.0] - <today's date>
 
 ### Added
 - New `lich-core` runtime package (v2 Phase 0): BaseEntity, generic Repository/CacheRepository
@@ -2286,13 +2286,13 @@ Add to `CHANGELOG.md` under a new `## lich-core [2.0.0a1]` heading:
 
 ```bash
 git add core/VERSIONING.md CHANGELOG.md
-git commit -m "docs(core): versioning + deprecation policy; changelog for 2.0.0a1"
+git commit -m "docs(core): versioning + deprecation policy; changelog for 0.1.0"
 ```
 
 - [ ] **Step 4: Report**
 
 Report to the human: Phase 0 complete, list commits, core test count, e2e status. Tagging
-`core-v2.0.0a1` (first PyPI publish) is a human decision — do NOT tag or publish.
+`core-v0.1.0` (first PyPI publish) is a human decision — do NOT tag or publish.
 
 ---
 

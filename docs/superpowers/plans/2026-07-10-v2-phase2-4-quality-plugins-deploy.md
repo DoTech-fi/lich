@@ -389,12 +389,19 @@ Default runners (wired in `engine.py`, **[RE-VERIFY]** against Phase 1's actual 
 
 ---
 
-### Task 2.3: Memory index — `.lich/memory/.index.json` (spec task 2.11)
+### Task 2.3: Memory index — extend `MemoryIndex` with the graph-walk API (spec task 2.11)
+
+> **CONTRACT: `2026-07-10-CONTRACTS.md` §C3.** `cli/src/lich/memory/index.py` ALREADY EXISTS
+> (created by Phase 1b Task 2). This task EXTENDS that class — never recreate the file.
+> Additions: `@classmethod build()`, `resolve_mentions()`, `walk()`; migrate `edges` from
+> `list` to `set` (keep `save()` output sorted). There is NO `@classmethod load(path)` —
+> it would clash with the existing instance `load()`; load via `MemoryIndex(vault).load()`.
+> The canonical `Note` model lives in `lich.memory.notes` (§C2) — do not define a second one here.
 
 **Files:**
-- Create: `cli/src/lich/memory/index.py`
-- Test: `cli/tests/test_memory_index.py`
-- Depends on: Phase 1 Task 1.21 (`memory/notes.py` note format) **[RE-VERIFY note reader API]**
+- Modify: `cli/src/lich/memory/index.py` (created by Phase 1b Task 2)
+- Test: `cli/tests/test_memory_index.py` (append; Phase 1b's existing tests must stay green)
+- Depends on: Phase 1b Task 1 (`memory/notes.py`) and Task 2 (`memory/index.py`) **[RE-VERIFY against the as-landed files]**
 
 - [ ] **Step 1: Write failing tests**
 
@@ -432,21 +439,21 @@ def test_resolve_mentions_finds_entities_in_task_text(vault):
 
 def test_walk_two_hops(vault):
     idx = MemoryIndex.build(vault)
-    names = {n.name for n in idx.walk(["Product"], max_hops=2)}
+    names = set(idx.walk(["Product"], max_hops=2))
     assert {"Product", "User", "Tag", "decision-positive-prices"} <= names
 
 def test_walk_one_hop_excludes_second_degree(vault):
     _note(vault, "Order", "Has [[LineItem]].")
     _note(vault, "LineItem", "Line.")
     idx = MemoryIndex.build(vault)
-    names = {n.name for n in idx.walk(["Order"], max_hops=1)}
+    names = set(idx.walk(["Order"], max_hops=1))
     assert "LineItem" in names  # 1 hop
     # LineItem's own neighbors beyond hop 1 would be excluded (none here)
 
-def test_round_trip_json(vault, tmp_path):
-    idx = MemoryIndex.build(vault)
-    idx.save(vault / ".index.json")
-    loaded = MemoryIndex.load(vault / ".index.json")
+def test_round_trip_json(vault):
+    idx = MemoryIndex.build(vault)   # build() persists via rebuild() -> save()
+    loaded = MemoryIndex(vault)
+    loaded.load()                    # instance load, per CONTRACTS §C3
     assert loaded.edges == idx.edges
 ```
 
@@ -454,61 +461,37 @@ def test_round_trip_json(vault, tmp_path):
 - [ ] **Step 3: Implement**
 
 ```python
-# cli/src/lich/memory/index.py
-"""Link + frontmatter graph index over .lich/memory/ (spec Feature 12).
+# cli/src/lich/memory/index.py — EXTENSIONS to the Phase 1b MemoryIndex (CONTRACTS §C3).
+# The class, __init__(vault_dir), rebuild(), update_note(), neighbors(), save(), load()
+# already exist. Apply these MIGRATIONS to the existing methods:
+#
+#   __init__:     self.edges: set[tuple[str, str]] = set()          # was: list
+#   _index_file:  self.edges.add((note.name, target))               # was: .append(...)
+#   update_note:  self.edges = {(s, d) for s, d in self.edges if s != name}
+#   save():       "edges": sorted(list(e) for e in self.edges)      # deterministic on disk
+#   load():       self.edges = {tuple(e) for e in data["edges"]}
+#
+# The on-disk .index.json schema is unchanged; Phase 1b indexes stay readable.
+# Then ADD these methods to the class (imports: `import re` if not present):
 
-Nodes = notes; edges = [[wikilinks]] (bidirectional for traversal,
-stored as written). No embeddings — deterministic regex + yaml only.
-"""
-from __future__ import annotations
+_TASK_WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
 
-import json
-import re
-from dataclasses import dataclass, field
-from pathlib import Path
-
-import yaml
-
-WIKILINK = re.compile(r"\[\[([^\]|#]+)")
-FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.S)
-
-
-@dataclass
-class Note:
-    name: str
-    type: str
-    path: str
-    body: str
-
-
-@dataclass
-class MemoryIndex:
-    nodes: dict[str, Note] = field(default_factory=dict)
-    edges: set[tuple[str, str]] = field(default_factory=set)
 
     @classmethod
-    def build(cls, vault: Path) -> "MemoryIndex":
-        idx = cls()
-        for md in sorted(vault.glob("*.md")):
-            text = md.read_text()
-            fm = {}
-            if (m := FRONTMATTER.match(text)):
-                fm = yaml.safe_load(m.group(1)) or {}
-            name = str(fm.get("name", md.stem))
-            idx.nodes[name] = Note(name, str(fm.get("type", "note")), str(md), text)
-            for target in WIKILINK.findall(text):
-                idx.edges.add((name, target.strip()))
+    def build(cls, vault_dir: Path) -> "MemoryIndex":
+        """Construct + full rebuild (persists .index.json via rebuild() -> save())."""
+        idx = cls(vault_dir)
+        idx.rebuild()
         return idx
 
-    def neighbors(self, name: str) -> set[str]:
-        return ({b for a, b in self.edges if a == name}
-                | {a for a, b in self.edges if b == name})
-
     def resolve_mentions(self, task: str) -> list[str]:
-        words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_-]*", task))
+        """Note names literally mentioned in free task text, sorted."""
+        words = set(_TASK_WORD.findall(task))
         return sorted(n for n in self.nodes if n in words)
 
-    def walk(self, start: list[str], max_hops: int = 2) -> list[Note]:
+    def walk(self, start: list[str], max_hops: int = 2) -> list[str]:
+        """BFS over the link graph. Returns note NAMES, start nodes first (CONTRACTS §C3:
+        callers needing bodies use read_note(vault_dir / nodes[name]["path"]))."""
         seen = [n for n in start if n in self.nodes]
         frontier, visited = set(seen), set(seen)
         for _ in range(max_hops):
@@ -516,24 +499,7 @@ class MemoryIndex:
             frontier &= set(self.nodes)
             seen.extend(sorted(frontier))
             visited |= frontier
-        return [self.nodes[n] for n in seen]
-
-    def save(self, path: Path) -> None:
-        path.write_text(json.dumps({
-            "nodes": {k: {"type": v.type, "path": v.path} for k, v in self.nodes.items()},
-            "edges": sorted(list(e) for e in self.edges),
-        }, indent=2))
-
-    @classmethod
-    def load(cls, path: Path) -> "MemoryIndex":
-        data = json.loads(path.read_text())
-        idx = cls()
-        idx.edges = {tuple(e) for e in data["edges"]}
-        for name, meta in data["nodes"].items():
-            p = Path(meta["path"])
-            body = p.read_text() if p.exists() else ""
-            idx.nodes[name] = Note(name, meta["type"], meta["path"], body)
-        return idx
+        return seen
 ```
 
 - [ ] **Step 4: Verify pass** — `pytest tests/test_memory_index.py -v` → PASS
@@ -586,7 +552,8 @@ local models (e.g. Qwen3-32B, 32K window).
 """
 from __future__ import annotations
 
-from .index import MemoryIndex, Note
+from .index import MemoryIndex
+from .notes import read_note
 
 
 def estimate_tokens(text: str) -> int:
@@ -602,13 +569,14 @@ class ContextAssembler:
         start = self.index.resolve_mentions(task)
         if not start:
             return ""
-        notes = self.index.walk(start, max_hops=2)  # start nodes first, BFS order
-        return self.pack(notes, budget_tokens)
+        names = self.index.walk(start, max_hops=2)  # note NAMES, start first (CONTRACTS §C3)
+        return self.pack(names, budget_tokens)
 
-    def pack(self, notes: list[Note], budget_tokens: int) -> str:
+    def pack(self, names: list[str], budget_tokens: int) -> str:
         parts: list[str] = []
         used = 0
-        for note in notes:
+        for name in names:
+            note = read_note(self.index.vault_dir / self.index.nodes[name]["path"])
             chunk = f"# {note.name}\n{note.body.strip()}\n"
             cost = estimate_tokens(chunk)
             if used + cost > budget_tokens:
@@ -672,7 +640,7 @@ Implementation: stdlib `difflib`-based context matching (no external `patch` bin
 
 - [ ] Full suite: `cd cli && python3 -m pytest -q` → green
 - [ ] Acceptance criteria from spec Phase 2 checklist verified one by one (validation-before-show, add-feature works, pre-commit hook → moved to Phase 3 guardian task, insights → moved to Phase 4, assembler budget respected)
-- [ ] CHANGELOG entry, version bump (v2 versioning scheme decided at execution time — OPEN QUESTION: v2.0.0-alpha tags vs continuing 1.x), commit.
+- [ ] CHANGELOG entry, version bump — **RESOLVED (2026-07-10, D17): lich CLI v2 releases as `2.0.0-alpha.N` pre-releases (GA = `2.0.0`); `lich-core` starts at `0.1.0` and reaches `1.0.0` at v2 GA.** Commit.
 
 ---
 
@@ -733,7 +701,7 @@ Generates a plugin package skeleton: `pyproject.toml` with entry point, `lich-pl
 
 - `lich guardian check` — runs Task 2.1 `validate_project()` + secret-pattern grep (reuse v1 `secret.py` patterns) on the current project; Rich table of violations; exit 1 on any.
 - `lich guardian install` — writes `.git/hooks/pre-commit` shell stub calling `lich guardian check` (respect existing hooks: append, don't clobber — v1 vault-hook precedent).
-- `lich guardian fix` — deterministic fixes only (import rewrites adapters→ports where unambiguous); everything else reported.
+- `lich guardian fix` — **RESOLVED (2026-07-10, D19): conservative scope.** Deterministic fixes only: import rewrites (adapters→ports where unambiguous) + formatting. Logic violations are REPORT-ONLY with suggested fixes; AI-assisted fixes happen exclusively via the TUI with explicit user approval — `guardian fix` never invokes AI.
 
 ### Task 3.8: First plugin `lich-plugin-auth` (spec 3.7) + plugin docs
 
@@ -749,13 +717,17 @@ Dogfood: package the template's auth scaffold as the first real plugin; write `d
 
 **Files:** `cli/src/lich/deploy/zenith.py`, `cli/src/lich/commands/deploy.py` (add `lich deploy zenith`), tests.
 
-Spec §13 flow as discrete, individually-testable steps: `check_cli()` (zenith binary on PATH) → `login()` (interactive passthrough) → `build()` (docker build, list argv) → `push()` → `deploy()` → `health()` (poll returned URL `/api/health`, timeout 120s). Each step returns `StepOutcome(ok, detail)`; command renders a Rich progress checklist. All subprocess via `asyncio.create_subprocess_exec`. Tests: mocked subprocess per step, failure at each step surfaces the right message. **[RE-VERIFY: zenith CLI actual command names against /Users/babak/codes/DoTech/Zenith at execution time]**
+Spec §13 flow as discrete, individually-testable steps: `check_cli()` (zenith binary on PATH) → `login()` (interactive passthrough) → `build()` (docker build, list argv) → `push()` → `deploy()` → `health()` (poll returned URL `/api/health`, timeout 120s). Each step returns `StepOutcome(ok, detail)`; command renders a Rich progress checklist. All subprocess via `asyncio.create_subprocess_exec`. Tests: mocked subprocess per step, failure at each step surfaces the right message.
+
+**VERIFIED 2026-07-10 against /Users/babak/codes/DoTech/Zenith — Zenith is READY, and has MORE than assumed:** the CLI binary is `zen` (not `zenith`): `zen deploy --image <registry>/<image>:<tag> [--name] [--env staging|production] [--replicas N]`, plus `zen apply -f manifest.yaml`. There is also a full REST API the adapter may use directly instead of shelling out: `POST /api/v1/deploy` (body: app, image, environment, replicas → returns deployment_id, url), `GET /api/v1/deployments/{id}` (status polling), `PUT /api/v1/apps/{appId}/env`, `POST /api/v1/apps/{appId}/rollback`. Auth: Bearer JWT for users, deploy tokens `znt_id_xxx:znt_sk_xxx` for CI/CD (CLI stores token after `zen login`). Sources: Zenith/cli/cmd/deploy/deploy.go, cli/internal/api/client.go, services/api/internal/handlers/deploy.go. **Prefer the REST API path for the adapter** (no binary dependency); keep `zen` CLI passthrough for login only. [RE-VERIFY endpoint shapes at execution time]
 
 ### Task 4.2: FairBroker deploy adapter
 
 **Files:** `cli/src/lich/deploy/fairbroker.py`, tests.
 
-Same step pattern: `check_account()` → `provision()` → `deploy()` → URL output. **OPEN QUESTION (Opus review): FairBroker has no public provisioning API today — confirm the contract (CLI? REST? SSH like v1 deploy?) before refinement.** Until then this task is interface-only.
+Same step pattern: `check_account()` → `provision()` → `deploy()` → URL output.
+
+**RESOLVED 2026-07-10 (D20, verified against /Users/babak/codes/DoTech/tempVPS/fairbroker):** FairBroker has **no programmatic provisioning surface today** — provisioning runs only through internal Temporal workflows (`ProvisionVPSWorkflow`, `ProvisionContainerWorkflow` in backend/internal/workers/workflows/) triggered by user order + payment (`POST /api/orders` → `POST /api/orders/{id}/pay`); the REST API covers service *management* (start/stop/reboot/terminate), not creation, and auth is user-JWT only (no server-to-server tokens). Decision: **this task ships interface-only in v2** (`FairBrokerAdapter` protocol with `check_account/provision/deploy` raising `NotImplementedError` + a clear "coming when FairBroker exposes a provisioning API" message in the CLI). Prerequisite logged for the FairBroker backlog: expose `POST /api/v1/internal/provision` with dedicated provisioning tokens; the adapter gets implemented the release after that lands. Do NOT build an order-simulation workaround — fragile and abuses the payment flow.
 
 ### Task 4.3: Spec export/import (spec 4.5–4.6)
 
@@ -767,8 +739,8 @@ Same step pattern: `check_account()` → `provision()` → `deploy()` → URL ou
 
 ### Task 4.4: Marketplace client (spec §14)
 
-`lich marketplace browse/search/fork/publish`, GitHub-based initially: a curated `lich-marketplace` repo of `lich-spec.yaml` files; browse/search = GitHub API over the repo index (unauthenticated, cached); fork = download spec + `lich spec import`; publish = PR instructions (no direct write in v2).
-**OPEN QUESTION (Opus review): the spec says "later dedicated website on freezenith.com" — confirm the GitHub-repo interim design and the repo's org/name before refinement.**
+`lich marketplace browse/search/fork/publish`, GitHub-based initially: a curated repo of `lich-spec.yaml` files; browse/search = GitHub API over the repo index (unauthenticated, cached); fork = download spec + `lich spec import`; publish = PR instructions (no direct write in v2).
+**RESOLVED (2026-07-10, D18): interim home is the public GitHub repo `DoTech-fi/lich-specs`; YAML specs, publish-by-PR with human review; no backend service in v2 (freezenith.com website deferred to v3).**
 
 ### Task 4.5: Project insights (spec §15; moved from Phase 2 per plan scope)
 
@@ -788,10 +760,10 @@ Same step pattern: `check_account()` → `provision()` → `deploy()` → URL ou
 
 ## Open Questions (for the Opus double-check pass)
 
-1. FairBroker provisioning contract (Task 4.2) — CLI, REST, or SSH?
-2. Marketplace interim home (Task 4.4) — GitHub org/repo name; publish-by-PR acceptable?
-3. v2 version scheme (Task 2.7) — `2.0.0-alpha.N` tags vs continuing `1.x` until v2 GA?
-4. Guardian `fix` scope (Task 3.7) — which import rewrites are safe enough to automate?
+1. ~~FairBroker provisioning contract (Task 4.2)~~ — **RESOLVED 2026-07-10 (D20): no provisioning API exists in FairBroker today (verified in codebase); adapter ships interface-only in v2, implementation gated on FairBroker exposing `POST /api/v1/internal/provision`. Zenith verified READY (REST API preferred over `zen` CLI). Details in Task 4.1/4.2.**
+2. ~~Marketplace interim home (Task 4.4)~~ — **RESOLVED 2026-07-10 (D18): `DoTech-fi/lich-specs` GitHub repo, publish-by-PR.**
+3. ~~v2 version scheme (Task 2.7)~~ — **RESOLVED 2026-07-10 (D17): lich CLI `2.0.0-alpha.N`; lich-core `0.1.0` → `1.0.0` at GA.**
+4. ~~Guardian `fix` scope (Task 3.7)~~ — **RESOLVED 2026-07-10 (D19): imports + formatting only; logic report-only; AI fixes only via TUI approval.**
 
 ## Spec coverage self-check (for the reviewer)
 

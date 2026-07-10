@@ -3,6 +3,8 @@ MCP Tools for Secret Management.
 """
 import subprocess
 
+from lich.commands._validate import ValidationError
+
 
 def register_secret_tools(mcp):
     """Register Secret management tools."""
@@ -11,12 +13,18 @@ def register_secret_tools(mcp):
     def lich_secret_generate(length: int = 32, count: int = 1, format: str = "hex") -> str:
         """
         Generate cryptographically secure secrets.
-        
+
         Args:
             length: Length of each secret (default: 32).
             count: Number of secrets to generate (default: 1).
             format: Format: 'hex', 'alphanum', 'urlsafe', 'full'.
         """
+        if not 1 <= length <= 256:
+            return "ERROR: length must be between 1 and 256"
+        if not 1 <= count <= 20:
+            return "ERROR: count must be between 1 and 20"
+        if format not in ("hex", "alphanum", "urlsafe", "full"):
+            return "ERROR: format must be one of hex, alphanum, urlsafe, full"
         cmd = ["lich", "secret", "generate", "-l", str(length), "-c", str(count), "-f", format]
         
         try:

@@ -3,6 +3,8 @@ MCP Tools for Database Migrations (Alembic wrapper).
 """
 import subprocess
 
+from lich.commands._validate import ValidationError, validate_identifier
+
 
 def register_migration_tools(mcp):
     """Register Migration-related tools."""
@@ -26,11 +28,15 @@ def register_migration_tools(mcp):
     def lich_migration_create(message: str, autogenerate: bool = True) -> str:
         """
         Create a new database migration.
-        
+
         Args:
             message: Migration message/name (e.g., 'add_users_table').
             autogenerate: If True, auto-generate from model changes.
         """
+        try:
+            message = validate_identifier(message)
+        except ValidationError as e:
+            return f"ERROR: {e}"
         cmd = ["lich", "migration", "create", message]
         if not autogenerate:
             cmd.append("--manual")

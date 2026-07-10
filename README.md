@@ -2,9 +2,11 @@
 
 > **AI-Ready Full-Stack Project Generator** - Create production-ready projects with a single command.
 
+[![CI](https://github.com/DoTech-fi/lich/actions/workflows/ci.yml/badge.svg)](https://github.com/DoTech-fi/lich/actions/workflows/ci.yml)
+[![E2E](https://github.com/DoTech-fi/lich/actions/workflows/e2e.yml/badge.svg)](https://github.com/DoTech-fi/lich/actions/workflows/e2e.yml)
+[![PyPI](https://img.shields.io/pypi/v/lich)](https://pypi.org/project/lich/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.1-orange.svg)](CHANGELOG.md)
 
 ---
 

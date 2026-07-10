@@ -37,22 +37,10 @@ ci_app = typer.Typer(
 )
 
 
-from lich.commands.common import ensure_lich_project as _check_lich_project
-
-
-def _run_command(cmd: List[str], cwd: Path = None, show_output: bool = True) -> bool:
-    """Run a command and return success status."""
-    try:
-        result = subprocess.run(
-            cmd,
-            cwd=cwd or Path.cwd(),
-            capture_output=not show_output,
-            text=True,
-        )
-        return result.returncode == 0
-    except FileNotFoundError:
-        console.print(f"[red]Command not found: {cmd[0]}[/red]")
-        return False
+from lich.commands.common import (
+    ensure_lich_project as _check_lich_project,
+    run_command_ok as _run_command,
+)
 
 
 def run_backend_ci() -> bool:

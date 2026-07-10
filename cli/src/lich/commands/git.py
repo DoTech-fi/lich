@@ -6,21 +6,9 @@ from pathlib import Path
 from typing import Optional
 
 from lich.commands._validate import ValidationError, validate_git_ref
+from lich.commands.common import run_command as _run_command
 
 console = Console()
-
-def _run_command(cmd: list, cwd: Path = None) -> tuple[int, str, str]:
-    """Run a shell command."""
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=cwd or Path.cwd(),
-        )
-        return result.returncode, result.stdout, result.stderr
-    except FileNotFoundError:
-        return -1, "", f"Command not found: {cmd[0]}"
 
 
 def git_commit(

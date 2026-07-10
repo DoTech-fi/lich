@@ -27,27 +27,11 @@ security_app = typer.Typer(
 )
 
 
-from lich.commands.common import ensure_lich_project as _check_lich_project
-
-
-def _run_command(cmd: list, capture: bool = True) -> tuple[int, str, str]:
-    """Run a shell command and return exit code, stdout, stderr."""
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=capture,
-            text=True,
-            cwd=Path.cwd(),
-        )
-        return result.returncode, result.stdout, result.stderr
-    except FileNotFoundError:
-        return -1, "", f"Command not found: {cmd[0]}"
-
-
-def _check_tool_installed(tool: str) -> bool:
-    """Check if a security tool is installed."""
-    code, _, _ = _run_command(["which", tool])
-    return code == 0
+from lich.commands.common import (
+    ensure_lich_project as _check_lich_project,
+    run_command as _run_command,
+    check_tool_installed as _check_tool_installed,
+)
 
 
 def scan_python_security(fix: bool = False) -> dict:

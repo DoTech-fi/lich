@@ -77,3 +77,19 @@ def test_generated_backend_compiles(jwt_project):
 def test_generated_backend_compiles_keycloak(keycloak_project):
     for py in (keycloak_project / "backend").rglob("*.py"):
         py_compile.compile(str(py), doraise=True)
+
+
+def test_keycloak_has_external_user_path(keycloak_project):
+    service = (keycloak_project / "backend/internal/services/user_service.py").read_text()
+    assert "create_external_user" in service
+
+    deps = (keycloak_project / "backend/internal/services/auth_deps.py").read_text()
+    assert "create_external_user" in deps
+    # The buggy DTO-based auto-creation must be gone:
+    assert "CreateUserRequest(" not in deps
+
+
+def test_rate_limiter_has_stale_eviction(jwt_project):
+    text = (jwt_project / "backend/api/middleware/rate_limit.py").read_text()
+    assert "_sweep_stale" in text
+    assert (jwt_project / "backend/tests/test_rate_limit.py").exists()

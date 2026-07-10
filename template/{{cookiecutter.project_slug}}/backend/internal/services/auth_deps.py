@@ -73,18 +73,20 @@ async def get_current_user(
         # Get or create user
         user = await user_service.user_repo.get_by_keycloak_id(keycloak_id)
         if not user:
-            # Auto-create user from Keycloak data
-            from internal.dto.requests import CreateUserRequest
-            request = CreateUserRequest(
-                email=payload.get("email", ""),
+            email = payload.get("email")
+            if not email:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has no email claim",
+                )
+            user = await user_service.create_external_user(
+                email=email,
                 username=payload.get("preferred_username"),
-                first_name=payload.get("given_name"),
-                last_name=payload.get("family_name"),
+                first_name=payload.get("given_name", ""),
+                last_name=payload.get("family_name", ""),
+                keycloak_id=keycloak_id,
             )
-            user = await user_service.create_user(request)
-            user.keycloak_id = keycloak_id
-            user = await user_service.user_repo.update(user)
-        
+
         return user
         
     except JWTError as e:

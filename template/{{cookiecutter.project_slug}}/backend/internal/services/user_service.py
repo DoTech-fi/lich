@@ -190,7 +190,7 @@ class UserService:
     async def suspend_user(self, user_id: UUID) -> User:
         """
         Suspend a user account.
-        
+
         Use case: Admin moderation
         """
         user = await self.get_user(user_id)
@@ -198,7 +198,50 @@ class UserService:
             raise ValidationError("Cannot suspend super admin")
         user.suspend()
         return await self.user_repo.update(user)
-    
+
+    {%- if cookiecutter.auth_strategy == 'keycloak' %}
+    async def create_external_user(
+        self,
+        email: str,
+        username: Optional[str] = None,
+        first_name: str = "",
+        last_name: str = "",
+        keycloak_id: Optional[str] = None,
+    ) -> User:
+        """
+        Create a user provisioned by an external identity provider (Keycloak).
+
+        Bypasses the registration DTO: external users have no local password,
+        the IdP already verified their email, and IdP usernames may contain
+        characters the registration validator rejects (e.g. dots).
+        """
+        if not email:
+            raise ValidationError("External identity has no email claim")
+
+        existing = await self.user_repo.get_by_email(email)
+        if existing:
+            return existing
+
+        base_username = username or email.split("@")[0]
+        candidate = base_username
+        counter = 1
+        while await self.user_repo.get_by_username(candidate):
+            candidate = f"{base_username}{counter}"
+            counter += 1
+
+        user = User(
+            email=email,
+            username=candidate,
+            first_name=first_name or "",
+            last_name=last_name or "",
+            role=UserRole.USER,
+            status=UserStatus.ACTIVE,
+            is_verified=True,
+            keycloak_id=keycloak_id,
+        )
+        return await self.user_repo.create(user)
+    {%- endif %}
+
     {%- if cookiecutter.auth_strategy == 'jwt_builtin' %}
     async def verify_password(self, user: User, password: str) -> bool:
         """Verify user's password."""

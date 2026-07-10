@@ -1,6 +1,6 @@
 # Lich MCP Setup Guide
 
-Configure AI tools to use Lich's 47+ MCP tools in seconds.
+Configure AI tools to use Lich's 52 MCP tools in seconds.
 
 ## Quick Start
 

@@ -1,6 +1,6 @@
 # 🤖 Lich MCP Integration
 
-!!! success "47 MCP Tools - Full Control for AI Assistants"
+!!! success "52 MCP Tools - Full Control for AI Assistants"
 
 Lich MCP (Model Context Protocol) enables AI coding assistants to directly interact with your Lich project - generating code, running tests, deploying, and more.
 
@@ -138,7 +138,7 @@ After upgrade:
 
 ---
 
-## 🛠️ Available Tools (47 Total)
+## 🛠️ Available Tools (52 Total)
 
 ### Project Management
 
@@ -199,6 +199,8 @@ After upgrade:
 | `lich_ci_backend` | Run backend CI |
 | `lich_ci_web` | Run web app CI |
 | `lich_ci_admin` | Run admin CI |
+| `lich_ci_landing` | Run landing page CI |
+| `lich_ci_setup` | Set up act for local CI |
 | `lich_production_ready_check` | Check production readiness |
 | `lich_production_ready_fix` | Auto-fix issues |
 
@@ -229,7 +231,10 @@ After upgrade:
 
 | Tool | Description |
 |------|-------------|
-| `lich_deploy` | Deploy via Ansible |
+| `lich_deploy_setup` | Configure deploy environments |
+| `lich_deploy_stage` | Deploy a component to staging |
+| `lich_deploy_prod` | Deploy a component to production |
+| `lich_deploy_status` | Show deployment status |
 | `lich_backup` | Database backup operations |
 
 ---
@@ -260,7 +265,7 @@ The AI will use:
 2. `lich_production_ready_fix` → Auto-fixes problems
 3. `lich_secret_check` → Validates secrets
 4. `lich_ci_all` → Runs all quality checks
-5. `lich_deploy` → Deploys to staging
+5. `lich_deploy_stage` → Deploys to staging
 
 ### Database Changes
 
@@ -294,7 +299,7 @@ After configuring MCP, ask your AI:
 
 > "What Lich tools are available?"
 
-The AI should list all 47 tools with descriptions.
+The AI should list all 52 tools with descriptions.
 
 Then try:
 

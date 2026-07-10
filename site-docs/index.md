@@ -26,7 +26,7 @@ One CLI. One Architecture. Infinite Possibilities.<br/>
 
     ---
     
-    Lich MCP lets AI assistants (Antigravity, Claude, Cursor) control your entire stack with **47 MCP tools**. Human and AI follow the same rules and commands.
+    Lich MCP lets AI assistants (Antigravity, Claude, Cursor) control your entire stack with **52 MCP tools**. Human and AI follow the same rules and commands.
 
 -   :material-swap-horizontal:{ .lg .middle } **Monolithic & Microservice**
 
@@ -71,7 +71,7 @@ One CLI. One Architecture. Infinite Possibilities.<br/>
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↕
-                    🤖 Lich MCP (47 Tools)
+                    🤖 Lich MCP (52 Tools)
                               ↕
               ┌───────────────────────────────┐
               │ Antigravity │ Claude │ Cursor │
@@ -82,7 +82,7 @@ One CLI. One Architecture. Infinite Possibilities.<br/>
 
 ## 🤖 Lich MCP - AI Speaks Your Stack
 
-!!! success "47 MCP Tools for Complete Control"
+!!! success "52 MCP Tools for Complete Control"
 
 Your AI assistant can now:
 

@@ -303,206 +303,157 @@ def _save_env_file(env: str, env_vars: dict):
 
 
 # ============================================
-# SETUP COMMAND (Enhanced)
+# SETUP HELPERS (orchestrator steps)
 # ============================================
 
-@deploy_app.command(name="setup")
-def deploy_setup():
-    """
-    🛠️ Setup deployment configuration.
-    
-    Interactive setup with:
-    - SSH connection configuration
-    - Deploy key generation for private repos
-    - Domain configuration for Traefik
-    - Environment variables collection
-    
-    Examples:
-        lich deploy setup
-    """
-    _check_lich_project()
-    
-    console.print(Panel.fit("🛠️ Deploy Setup", style="bold blue"))
-    
-    # Get project name from current directory
-    project_name = Path.cwd().name
-    
-    # Load existing config
-    config = _load_deploy_config()
-    
-    # Step 1: Select Environment
+def _prompt_environments() -> list[str]:
+    """Step 1: which environments to configure."""
     console.print("\n[bold]Step 1: Select Environment[/bold]")
     env_choice = Prompt.ask(
         "Which environment?",
         choices=["staging", "production", "both"],
-        default="production"
+        default="production",
     )
-    
-    environments = ["staging", "production"] if env_choice == "both" else [env_choice]
-    
-    for env in environments:
-        console.print(f"\n[bold cyan]{'━' * 40}[/bold cyan]")
-        console.print(f"[bold cyan]  Configuring {env.upper()}[/bold cyan]")
-        console.print(f"[bold cyan]{'━' * 40}[/bold cyan]")
-        
-        # Step 2: Connection Method
-        console.print("\n[bold]Step 2: Server Connection[/bold]")
-        connection = Prompt.ask(
-            "How do you connect?",
-            choices=["ssh-config", "manual"],
-            default="ssh-config"
-        )
-        
-        env_config = {"connection": connection}
-        
-        if connection == "ssh-config":
-            ssh_hosts = _get_ssh_config_hosts()
-            if ssh_hosts:
-                console.print(f"  [dim]Available: {', '.join(ssh_hosts[:8])}{'...' if len(ssh_hosts) > 8 else ''}[/dim]")
-            
-            ssh_name = _prompt_validated("SSH config name", validate_ssh_destination)
-            env_config["ssh_name"] = ssh_name
-            
-            # Verify SSH connection
-            console.print("  Verifying connection...", end=" ")
-            if _check_ssh_connection(ssh_name):
-                console.print("[green]✓[/green]")
-            else:
-                console.print("[red]✗[/red]")
-                console.print("  [yellow]Warning: Could not connect. Check your SSH config.[/yellow]")
+    return ["staging", "production"] if env_choice == "both" else [env_choice]
+
+
+def _configure_environment(env: str) -> dict:
+    """Step 2 for one environment: connection, deploy path, runtime."""
+    console.print(f"\n[bold cyan]{'━' * 40}[/bold cyan]")
+    console.print(f"[bold cyan]  Configuring {env.upper()}[/bold cyan]")
+    console.print(f"[bold cyan]{'━' * 40}[/bold cyan]")
+
+    console.print("\n[bold]Step 2: Server Connection[/bold]")
+    connection = Prompt.ask(
+        "How do you connect?",
+        choices=["ssh-config", "manual"],
+        default="ssh-config",
+    )
+    env_config = {"connection": connection}
+
+    if connection == "ssh-config":
+        ssh_hosts = _get_ssh_config_hosts()
+        if ssh_hosts:
+            console.print(f"  [dim]Available: {', '.join(ssh_hosts[:8])}{'...' if len(ssh_hosts) > 8 else ''}[/dim]")
+        # Security: validate SSH destination to prevent option smuggling
+        ssh_name = _prompt_validated("SSH config name", validate_ssh_destination)
+        env_config["ssh_name"] = ssh_name
+        # Verify SSH connection
+        console.print("  Verifying connection...", end=" ")
+        if _check_ssh_connection(ssh_name):
+            console.print("[green]✓[/green]")
         else:
-            host = Prompt.ask("Server host/IP")
-            user = Prompt.ask("SSH username", default="root")
-            env_config["host"] = host
-            env_config["user"] = user
-        
-        # Deploy path
-        deploy_path = _prompt_validated("Deploy path on server", validate_deploy_path, default="/opt/app")
-        env_config["path"] = deploy_path
-        
-        # Runtime
-        runtime = Prompt.ask(
-            "Runtime",
-            choices=["docker-compose", "bare-metal"],
-            default="docker-compose"
-        )
-        env_config["runtime"] = runtime
-        
-        config[env] = env_config
-    
-    # Step 3: Git Repository (once, shared across environments)
+            console.print("[red]✗[/red]")
+            console.print("  [yellow]Warning: Could not connect. Check your SSH config.[/yellow]")
+    else:
+        host = Prompt.ask("Server host/IP")
+        user = Prompt.ask("SSH username", default="root")
+        env_config["host"] = host
+        env_config["user"] = user
+
+    # Security: validate deploy path to prevent shell injection
+    deploy_path = _prompt_validated("Deploy path on server", validate_deploy_path, default="/opt/app")
+    env_config["path"] = deploy_path
+
+    runtime = Prompt.ask(
+        "Runtime",
+        choices=["docker-compose", "bare-metal"],
+        default="docker-compose",
+    )
+    env_config["runtime"] = runtime
+    return env_config
+
+
+def _configure_git_repo(config: dict, environments: list[str], project_name: str) -> None:
+    """Step 3: git repo + deploy key. Mutates config in place."""
     reconfigure_git = True
     if "git_repo" in config:
         console.print(f"\n[bold]Step 3: Git Repository[/bold]")
         console.print(f"  [dim]Current: {config['git_repo']}[/dim]")
         reconfigure_git = Confirm.ask("Reconfigure git settings?", default=False)
-    
+
     if reconfigure_git and "git_repo" not in config:
         console.print("\n[bold]Step 3: Git Repository[/bold]")
-    
-    if reconfigure_git:
-        
-        # Try to get from git remote
+
+    if not reconfigure_git:
+        return
+
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True, text=True,
+        )
+        default_repo = result.stdout.strip() if result.returncode == 0 else "git@github.com:user/repo.git"
+    except Exception:
+        default_repo = "git@github.com:user/repo.git"
+
+    # Security: validate git URL before storing
+    git_repo = _prompt_validated("Git repo URL (SSH format)", validate_git_url, default=default_repo)
+    config["git_repo"] = git_repo
+
+    is_private = Confirm.ask("Is this a private repo?", default=True)
+    config["private_repo"] = is_private
+
+    if not is_private:
+        return
+
+    console.print("\n[bold]🔑 SSH Deploy Key Setup[/bold]")
+    console.print("  [dim]Recommended: Create a new deploy key (more secure)[/dim]")
+    key_choice = Prompt.ask(
+        "Use existing SSH key or create new deploy key?",
+        choices=["create", "existing"],
+        default="create",
+    )
+
+    if key_choice == "create":
+        key_path, pub_key = _generate_deploy_key(environments[0], project_name)
+        config["deploy_key_path"] = key_path
+        console.print(f"  [green]✓ Created: {key_path}[/green]")
+
+        provider, owner, repo = _extract_repo_info(git_repo)
+        console.print("\n  [bold yellow]📋 Add this deploy key to GitHub:[/bold yellow]")
+        console.print(Panel(pub_key, title="Public Key", border_style="cyan"))
+        if provider == "github":
+            console.print(f"  1. Go to: [link]https://github.com/{owner}/{repo}/settings/keys[/link]")
+        else:
+            console.print(f"  1. Go to: [link]https://gitlab.com/{owner}/{repo}/-/settings/repository[/link]")
+        console.print("  2. Click 'Add deploy key'")
+        console.print("  3. Paste the key above")
+        console.print("  4. ✓ Enable 'Allow read access' only")
+        Prompt.ask("\n  Press Enter when done", default="")
+
+        # Advisory verify — GitHub may need a moment to propagate the key
+        console.print("  Verifying GitHub access...", end=" ")
         try:
-            result = subprocess.run(
-                ["git", "remote", "get-url", "origin"],
-                capture_output=True, text=True
-            )
-            default_repo = result.stdout.strip() if result.returncode == 0 else "git@github.com:user/repo.git"
-        except Exception:
-            default_repo = "git@github.com:user/repo.git"
-        
-        git_repo = _prompt_validated("Git repo URL (SSH format)", validate_git_url, default=default_repo)
-        config["git_repo"] = git_repo
-        
-        is_private = Confirm.ask("Is this a private repo?", default=True)
-        config["private_repo"] = is_private
-        
-        if is_private:
-            console.print("\n[bold]🔑 SSH Deploy Key Setup[/bold]")
-            console.print("  [dim]Recommended: Create a new deploy key (more secure)[/dim]")
-            
-            key_choice = Prompt.ask(
-                "Use existing SSH key or create new deploy key?",
-                choices=["create", "existing"],
-                default="create"
-            )
-            
-            if key_choice == "create":
-                # Generate deploy key
-                key_path, pub_key = _generate_deploy_key(environments[0], project_name)
-                config["deploy_key_path"] = key_path
-                
-                console.print(f"  [green]✓ Created: {key_path}[/green]")
-                
-                # Show instructions
-                provider, owner, repo = _extract_repo_info(git_repo)
-                
-                console.print("\n  [bold yellow]📋 Add this deploy key to GitHub:[/bold yellow]")
-                console.print(Panel(pub_key, title="Public Key", border_style="cyan"))
-                
-                if provider == "github":
-                    console.print(f"  1. Go to: [link]https://github.com/{owner}/{repo}/settings/keys[/link]")
-                else:
-                    console.print(f"  1. Go to: [link]https://gitlab.com/{owner}/{repo}/-/settings/repository[/link]")
-                
-                console.print("  2. Click 'Add deploy key'")
-                console.print("  3. Paste the key above")
-                console.print("  4. ✓ Enable 'Allow read access' only")
-                
-                Prompt.ask("\n  Press Enter when done", default="")
-                
-                # Verify access (advisory — GitHub may need a moment to propagate the key)
-                console.print("  Verifying GitHub access...", end=" ")
-                try:
-                    if _verify_github_access(git_repo, key_path):
-                        console.print("[green]✓[/green]")
-                    else:
-                        console.print("[yellow]⚠ could not verify yet (continuing)[/yellow]")
-                except Exception:
-                    console.print("[yellow]⚠ verification skipped (continuing)[/yellow]")
+            if _verify_github_access(git_repo, key_path):
+                console.print("[green]✓[/green]")
             else:
-                # Use existing key
-                default_key = str(Path.home() / ".ssh" / "id_ed25519")
-                key_path = Prompt.ask("Path to your SSH private key", default=default_key)
-                
-                if not Path(key_path).exists():
-                    console.print(f"  [red]Key not found: {key_path}[/red]")
-                    raise typer.Exit(1)
-                
-                config["deploy_key_path"] = key_path
-                console.print(f"  [green]✓ Using: {key_path}[/green]")
-                console.print("  [yellow]Make sure this key has access to the repository[/yellow]")
-    
-    # Step 4: Domain Configuration
+                console.print("[yellow]⚠ could not verify yet (continuing)[/yellow]")
+        except Exception:
+            console.print("[yellow]⚠ verification skipped (continuing)[/yellow]")
+    else:
+        default_key = str(Path.home() / ".ssh" / "id_ed25519")
+        key_path = Prompt.ask("Path to your SSH private key", default=default_key)
+        if not Path(key_path).exists():
+            console.print(f"  [red]Key not found: {key_path}[/red]")
+            raise typer.Exit(1)
+        config["deploy_key_path"] = key_path
+        console.print(f"  [green]✓ Using: {key_path}[/green]")
+        console.print("  [yellow]Make sure this key has access to the repository[/yellow]")
+
+
+def _configure_domains(project_name: str) -> dict:
+    """Step 4: domain configuration."""
     console.print("\n[bold]Step 4: Domain Configuration[/bold]")
-    
+    # Security: validate all domain inputs
     domain = _prompt_validated("Main domain", validate_domain, default=f"{project_name}.com")
     api_subdomain = _prompt_validated("API subdomain", validate_domain, default=f"api.{domain}")
     admin_subdomain = _prompt_validated("Admin subdomain", validate_domain, default=f"admin.{domain}")
-    
-    config["domains"] = {
-        "main": domain,
-        "api": api_subdomain,
-        "admin": admin_subdomain,
-    }
-    
-    # Step 5: Environment Variables
-    console.print("\n[bold]Step 5: Environment Variables[/bold]")
-    collect_env = Confirm.ask("Configure environment variables now?", default=True)
-    
-    if collect_env:
-        for env in environments:
-            env_vars = _collect_env_vars(env)
-            if env_vars:
-                _save_env_file(env, env_vars)
-                config[env]["env_file"] = f".lich/deploy.{env}.env"
-    
-    # Save config
-    _save_deploy_config(config)
-    console.print(f"\n[green]✓ Saved to {DEPLOY_CONFIG_PATH}[/green]")
-    
-    # Show summary
+    return {"main": domain, "api": api_subdomain, "admin": admin_subdomain}
+
+
+def _print_setup_summary(config: dict) -> None:
+    """Configuration summary + next steps."""
     console.print("\n[bold]Configuration Summary:[/bold]")
     for env_name, cfg in config.items():
         if not isinstance(cfg, dict) or env_name in RESERVED_CONFIG_KEYS:
@@ -511,13 +462,58 @@ def deploy_setup():
             console.print(f"  {env_name}: SSH → {cfg.get('ssh_name')} → {cfg.get('path')}")
         else:
             console.print(f"  {env_name}: {cfg.get('user')}@{cfg.get('host')} → {cfg.get('path')}")
-    
+
     if config.get("domains"):
         console.print(f"  Domains: {config['domains'].get('main')}")
-    
+
     console.print("\n[bold]Next Steps:[/bold]")
     console.print("  1. Run [cyan]lich deploy init production[/cyan] to setup the server")
     console.print("  2. Run [cyan]lich deploy prod backend[/cyan] to deploy")
+
+
+# ============================================
+# SETUP COMMAND (Enhanced)
+# ============================================
+
+@deploy_app.command(name="setup")
+def deploy_setup():
+    """
+    🛠️ Setup deployment configuration.
+
+    Interactive setup with:
+    - SSH connection configuration
+    - Deploy key generation for private repos
+    - Domain configuration for Traefik
+    - Environment variables collection
+
+    Examples:
+        lich deploy setup
+    """
+    _check_lich_project()
+    console.print(Panel.fit("🛠️ Deploy Setup", style="bold blue"))
+
+    project_name = Path.cwd().name
+    config = _load_deploy_config()
+
+    environments = _prompt_environments()
+    for env in environments:
+        config[env] = _configure_environment(env)
+
+    _configure_git_repo(config, environments, project_name)
+    config["domains"] = _configure_domains(project_name)
+
+    # Step 5: Environment Variables
+    console.print("\n[bold]Step 5: Environment Variables[/bold]")
+    if Confirm.ask("Configure environment variables now?", default=True):
+        for env in environments:
+            env_vars = _collect_env_vars(env)
+            if env_vars:
+                _save_env_file(env, env_vars)
+                config[env]["env_file"] = f".lich/deploy.{env}.env"
+
+    _save_deploy_config(config)
+    console.print(f"\n[green]✓ Saved to {DEPLOY_CONFIG_PATH}[/green]")
+    _print_setup_summary(config)
 
 
 # ============================================

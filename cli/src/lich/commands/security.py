@@ -27,11 +27,7 @@ security_app = typer.Typer(
 )
 
 
-def _check_lich_project():
-    """Check if we're in a Lich project."""
-    if not (Path(".lich").exists() or Path("backend").exists()):
-        console.print("[red]Error: Not in a Lich project directory[/red]")
-        raise typer.Exit(1)
+from lich.commands.common import ensure_lich_project as _check_lich_project
 
 
 def _run_command(cmd: list, capture: bool = True) -> tuple[int, str, str]:

@@ -71,11 +71,7 @@ def _validate_component(component: str):
         raise typer.Exit(1)
 
 
-def _check_lich_project():
-    """Check if we're in a Lich project."""
-    if not (Path(".lich").exists() or Path("backend").exists()):
-        console.print("[red]Error: Not in a Lich project directory[/red]")
-        raise typer.Exit(1)
+from lich.commands.common import ensure_lich_project as _check_lich_project
 
 
 def _safe_local_path(value: str, label: str) -> str:

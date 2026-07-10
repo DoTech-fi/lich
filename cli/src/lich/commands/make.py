@@ -17,12 +17,7 @@ make_app = typer.Typer(
 )
 
 
-def _check_lich_project() -> bool:
-    """Check if we're in a Lich project."""
-    if not Path(".lich").exists():
-        console.print("[red]❌ Not a Lich project![/red]")
-        return False
-    return True
+from lich.commands.common import is_lich_project as _check_lich_project
 
 
 def _valid_name(name: str) -> str:

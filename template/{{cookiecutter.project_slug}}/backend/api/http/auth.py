@@ -1,6 +1,9 @@
 """
 Authentication endpoints.
 """
+import hashlib
+import hmac as _hmac
+import time
 from fastapi import APIRouter, Depends, HTTPException, status
 {%- if cookiecutter.auth_strategy == 'jwt_builtin' %}
 from datetime import timedelta
@@ -159,6 +162,23 @@ async def refresh_token(
 # GOOGLE OAUTH
 # ==========================================
 
+def _make_oauth_state() -> str:
+    """Create a signed, time-limited state token for the OAuth flow."""
+    ts = str(int(time.time()))
+    sig = _hmac.new(settings.secret_key.encode(), ts.encode(), hashlib.sha256).hexdigest()
+    return f"{ts}.{sig}"
+
+
+def _verify_oauth_state(state: str, max_age_seconds: int = 600) -> bool:
+    """Verify the signature and age of an OAuth state token."""
+    try:
+        ts, sig = state.split(".", 1)
+        expected = _hmac.new(settings.secret_key.encode(), ts.encode(), hashlib.sha256).hexdigest()
+        return _hmac.compare_digest(sig, expected) and (time.time() - int(ts)) < max_age_seconds
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
 @router.get("/google/url")
 async def google_auth_url():
     """Get Google OAuth authorization URL."""
@@ -169,7 +189,9 @@ async def google_auth_url():
         )
     
     import urllib.parse
-    
+
+    state = _make_oauth_state()
+
     params = {
         "client_id": settings.google_client_id,
         "redirect_uri": settings.google_redirect_uri,
@@ -177,21 +199,29 @@ async def google_auth_url():
         "scope": "openid email profile",
         "access_type": "offline",
         "prompt": "consent",
+        "state": state,
     }
-    
+
     google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
-    
-    return {"url": google_auth_url}
+
+    return {"url": google_auth_url, "state": state}
 
 
 @router.post("/google/callback")
 async def google_callback(
     code: str,
+    state: str,
     user_service: UserService = Depends(get_user_service),
 ):
     """Handle Google OAuth callback and exchange code for tokens."""
+    if not _verify_oauth_state(state):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OAuth state (possible CSRF).",
+        )
+
     import httpx
-    
+
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,

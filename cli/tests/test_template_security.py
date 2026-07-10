@@ -33,3 +33,11 @@ class TestAdminPassword:
     def test_seed_script_refuses_weak_password(self):
         seed = (PROJECT_TEMPLATE / "backend/scripts/seed_db.py").read_text()
         assert 'in ("", "admin")' in seed
+
+
+class TestOAuthState:
+    def test_google_flow_uses_state_parameter(self):
+        auth = (PROJECT_TEMPLATE / "backend/api/http/auth.py").read_text()
+        assert "_make_oauth_state" in auth
+        assert "_verify_oauth_state" in auth
+        assert '"state": state' in auth

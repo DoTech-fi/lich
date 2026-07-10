@@ -1,0 +1,45 @@
+name: E2E Golden Path
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "cli/**"
+      - "template/**"
+      - "scripts/e2e_local.sh"
+      - ".github/workflows/e2e.yml"
+  schedule:
+    - cron: "0 3 * * *"  # nightly 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  golden-path:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: postgresql
+            auth: jwt_builtin
+          - database: mongodb
+            auth: none
+    name: e2e (${{ matrix.database }} + ${{ matrix.auth }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lich CLI + cookiecutter
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./cli
+          pip install cookiecutter
+
+      - name: Run golden path
+        env:
+          E2E_DATABASE: ${{ matrix.database }}
+          E2E_AUTH: ${{ matrix.auth }}
+        run: ./scripts/e2e_local.sh "$E2E_DATABASE" "$E2E_AUTH"

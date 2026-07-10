@@ -1,4 +1,5 @@
 """Tests for the lich_ci_all MCP tool."""
+import pytest
 from mcp.server.fastmcp import FastMCP
 
 from lich.mcp.tools import ci
@@ -15,18 +16,21 @@ def test_ci_all_is_registered():
     assert _get_tool("lich_ci_all") is not None
 
 
-def test_ci_all_runs_all_components(mocker):
-    mock_run = mocker.patch("lich.mcp.tools.ci.subprocess.run")
-    mock_run.return_value.returncode = 0
-    mock_run.return_value.stdout = "ok"
-    mock_run.return_value.stderr = ""
+@pytest.mark.asyncio
+async def test_ci_all_runs_all_components(mocker):
+    recorded = []
+
+    async def fake_async(cmd, force_no_color=True):
+        recorded.append(cmd)
+        return "ok"
+
+    mocker.patch("lich.mcp.tools.ci.run_lich_command_async", side_effect=fake_async)
 
     tool = _get_tool("lich_ci_all")
-    output = tool(local=True)
+    output = await tool(local=True)
 
-    called_cmds = [call.args[0] for call in mock_run.call_args_list]
-    assert ["lich", "ci", "backend", "-l"] in called_cmds
-    assert ["lich", "ci", "web", "-l"] in called_cmds
-    assert ["lich", "ci", "admin", "-l"] in called_cmds
-    assert ["lich", "ci", "landing", "-l"] in called_cmds
+    assert ["lich", "ci", "backend", "-l"] in recorded
+    assert ["lich", "ci", "web", "-l"] in recorded
+    assert ["lich", "ci", "admin", "-l"] in recorded
+    assert ["lich", "ci", "landing", "-l"] in recorded
     assert "backend" in output and "landing" in output

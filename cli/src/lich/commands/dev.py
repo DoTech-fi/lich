@@ -23,7 +23,7 @@ def _check_port(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
-def _kill_port(port: int):
+def _kill_port(port: int) -> None:
     """Kill process listening on port."""
     try:
         # lsof -ti :port
@@ -36,7 +36,7 @@ def _kill_port(port: int):
     except (subprocess.SubprocessError, FileNotFoundError, OSError):
         console.print(f"[dim]Could not free port {port}[/dim]")
 
-def _ensure_dirs():
+def _ensure_dirs() -> None:
     PID_DIR.mkdir(exist_ok=True)
     LOG_DIR.mkdir(exist_ok=True)
 

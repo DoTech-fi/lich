@@ -13,6 +13,7 @@ Usage:
 import subprocess
 import json
 from pathlib import Path
+from typing import Any, Dict, List
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -36,7 +37,7 @@ from lich.commands.common import (
 
 def scan_python_security(fix: bool = False) -> dict:
     """Scan Python code with bandit and safety."""
-    results = {"tool": "python", "passed": True, "issues": []}
+    results: Dict[str, Any] = {"tool": "python", "passed": True, "issues": []}
     
     backend_path = Path("backend")
     if not backend_path.exists():
@@ -97,7 +98,7 @@ def scan_python_security(fix: bool = False) -> dict:
 
 def scan_frontend_security(fix: bool = False) -> dict:
     """Scan frontend apps with npm audit."""
-    results = {"tool": "frontend", "passed": True, "issues": []}
+    results: Dict[str, Any] = {"tool": "frontend", "passed": True, "issues": []}
     
     apps_dir = Path("apps")
     if not apps_dir.exists():
@@ -138,7 +139,7 @@ def scan_frontend_security(fix: bool = False) -> dict:
 
 def scan_secrets(fix: bool = False) -> dict:
     """Scan for hardcoded secrets with git-secrets or gitleaks."""
-    results = {"tool": "secrets", "passed": True, "issues": []}
+    results: Dict[str, Any] = {"tool": "secrets", "passed": True, "issues": []}
     
     console.print("\n[blue]🔍 Scanning for hardcoded secrets...[/blue]")
     
@@ -181,7 +182,7 @@ def scan_secrets(fix: bool = False) -> dict:
 
 def scan_docker(fix: bool = False) -> dict:
     """Scan Docker images with trivy."""
-    results = {"tool": "docker", "passed": True, "issues": []}
+    results: Dict[str, Any] = {"tool": "docker", "passed": True, "issues": []}
     
     console.print("\n[blue]🔍 Scanning Docker configuration...[/blue]")
     

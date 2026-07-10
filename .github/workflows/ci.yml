@@ -56,3 +56,14 @@ jobs:
       - name: Run Ruff
         run: |
           ruff check cli/src/lich --ignore=E501
+
+      - name: Install mypy
+        run: |
+          pip install mypy
+          cd cli
+          pip install -e .
+
+      - name: Run mypy
+        run: |
+          cd cli
+          mypy src/lich

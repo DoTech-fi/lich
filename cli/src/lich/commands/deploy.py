@@ -104,7 +104,7 @@ def _load_deploy_config() -> dict:
         return yaml.safe_load(f) or {}
 
 
-def _save_deploy_config(config: dict):
+def _save_deploy_config(config: dict) -> None:
     """Save deploy configuration to .lich/deploy.yml."""
     DEPLOY_CONFIG_PATH.parent.mkdir(exist_ok=True)
     with open(DEPLOY_CONFIG_PATH, "w") as f:
@@ -286,7 +286,7 @@ def _collect_env_vars(env: str) -> dict:
     return env_vars
 
 
-def _save_env_file(env: str, env_vars: dict):
+def _save_env_file(env: str, env_vars: dict) -> Path:
     """Save environment variables to .lich/deploy.{env}.env file."""
     env_file = Path(f".lich/deploy.{env}.env")
     env_file.parent.mkdir(exist_ok=True)
@@ -554,7 +554,7 @@ def _resolve_ssh_target(config: dict, environment: str) -> tuple[str, str, str]:
         console.print(f"[red]Invalid value in {DEPLOY_CONFIG_PATH}: {e}[/red]")
         raise typer.Exit(1)
 
-    return ssh_host, deploy_path, git_repo
+    return ssh_host, deploy_path, git_repo  # type: ignore[return-value]
 
 
 def _check_server_connection(progress, ssh_host: str) -> None:
@@ -602,7 +602,7 @@ def _copy_deploy_key_remote(progress, config: dict, ssh_host: str) -> None:
     task = progress.add_task("[cyan]Setting up deploy key...", total=None)
 
     # Security: _safe_local_path rejects empty/dash-prefixed paths (scp option smuggling)
-    key_path = _safe_local_path(config.get("deploy_key_path"), "deploy_key_path")
+    key_path = _safe_local_path(config.get("deploy_key_path"), "deploy_key_path")  # type: ignore[arg-type]
 
     # Copy private key to server
     scp_cmd = ["scp", key_path, f"{ssh_host}:~/.ssh/deploy_key"]
@@ -881,7 +881,7 @@ def deploy_status(
             ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
 
         try:
-            ssh_host = validate_ssh_destination(ssh_host)
+            ssh_host = validate_ssh_destination(ssh_host)  # type: ignore[arg-type]
         except ValidationError as e:
             console.print(f"│  [red]Invalid SSH destination in config: {e}[/red]")
             console.print(f"[bold]└{'─' * 44}┘[/bold]")

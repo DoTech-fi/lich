@@ -8,7 +8,7 @@ Usage:
 import re
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 import typer
 from rich.console import Console
@@ -52,7 +52,7 @@ class CheckCategory:
 class ProductionReadinessChecker:
     """Check production readiness of a Lich project."""
     
-    def __init__(self, project_path: Path = None):
+    def __init__(self, project_path: Optional[Path] = None):
         self.project_path = project_path or Path.cwd()
         self.env_file = self.project_path / ".env"
         self.env_vars = self._load_env()
@@ -462,10 +462,10 @@ from lich.commands.common import ensure_lich_project as _check_lich_project
 class AutoFixer:
     """Auto-fix common production readiness issues."""
     
-    def __init__(self, project_path: Path = None):
+    def __init__(self, project_path: Optional[Path] = None):
         self.project_path = project_path or Path.cwd()
         self.env_file = self.project_path / ".env"
-        self.fixes_applied = []
+        self.fixes_applied: List[str] = []
     
     def _read_env(self) -> Dict[str, str]:
         """Read .env file."""

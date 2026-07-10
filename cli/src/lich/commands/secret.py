@@ -52,7 +52,7 @@ def _read_env_file(env_path: Path) -> dict:
     return env_vars
 
 
-def _write_env_file(env_path: Path, env_vars: dict):
+def _write_env_file(env_path: Path, env_vars: dict) -> None:
     """Write dict back to environment file."""
     lines = []
     for key, value in env_vars.items():

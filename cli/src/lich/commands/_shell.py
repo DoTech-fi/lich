@@ -33,7 +33,7 @@ def run_local(
                 cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd
             )
             return result.returncode, result.stdout + result.stderr
-        result = subprocess.run(cmd, timeout=timeout, cwd=cwd)
+        result = subprocess.run(cmd, timeout=timeout, cwd=cwd)  # type: ignore[assignment]
         return result.returncode, ""
     except subprocess.TimeoutExpired:
         return 1, "Command timeout"

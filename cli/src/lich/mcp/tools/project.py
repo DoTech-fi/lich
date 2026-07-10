@@ -2,13 +2,12 @@ from pathlib import Path
 from lich.commands.init import init_project
 
 
-def lich_init(project_name: str, template_url: str = "https://github.com/DoTech-fi/lich-fastapi", output_dir: str = "."):
-    """Initialize a new Lich project using a cookiecutter template."""
+def lich_init(project_name: str, output_dir: str = "."):
+    """Initialize a new Lich project using the default Lich template."""
     result = init_project(
-        template=template_url,
+        name=project_name,
+        output_dir=output_dir,
         no_input=True,
-        output_dir=Path(output_dir),
-        extra_context={"project_slug": project_name}
     )
     return str(result)
 

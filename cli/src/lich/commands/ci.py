@@ -398,7 +398,7 @@ def _write_file_if_not_exists(path: Path, content: str, name: str) -> bool:
         return True
 
 
-def _add_to_gitignore(files: list):
+def _add_to_gitignore(files: list) -> None:
     """Add files to .gitignore if not already present."""
     gitignore_path = Path.cwd() / ".gitignore"
 

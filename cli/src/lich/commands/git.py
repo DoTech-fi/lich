@@ -14,7 +14,7 @@ console = Console()
 def git_commit(
     message: Optional[str] = typer.Option(None, "--message", "-m", help="Direct commit message (bypass wizard)"),
     add_all: bool = typer.Option(False, "--all", "-a", help="Stage all changes before committing"),
-):
+) -> None:
     """
     📝 Create a Conventional Commit.
     
@@ -89,7 +89,7 @@ def git_commit(
 def git_tag(
     version: str = typer.Argument(..., help="Version to tag (e.g. v1.0.0)"),
     push: bool = typer.Option(False, "--push", "-p", help="Push tag immediately after creating"),
-):
+) -> None:
     """
     🏷️ Create a new version tag.
     """
@@ -122,7 +122,7 @@ def git_tag(
 
 def git_push(
     tags: bool = typer.Option(False, "--tags", "-t", help="Push tags as well"),
-):
+) -> None:
     """
     🚀 Push changes to remote (origin main/master).
     """

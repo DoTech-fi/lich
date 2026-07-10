@@ -87,15 +87,15 @@ def _count_python_files(project_path: Path) -> dict:
     for py_file in project_path.rglob("*.py"):
         if ".venv" in str(py_file) or "venv" in str(py_file) or "__pycache__" in str(py_file):
             continue
-        stats["total_files"] += 1
+        stats["total_files"] += 1  # type: ignore[operator]
         try:
             with open(py_file) as f:
-                stats["total_lines"] += len(f.readlines())
+                stats["total_lines"] += len(f.readlines())  # type: ignore[operator]
         except (OSError, IOError):
             pass
-        
+
         if py_file.name == "main.py" or py_file.name == "app.py":
-            stats["main_file"] = str(py_file.relative_to(project_path))
+            stats["main_file"] = str(py_file.relative_to(project_path))  # type: ignore[assignment]
     
     # Check folder structure
     if (project_path / "api").exists() or (project_path / "routes").exists():

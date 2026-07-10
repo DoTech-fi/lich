@@ -11,6 +11,7 @@ Usage:
 import subprocess
 from pathlib import Path
 from datetime import datetime
+from typing import Any, Dict, Optional
 import typer
 import yaml
 from rich.console import Console
@@ -34,22 +35,22 @@ from lich.commands.common import ensure_lich_project as _check_lich_project
 
 def _detect_databases() -> dict:
     """Auto-detect databases from docker-compose.yml."""
-    databases = {}
-    
+    databases: Dict[str, Any] = {}
+
     compose_files = ["docker-compose.yml", "docker-compose.yaml", "compose.yml"]
-    compose_path = None
-    
-    for f in compose_files:
-        if Path(f).exists():
-            compose_path = Path(f)
+    compose_path: Optional[Path] = None
+
+    for compose_name in compose_files:
+        if Path(compose_name).exists():
+            compose_path = Path(compose_name)
             break
-    
+
     if not compose_path:
         return databases
-    
+
     try:
-        with open(compose_path) as f:
-            compose = yaml.safe_load(f)
+        with open(compose_path) as fp:
+            compose = yaml.safe_load(fp)
         
         services = compose.get("services", {})
         
@@ -283,7 +284,7 @@ def backup_command(
     # Upload to S3 if requested
     if remote:
         console.print(f"\n[blue]Uploading to {remote}...[/blue]")
-        for name, success, backup_file in results:
+        for name, success, backup_file in results:  # type: ignore[assignment]
             if success and backup_file:
                 if upload_to_s3(backup_file, f"{remote}/{backup_file.name}"):
                     console.print(f"  [green]✓ Uploaded {backup_file.name}[/green]")

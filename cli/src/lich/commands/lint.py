@@ -9,6 +9,7 @@ Usage:
 """
 import subprocess
 from pathlib import Path
+from typing import Any, Dict
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -101,7 +102,7 @@ def lint_python(fix: bool = False) -> dict:
 
 def lint_frontend(fix: bool = False) -> dict:
     """Lint TypeScript/JavaScript with eslint."""
-    results = {"tool": "frontend", "passed": True, "issues": 0}
+    results: Dict[str, Any] = {"tool": "frontend", "passed": True, "issues": 0}
     
     apps_dir = Path("apps")
     if not apps_dir.exists():

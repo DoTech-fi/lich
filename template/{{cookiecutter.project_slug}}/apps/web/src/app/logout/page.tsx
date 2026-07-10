@@ -48,24 +48,24 @@ export default function LogoutPage() {
   }, [router]);
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
+    <div style={% raw %}{{{% endraw %}
+      height: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'column',
       gap: '1rem',
       backgroundColor: '#f9fafb'
-    }}>
-      <div style={{
+    {% raw %}}}{% endraw %}>
+      <div style={% raw %}{{{% endraw %}
         width: '40px',
         height: '40px',
         border: '3px solid #e5e7eb',
         borderTopColor: '#3b82f6',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite'
-      }}></div>
-      <p style={{ fontFamily: 'system-ui, sans-serif', color: '#6b7280' }}>Logging out...</p>
+      {% raw %}}}{% endraw %}></div>
+      <p style={% raw %}{{{% endraw %} fontFamily: 'system-ui, sans-serif', color: '#6b7280' {% raw %}}}{% endraw %}>Logging out...</p>
       <style jsx global>{`
         @keyframes spin {
           to { transform: rotate(360deg); }

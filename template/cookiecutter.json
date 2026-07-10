@@ -48,9 +48,6 @@
     "*.ico",
     "*.woff",
     "*.woff2",
-    "*.tsx",
-    "*.jsx",
-    "*.ts",
     "infra/ansible/**/*"
   ]
 }

@@ -10,57 +10,33 @@ from lich.mcp.tools import project, make, git, qa, ops
 # So we should patch them where they are imported in the tool modules.
 
 def test_mcp_wiring(mocker):
-    """
-    Verify that MCP tools are correctly wired to their underlying CLI implementations.
-    """
-    
-    # 1. Create a fresh MCP instance
+    """Verify that MCP tools are correctly wired to their underlying implementations."""
     mcp = FastMCP("TestLich")
-    
-    # 2. Mock the underlying functions in the tool modules
-    # We use mocker.patch to replace the imported function in the tool module namespace
-    
-    # Mock project tools
+
     mock_init = mocker.patch("lich.mcp.tools.project.init_project")
-    
-    # Mock make tools
     mock_make_service = mocker.patch("lich.mcp.tools.make.make_service")
-    mock_make_entity = mocker.patch("lich.mcp.tools.make.make_entity")
-    
-    # Mock git tools
     mock_git_commit = mocker.patch("lich.mcp.tools.git.git_commit")
-    
-    # Mock QA tools
-    mock_lint = mocker.patch("lich.mcp.tools.qa.lint_python", return_value={"passed": True})
-    
-    # Mock Ops tools
-    mock_deploy = mocker.patch("lich.mcp.tools.ops.subprocess.run")
-    mock_deploy.return_value.returncode = 0
-    mock_deploy.return_value.stdout = "Deploy success"
-    
-    # 3. Register tools (this binds the decorated functions to our mcp instance)
+    mock_run = mocker.patch(
+        "lich.mcp.tools.ops.run_lich_command", return_value="Deploy success"
+    )
+
     project.register_project_tools(mcp)
     make.register_make_tools(mcp)
     git.register_git_tools(mcp)
     qa.register_qa_tools(mcp)
     ops.register_ops_tools(mcp)
-    
-    # 4. Access the tools via the tool manager
-    # Note: FastMCP stores tools in different ways depending on version.
-    # The most reliable way to test "wiring" is to call the decorated function directly.
-    # But wait, the decorated function IS the tool in FastMCP (it returns the function).
-    # So we need to find the function in the tool module that was decorated.
-    
-    # Let's import the specific module functions we want to test
-    # Actually, the register functions define inner functions. We can't access them easily from outside
-    # unless we change the design to return them or define them at module level.
-    
-    # WAIT! The current implementation of `register_*_tools` defines functions INSIDE the register function.
-    # This makes them inaccessible for direct unit testing of the wiring!
-    # They are only accessible via `mcp.call_tool()`.
-    
-    # So we must use mcp.call_tool (async) to test them.
-    pass
+
+    tools_map = {t.name: t.fn for t in mcp._tool_manager.list_tools()}
+
+    result = tools_map["lich_deploy_status"]()
+    mock_run.assert_called_once_with(["lich", "deploy", "status"])
+    assert result == "Deploy success"
+
+    mock_run.reset_mock()
+    tools_map["lich_deploy_stage"](component="web", version="1.2.3", dry_run=True)
+    mock_run.assert_called_once_with(
+        ["lich", "deploy", "stage", "web", "--version", "1.2.3", "--dry-run"]
+    )
 
 @pytest.mark.asyncio
 async def test_mcp_execution_flow(mocker):
@@ -107,12 +83,3 @@ async def test_mcp_execution_flow(mocker):
     tools_map["lich_git_commit"](message="feat: test")
     mock_git_commit.assert_called_once_with(message="feat: test")
 
-if __name__ == "__main__":
-    # Simplify run for manual execution
-    import asyncio
-    from unittest.mock import MagicMock
-    
-    # Manual mock setup since we are not running via pytest CLI here
-    print("Running Manual Integration Test...")
-    
-    # ... (Manual mocking is complex here, best to run via pytest)

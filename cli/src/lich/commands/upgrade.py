@@ -4,100 +4,27 @@ lich upgrade - Upgrade project to latest version.
 import os
 import re
 import shutil
-import tempfile
-import zipfile
-from pathlib import Path
-from typing import Optional
 import sys
 import subprocess
+from pathlib import Path
 from packaging import version
 
-import typer
 import requests
+import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 
 from lich import __version__
+from lich.commands.common import (
+    get_local_template_path as _get_local_template_path,
+    download_template as _download_template,
+)
 
 console = Console()
 
-# GitHub repository for template
-GITHUB_REPO = "DoTech-fi/lich"
-GITHUB_BRANCH = "main"
-TEMPLATE_URL = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/{GITHUB_BRANCH}.zip"
-
 # Path to CHANGELOG.md (for dev environment)
 CHANGELOG_PATH = Path(__file__).parent.parent.parent.parent.parent / "CHANGELOG.md"
-
-
-def _get_local_template_path() -> Optional[Path]:
-    """Get local template path (for development)."""
-    # Try relative to CLI package (development mode)
-    dev_path = Path(__file__).parent.parent.parent.parent.parent / "template"
-    if dev_path.exists():
-        return dev_path
-    return None
-
-
-def _download_template() -> str:
-    """Download template from GitHub and return path."""
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
-        progress.add_task(description="Downloading latest template from GitHub...", total=None)
-        
-        # Download to temp directory
-        temp_dir = tempfile.mkdtemp()
-        zip_path = os.path.join(temp_dir, "lich.zip")
-        
-        try:
-            # Use requests for better SSL handling
-            response = requests.get(TEMPLATE_URL, stream=True, timeout=60)
-            response.raise_for_status()
-            
-            with open(zip_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-                    
-        except requests.exceptions.SSLError:
-            console.print("[red]❌ SSL Certificate Error[/red]")
-            console.print("[dim]Try running: /Applications/Python*/Install\\ Certificates.command[/dim]")
-            console.print("[dim]Or: pip install certifi[/dim]")
-            raise typer.Exit(1)
-        except requests.exceptions.RequestException as e:
-            console.print(f"[red]❌ Failed to download template: {e}[/red]")
-            console.print("[dim]Check your internet connection.[/dim]")
-            raise typer.Exit(1)
-        
-        # Extract
-        try:
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(temp_dir)
-        except zipfile.BadZipFile:
-            console.print("[red]❌ Downloaded file is not a valid zip![/red]")
-            raise typer.Exit(1)
-        
-        # Find template directory (lich-main/template)
-        # Note: GitHub archives unzip to REPO-BRANCH folder
-        extracted_root = os.path.join(temp_dir, f"lich-{GITHUB_BRANCH}")
-        
-        # In the repo, the template is in 'template' folder
-        extracted_template = os.path.join(extracted_root, "template")
-        
-        if not os.path.exists(extracted_template):
-            # Fallback: maybe the zip structure is different
-             if os.path.exists(os.path.join(temp_dir, "template")):
-                 return os.path.join(temp_dir, "template")
-             
-             console.print(f"[red]❌ Template not found in downloaded archive! Looked in: {extracted_template}[/red]")
-             console.print(f"[dim]Root contents: {os.listdir(temp_dir)}[/dim]")
-             raise typer.Exit(1)
-        
-        return extracted_template
 
 
 def _parse_versions() -> list:

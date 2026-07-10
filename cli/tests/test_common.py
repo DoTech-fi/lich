@@ -78,3 +78,13 @@ class TestCheckToolInstalled:
 
     def test_missing_tool(self):
         assert check_tool_installed("definitely-not-a-real-binary-xyz") is False
+
+
+class TestTemplateHelpers:
+    def test_get_local_template_path_in_dev_checkout(self):
+        from lich.commands.common import get_local_template_path
+        # In this repo checkout, template/ exists next to cli/
+        path = get_local_template_path()
+        assert path is not None
+        assert path.name == "template"
+        assert path.exists()

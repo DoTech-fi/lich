@@ -32,12 +32,11 @@ jobs:
           cd cli
           pytest -v --tb=short
 
-      - name: Run tests with coverage
+      - name: Coverage gate (>= 80%)
         if: matrix.python-version == '3.12'
         run: |
           cd cli
-          pip install pytest-cov
-          pytest --cov=lich --cov-report=xml
+          pytest --cov=lich --cov-report=term --cov-report=xml --cov-fail-under=80
 
   lint:
     runs-on: ubuntu-latest

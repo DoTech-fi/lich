@@ -4,7 +4,7 @@ All configuration is loaded from environment variables.
 """
 from typing import List
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, model_validator
 
 
 class Settings(BaseSettings):
@@ -91,10 +91,24 @@ class Settings(BaseSettings):
     {%- else %}
     log_format: str = Field(default="text")
     {%- endif %}
-    
+
     # Security
     secret_key: str = Field(default="your-secret-key-change-me-in-production")
-    
+
+    @model_validator(mode="after")
+    def _reject_default_secrets_in_production(self):
+        """Refuse to boot in production with placeholder secrets."""
+        if self.environment.lower() == "production":
+            for field_name in ("secret_key", "jwt_secret_key"):
+                value = getattr(self, field_name, "")
+                if isinstance(value, str) and "change-me" in value:
+                    raise ValueError(
+                        f"{field_name} still has its default value. "
+                        "Set a real secret in the environment before running in production "
+                        "(generate one with: openssl rand -hex 32)."
+                    )
+        return self
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

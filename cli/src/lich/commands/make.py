@@ -6,6 +6,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from lich.commands._validate import ValidationError, validate_identifier
+
 console = Console()
 
 make_app = typer.Typer(
@@ -21,6 +23,15 @@ def _check_lich_project() -> bool:
         console.print("[red]❌ Not a Lich project![/red]")
         return False
     return True
+
+
+def _valid_name(name: str) -> str:
+    """Validate a generator name argument; exit with a friendly error if invalid."""
+    try:
+        return validate_identifier(name)
+    except ValidationError as e:
+        console.print(f"[red]❌ {e}[/red]")
+        raise typer.Exit(1)
 
 
 def _write_file(path: Path, content: str, force: bool = False) -> bool:
@@ -51,7 +62,8 @@ def make_entity(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower()
     name_pascal = name[0].upper() + name[1:] if name else name
     
@@ -181,7 +193,8 @@ def make_service(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower().replace("service", "")
     name_pascal = name[0].upper() + name[1:] if name else name
     if not name_pascal.endswith("Service"):
@@ -245,7 +258,8 @@ def make_api(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower()
     name_pascal = name[0].upper() + name[1:] if name else name
     
@@ -320,7 +334,8 @@ def make_dto(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower().replace("dto", "")
     name_pascal = name[0].upper() + name[1:] if name else name
     
@@ -383,7 +398,8 @@ def make_factory(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower().replace("factory", "")
     name_pascal = name[0].upper() + name[1:] if name else name
     if name_pascal.endswith("Factory"):
@@ -454,7 +470,8 @@ def make_middleware(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower().replace("middleware", "")
     name_pascal = name[0].upper() + name[1:] if name else name
     
@@ -518,7 +535,8 @@ def make_event(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower()
     name_pascal = name[0].upper() + name[1:] if name else name
     
@@ -575,7 +593,10 @@ def make_listener(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
+    if event is not None:
+        event = _valid_name(event)
     name_lower = name.lower()
     name_pascal = name[0].upper() + name[1:] if name else name
     event_name = event or "SomeEvent"
@@ -633,7 +654,8 @@ def make_job(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower().replace("job", "")
     name_pascal = name[0].upper() + name[1:] if name else name
     if name_pascal.endswith("Job"):
@@ -743,7 +765,8 @@ def make_policy(
     """
     if not _check_lich_project():
         raise typer.Exit(1)
-    
+
+    name = _valid_name(name)
     name_lower = name.lower().replace("policy", "")
     name_pascal = name[0].upper() + name[1:] if name else name
     if name_pascal.endswith("Policy"):

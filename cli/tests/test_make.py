@@ -242,3 +242,65 @@ class TestMakePolicy:
         assert "def can_create(" in content
         assert "def can_edit(" in content
         assert "def can_delete(" in content
+
+
+class TestMakeNameValidation:
+    """All make commands must reject names that could inject into generated code or paths."""
+
+    def test_make_entity_rejects_shell_metacharacters(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "entity", "Product; rm -rf /"])
+        assert result.exit_code == 1
+        assert "Invalid name" in result.output
+        assert "Created" not in result.output
+
+    def test_make_entity_rejects_fstring_injection(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "entity", "{__import__('os').system('id')}"])
+        assert result.exit_code == 1
+        assert "Invalid name" in result.output
+
+    def test_make_entity_rejects_path_traversal(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "entity", "../../outside"])
+        assert result.exit_code == 1
+        assert not (in_lich_project.parent / "outside.py").exists()
+
+    def test_make_service_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "service", "Bad Name"])
+        assert result.exit_code == 1
+        assert "Invalid name" in result.output
+
+    def test_make_api_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "api", "x;y"])
+        assert result.exit_code == 1
+
+    def test_make_dto_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "dto", "x;y"])
+        assert result.exit_code == 1
+
+    def test_make_factory_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "factory", "x;y"])
+        assert result.exit_code == 1
+
+    def test_make_middleware_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "middleware", "x;y"])
+        assert result.exit_code == 1
+
+    def test_make_event_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "event", "x;y"])
+        assert result.exit_code == 1
+
+    def test_make_listener_rejects_invalid_event(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "listener", "SendEmail", "--event", "Evil;Event"])
+        assert result.exit_code == 1
+
+    def test_make_job_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "job", "x;y"])
+        assert result.exit_code == 1
+
+    def test_make_policy_rejects_invalid_name(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "policy", "x;y"])
+        assert result.exit_code == 1
+
+    def test_valid_names_still_work(self, runner: CliRunner, in_lich_project: Path):
+        result = runner.invoke(app, ["make", "entity", "OrderItem"])
+        assert result.exit_code == 0
+        assert (in_lich_project / "backend/internal/entities/orderitem.py").exists()

@@ -1,7 +1,7 @@
 import pytest
 from lich.mcp.server import mcp
 
-# All 47 expected tools from our MCP implementation
+# All 52 expected tools from our MCP implementation
 ALL_EXPECTED_TOOLS = [
     # Project tools (2)
     "lich_init",
@@ -26,8 +26,11 @@ ALL_EXPECTED_TOOLS = [
     "lich_lint_frontend",
     "lich_security_scan",
     "lich_test",
-    # Ops tools (2)
-    "lich_deploy",
+    # Ops tools (5)
+    "lich_deploy_setup",
+    "lich_deploy_stage",
+    "lich_deploy_prod",
+    "lich_deploy_status",
     "lich_backup",
     # Routes tools (1)
     "lich_routes",
@@ -48,11 +51,13 @@ ALL_EXPECTED_TOOLS = [
     # Production tools (2)
     "lich_production_ready_check",
     "lich_production_ready_fix",
-    # CI tools (4)
+    # CI tools (6)
+    "lich_ci_setup",
     "lich_ci_all",
     "lich_ci_backend",
     "lich_ci_web",
     "lich_ci_admin",
+    "lich_ci_landing",
     # Middleware tools (3)
     "lich_middleware_list",
     "lich_middleware_enable",
@@ -66,27 +71,27 @@ ALL_EXPECTED_TOOLS = [
     "lich_version",
 ]
 
-EXPECTED_TOOL_COUNT = 47
+EXPECTED_TOOL_COUNT = len(ALL_EXPECTED_TOOLS)
 
 
 def test_all_mcp_tools_registered():
-    """Verify that ALL 47 Lich tools are registered in the MCP server."""
-    
+    """Verify that ALL 52 Lich tools are registered in the MCP server."""
+
     try:
         tools = [t.name for t in mcp._tool_manager.list_tools()]
     except AttributeError:
         pytest.skip("Could not access internal tool registry")
-    
+
     print(f"\nRegistered Tools ({len(tools)}):")
     for t in sorted(tools):
         print(f"  - {t}")
-    
-    # Check we have exactly 47 tools
-    assert len(tools) == EXPECTED_TOOL_COUNT, f"Expected {EXPECTED_TOOL_COUNT} tools, found {len(tools)}"
-    
-    # Check each expected tool exists
-    for tool in ALL_EXPECTED_TOOLS:
-        assert tool in tools, f"Missing tool: {tool}"
+
+    expected = set(ALL_EXPECTED_TOOLS)
+    actual = set(tools)
+    assert actual == expected, (
+        f"Missing: {sorted(expected - actual)}; Unexpected: {sorted(actual - expected)}"
+    )
+    assert len(tools) == EXPECTED_TOOL_COUNT
 
 
 def test_mcp_tools_have_descriptions():
@@ -148,7 +153,10 @@ class TestMCPToolCategories:
     
     def test_ops_tools_exist(self):
         tools = [t.name for t in mcp._tool_manager.list_tools()]
-        ops_tools = ["lich_deploy", "lich_backup"]
+        ops_tools = [
+            "lich_deploy_setup", "lich_deploy_stage", "lich_deploy_prod",
+            "lich_deploy_status", "lich_backup",
+        ]
         for t in ops_tools:
             assert t in tools
     
@@ -186,7 +194,10 @@ class TestMCPToolCategories:
     
     def test_ci_tools_exist(self):
         tools = [t.name for t in mcp._tool_manager.list_tools()]
-        ci_tools = ["lich_ci_all", "lich_ci_backend", "lich_ci_web", "lich_ci_admin"]
+        ci_tools = [
+            "lich_ci_setup", "lich_ci_all", "lich_ci_backend",
+            "lich_ci_web", "lich_ci_admin", "lich_ci_landing",
+        ]
         for t in ci_tools:
             assert t in tools
     
@@ -211,4 +222,4 @@ class TestMCPToolCategories:
 
 if __name__ == "__main__":
     test_all_mcp_tools_registered()
-    print(f"\n✅ All {EXPECTED_TOOL_COUNT} MCP Tools Verified!")
+    print(f"\nAll {EXPECTED_TOOL_COUNT} MCP Tools Verified!")

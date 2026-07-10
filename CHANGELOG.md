@@ -2,6 +2,23 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.15.0] - 2026-07-11
+
+Gates & golden-path sprint — Phase 4 (final) of the v1 hardening roadmap. Adds the CI gates that keep the framework honest and an end-to-end test that proves a generated project actually runs.
+
+### Added
+- **Golden-path e2e**: `scripts/e2e_local.sh` + `.github/workflows/e2e.yml` generate a project with the template, boot infra, build & run the backend image, run its tests, and hit `/api/health` + auth endpoints — matrix over postgresql+jwt and mongodb+none. Proves `lich new` produces a working app, not just compiling code.
+- **CI security scanning**: `bandit` (subprocess findings triaged — all call sites use list args via `_shell.py`) + `pip-audit` (no vulnerable dependencies) run on every push.
+- **Coverage gate**: CI enforces `--cov-fail-under=80` (currently 81%).
+- **MCP protocol smoke test**: spawns the MCP server over stdio and verifies a real JSON-RPC `initialize` + `tools/list` returns the 52 tools and a read-only tool call succeeds.
+- **`SECURITY.md`** disclosure policy; README badges (CI, e2e, PyPI, Python) replacing a stale hardcoded version badge.
+
+### Fixed
+- **Generated backend healthcheck**: the Dockerfile used `curl` (absent in `python:3.12-slim`) and the wrong path — now a `curl`-free Python urllib check against `/api/health`. This was blocking the e2e.
+
+### Chore
+- Untracked `__pycache__/*.pyc` files that had been committed since v1.12.0 (they were already gitignored).
+
 ## [1.14.0] - 2026-07-11
 
 Quality sprint — Phase 3 of the v1 hardening roadmap. Large internal refactor, MCP modernization, type checking, and a big test-coverage lift. No behavior change for users; all security guards from Phase 1 preserved.

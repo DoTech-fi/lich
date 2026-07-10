@@ -1,0 +1,16 @@
+# Development-only overrides.
+# `docker compose up` merges this file automatically on your machine.
+# Production deploys (lich deploy) run with explicit -f flags and never load it.
+#
+# NOTE: `command:` REPLACES the base list entirely, so all dev flags live here.
+services:
+  traefik:
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "8090:8080"   # Traefik dashboard: http://localhost:8090

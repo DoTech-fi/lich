@@ -43,3 +43,15 @@ class TestOAuthState:
         assert '"state": state' in auth
         assert "oauth_state" in auth
         assert "set_cookie" in auth
+
+
+class TestTraefikDashboard:
+    def test_base_compose_has_no_insecure_api(self):
+        compose = (PROJECT_TEMPLATE / "docker-compose.yml").read_text()
+        assert "--api.insecure=true" not in compose
+        assert '"8090:8080"' not in compose
+
+    def test_dev_override_exists_with_dashboard(self):
+        override = (PROJECT_TEMPLATE / "docker-compose.override.yml").read_text()
+        assert "--api.insecure=true" in override
+        assert "8090:8080" in override

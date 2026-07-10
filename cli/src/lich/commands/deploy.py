@@ -28,6 +28,7 @@ from lich.commands._validate import (
     validate_git_url,
     validate_ssh_destination,
 )
+from lich.commands._shell import quote, run_remote
 
 console = Console()
 
@@ -134,18 +135,18 @@ def _generate_secure_string(length: int = 32) -> str:
 
 def _run_ssh_command(ssh_host: str, command: str, capture: bool = True, timeout: int = 120) -> tuple[int, str]:
     """Run a command on remote server via SSH."""
-    ssh_cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", ssh_host, command]
-    try:
-        if capture:
-            result = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=timeout)
-            return result.returncode, result.stdout + result.stderr
-        else:
-            result = subprocess.run(ssh_cmd, timeout=timeout)
-            return result.returncode, ""
-    except subprocess.TimeoutExpired:
-        return 1, "Connection timeout"
-    except Exception as e:
-        return 1, str(e)
+    return run_remote(ssh_host, command, timeout=timeout, capture=capture)
+
+
+def _build_clone_cmd(deploy_path: str, git_repo: str) -> str:
+    """Build the remote clone-or-pull script with all values shell-quoted."""
+    qpath = quote(deploy_path)
+    qrepo = quote(git_repo)
+    return (
+        f"mkdir -p {qpath} && "
+        f"if [ -d {qpath}/.git ]; then cd {qpath} && git pull; "
+        f"else rm -rf {qpath}/* && git clone {qrepo} {qpath}; fi"
+    )
 
 
 def _check_ssh_connection(ssh_host: str) -> bool:
@@ -651,15 +652,7 @@ def deploy_init(
         task = progress.add_task("[cyan]Cloning repository...", total=None)
         
         # Create directory and clone
-        clone_cmd = f"""
-            mkdir -p {deploy_path} && \
-            if [ -d "{deploy_path}/.git" ]; then
-                cd {deploy_path} && git pull
-            else
-                rm -rf {deploy_path}/* && \
-                git clone {git_repo} {deploy_path}
-            fi
-        """
+        clone_cmd = _build_clone_cmd(deploy_path, git_repo)
         code, output = _run_ssh_command(ssh_host, clone_cmd)
         
         if code != 0:
@@ -695,12 +688,17 @@ def deploy_init(
             task = progress.add_task("[cyan]Configuring Traefik...", total=None)
             
             domains = config.get("domains", {})
-            main_domain = domains.get("main", "example.com")
-            
+            try:
+                main_domain = validate_domain(domains.get("main", "example.com"))
+            except ValidationError as e:
+                console.print(f"[red]Invalid domain in config: {e}[/red]")
+                raise typer.Exit(1)
+            qpath = quote(deploy_path)
+
             # Create traefik configuration
             traefik_setup_cmd = f"""
-                mkdir -p {deploy_path}/traefik && \
-                cat > {deploy_path}/traefik/traefik.yml << 'EOF'
+                mkdir -p {qpath}/traefik && \
+                cat > {qpath}/traefik/traefik.yml << 'EOF'
 api:
   dashboard: true
 
@@ -727,9 +725,9 @@ providers:
   docker:
     exposedByDefault: false
 EOF
-                mkdir -p {deploy_path}/letsencrypt && \
-                touch {deploy_path}/letsencrypt/acme.json && \
-                chmod 600 {deploy_path}/letsencrypt/acme.json
+                mkdir -p {qpath}/letsencrypt && \
+                touch {qpath}/letsencrypt/acme.json && \
+                chmod 600 {qpath}/letsencrypt/acme.json
             """
             _run_ssh_command(ssh_host, traefik_setup_cmd)
             
@@ -740,11 +738,15 @@ EOF
         # Step 7: Start services
         task = progress.add_task("[cyan]Starting services...", total=None)
         
-        start_cmd = f"""
-            cd {deploy_path} && \
-            docker compose pull && \
-            docker compose up -d
-        """
+        qpath = quote(deploy_path)
+        start_cmd = (
+            f"cd {qpath} && "
+            f"if [ -f docker-compose.prod.yml ]; then "
+            f"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull && "
+            f"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d; "
+            f"else docker compose -f docker-compose.yml pull && "
+            f"docker compose -f docker-compose.yml up -d; fi"
+        )
         code, output = _run_ssh_command(ssh_host, start_cmd, timeout=180)
         
         if code != 0:
@@ -852,16 +854,16 @@ def deploy_status(
         
         # Get last commit info
         code, output = _run_ssh_command(
-            ssh_host, 
-            f"cd {deploy_path} && git log -1 --format='%h %s (%cr)' 2>/dev/null"
+            ssh_host,
+            f"cd {quote(deploy_path)} && git log -1 --format='%h %s (%cr)' 2>/dev/null"
         )
         if code == 0 and output.strip():
             console.print(f"│  [blue]🏷️ Version: {output.strip()}[/blue]")
-        
+
         # Get container status using modern docker compose
         code, output = _run_ssh_command(
             ssh_host,
-            f"cd {deploy_path} && docker compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}|{{{{.Service}}}}' 2>/dev/null || docker-compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}' 2>/dev/null"
+            f"cd {quote(deploy_path)} && docker compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}|{{{{.Service}}}}' 2>/dev/null || docker-compose ps --format 'table {{{{.Name}}}}|{{{{.Status}}}}' 2>/dev/null"
         )
         
         console.print("│")
@@ -973,40 +975,41 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
         
         # Pull latest code
         task = progress.add_task("[cyan]Pulling latest code...", total=None)
-        
-        pull_cmd = f"cd {deploy_path} && git pull"
+        qpath = quote(deploy_path)
+
+        pull_cmd = f"cd {qpath} && git pull"
         if version and version != "latest":
-            pull_cmd = f"cd {deploy_path} && git fetch && git checkout {version}"
-        
+            pull_cmd = f"cd {qpath} && git fetch && git checkout {quote(version)}"
+
         code, output = _run_ssh_command(ssh_host, pull_cmd)
         if code != 0:
             progress.stop()
             console.print(f"[red]✗ Failed to pull code: {output}[/red]")
             raise typer.Exit(1)
-        
+
         progress.update(task, description="[green]✓ Code updated")
         progress.remove_task(task)
-        
+
         # Determine which compose file to use (prefer .prod.yml for production)
-        compose_file_check = f"test -f {deploy_path}/docker-compose.prod.yml && echo 'prod' || echo 'dev'"
+        compose_file_check = f"test -f {qpath}/docker-compose.prod.yml && echo 'prod' || echo 'dev'"
         code, compose_type = _run_ssh_command(ssh_host, compose_file_check)
-        
+
         if "prod" in compose_type:
             compose_cmd = "docker compose -f docker-compose.prod.yml"
             console.print("[dim]Using docker-compose.prod.yml[/dim]")
         else:
-            compose_cmd = "docker compose"
+            compose_cmd = "docker compose -f docker-compose.yml"
             console.print("[dim]Using docker-compose.yml[/dim]")
-        
+
         # Rebuild and restart containers
         for comp in components:
             task = progress.add_task(f"[cyan]Deploying {comp}...", total=None)
-            
-            deploy_cmd = f"""
-                cd {deploy_path} && \
-                {compose_cmd} pull {comp} 2>&1; \
-                {compose_cmd} up -d --build {comp} 2>&1
-            """
+
+            deploy_cmd = (
+                f"cd {qpath} && "
+                f"{compose_cmd} pull {comp} 2>&1; "
+                f"{compose_cmd} up -d --build {comp} 2>&1"
+            )
             code, output = _run_ssh_command(ssh_host, deploy_cmd, timeout=300)
             
             progress.remove_task(task)
@@ -1028,7 +1031,7 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
     console.print("\n[cyan]Verifying containers...[/cyan]")
     code, output = _run_ssh_command(
         ssh_host,
-        f"cd {deploy_path} && docker compose ps --format '{{{{.Name}}}}|{{{{.Status}}}}'"
+        f"cd {qpath} && docker compose ps --format '{{{{.Name}}}}|{{{{.Status}}}}'"
     )
     
     if code == 0 and output.strip():
@@ -1139,7 +1142,7 @@ def deploy_logs(
     console.print(f"[dim]Connecting to {ssh_host}...[/dim]\n")
 
     follow_flag = "-f" if follow else ""
-    log_cmd = f"cd {deploy_path} && docker compose logs {follow_flag} --tail={lines} {component}"
+    log_cmd = f"cd {quote(deploy_path)} && docker compose logs {follow_flag} --tail={lines} {component}"
     
     # Run interactively for follow mode
     ssh_cmd = ["ssh", "-t", ssh_host, log_cmd]

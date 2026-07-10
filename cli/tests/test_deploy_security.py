@@ -158,3 +158,29 @@ class TestDeploySSHDestinationValidation:
         result = runner.invoke(app, ["deploy", "init", "production", "--skip-docker"])
         assert result.exit_code == 1
         assert "Invalid" in result.output
+
+
+class TestRemoteScriptQuoting:
+    def test_clone_cmd_quotes_path_and_repo(self):
+        from lich.commands.deploy import _build_clone_cmd
+
+        cmd = _build_clone_cmd('/opt/app"; rm -rf / #', "git@github.com:acme/app.git")
+        # the hostile path must appear only inside single quotes
+        assert '\'/opt/app"; rm -rf / #\'' in cmd
+        # and never unquoted
+        assert 'mkdir -p /opt/app";' not in cmd
+
+    def test_run_ssh_command_delegates_to_shell_module(self, monkeypatch):
+        captured = {}
+
+        def fake_run_remote(ssh_host, script, timeout=120, capture=True):
+            captured["ssh_host"] = ssh_host
+            captured["script"] = script
+            return 0, "ok"
+
+        monkeypatch.setattr("lich.commands.deploy.run_remote", fake_run_remote)
+        from lich.commands.deploy import _run_ssh_command
+
+        code, output = _run_ssh_command("prod", "echo ok")
+        assert code == 0
+        assert captured["ssh_host"] == "prod"

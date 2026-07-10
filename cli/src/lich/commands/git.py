@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from lich.commands._validate import ValidationError, validate_git_ref
+
 console = Console()
 
 def _run_command(cmd: list, cwd: Path = None) -> tuple[int, str, str]:
@@ -77,6 +79,11 @@ def git_commit(
         if not Confirm.ask("Proceed with this message?"):
             raise typer.Abort()
 
+    # Guard: reject empty or dash-prefixed messages to prevent git option smuggling
+    if not final_message or final_message.lstrip() == "" or final_message.startswith("-"):
+        console.print("[red]✗ Commit message must not be empty or start with '-'.[/red]")
+        raise typer.Exit(1)
+
     # Run git commit
     code, stdout, stderr = _run_command(["git", "commit", "-m", final_message])
     
@@ -98,6 +105,12 @@ def git_tag(
     """
     🏷️ Create a new version tag.
     """
+    try:
+        version = validate_git_ref(version)
+    except ValidationError as e:
+        console.print(f"[red]✗ {e}[/red]")
+        raise typer.Exit(1)
+
     if not version.startswith("v"):
         if Confirm.ask(f"Did you mean 'v{version}'?"):
             version = f"v{version}"

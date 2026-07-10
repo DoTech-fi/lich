@@ -10,6 +10,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from lich.commands._validate import ValidationError, validate_identifier
+
 console = Console()
 
 
@@ -33,7 +35,15 @@ def seed_command(
     if not Path(".lich").exists():
         console.print("[red]❌ Not a Lich project![/red]")
         raise typer.Exit(1)
-    
+
+    # M1: validate name before using it in path/importlib (only when provided)
+    if name:
+        try:
+            name = validate_identifier(name)
+        except ValidationError as e:
+            console.print(f"[red]✗ {e}[/red]")
+            raise typer.Exit(1)
+
     seeds_path = Path("backend/seeds")
     
     # Create seeds folder if missing

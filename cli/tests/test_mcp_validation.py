@@ -45,3 +45,19 @@ async def test_lich_secret_generate_rejects_huge_length():
 async def test_lich_secret_generate_rejects_huge_count():
     result = await mcp.call_tool("lich_secret_generate", {"count": 5000})
     assert "count must be between" in _text_of(result)
+
+
+@pytest.mark.asyncio
+async def test_lich_git_tag_rejects_option_injection():
+    """I1: lich_git_tag must reject a version that starts with '-' (option smuggling)."""
+    result = await mcp.call_tool("lich_git_tag", {"version": "--delete"})
+    text = _text_of(result)
+    assert "Invalid" in text or "ERROR" in text
+
+
+@pytest.mark.asyncio
+async def test_lich_seed_rejects_injection():
+    """M1: lich_seed must reject a name containing shell metacharacters."""
+    result = await mcp.call_tool("lich_seed", {"name": "x; rm -rf /"})
+    text = _text_of(result)
+    assert "Invalid" in text or "ERROR" in text

@@ -11,14 +11,20 @@ def register_utility_tools(mcp):
     def lich_adopt(path: str, output: str = ".", dry_run: bool = True) -> str:
         """
         Adopt an existing Python project into Lich architecture.
-        
+
         Analyzes the project and suggests a Lich configuration.
-        
+
         Args:
             path: Path to existing Python project.
             output: Output directory for new Lich project.
             dry_run: If True, only analyze without creating project.
         """
+        # M2: guard against empty or dash-prefixed path/output (option smuggling)
+        if not path or path.startswith("-"):
+            return "ERROR: 'path' must not be empty or start with '-'."
+        if not output or output.startswith("-"):
+            return "ERROR: 'output' must not be empty or start with '-'."
+
         cmd = ["lich", "adopt", path, "-o", output]
         if dry_run:
             cmd.append("--dry-run")

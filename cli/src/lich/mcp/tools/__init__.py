@@ -42,3 +42,31 @@ def run_lich_command(cmd: list, force_no_color: bool = True) -> str:
         return output
     except FileNotFoundError:
         return "lich command not found"
+
+
+async def run_lich_command_async(cmd: list, force_no_color: bool = True) -> str:
+    """Async variant of run_lich_command for long-running tools.
+
+    Uses asyncio.create_subprocess_exec (never a shell) so a slow deploy/CI/
+    migration doesn't block the MCP server's event loop. Non-zero exits are
+    prefixed with 'ERROR (exit N):' so AI callers can detect failure.
+    """
+    import asyncio
+
+    env = os.environ.copy()
+    if force_no_color:
+        env["NO_COLOR"] = "1"
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            env=env,
+        )
+        out, _ = await proc.communicate()
+        text = clean_cli_output(out.decode(errors="replace"))
+        if proc.returncode != 0:
+            return f"ERROR (exit {proc.returncode}):\n{text}"
+        return text
+    except FileNotFoundError:
+        return f"Command not found: {cmd[0]}"

@@ -41,3 +41,5 @@ class TestOAuthState:
         assert "_make_oauth_state" in auth
         assert "_verify_oauth_state" in auth
         assert '"state": state' in auth
+        assert "oauth_state" in auth
+        assert "set_cookie" in auth

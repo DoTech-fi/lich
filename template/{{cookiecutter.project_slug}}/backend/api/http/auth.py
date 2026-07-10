@@ -3,8 +3,9 @@ Authentication endpoints.
 """
 import hashlib
 import hmac as _hmac
+import secrets
 import time
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 {%- if cookiecutter.auth_strategy == 'jwt_builtin' %}
 from datetime import timedelta
 
@@ -162,35 +163,54 @@ async def refresh_token(
 # GOOGLE OAUTH
 # ==========================================
 
-def _make_oauth_state() -> str:
-    """Create a signed, time-limited state token for the OAuth flow."""
+def _make_oauth_state(nonce: str) -> str:
+    """Create a signed, time-limited state token bound to a per-session nonce."""
     ts = str(int(time.time()))
-    sig = _hmac.new(settings.secret_key.encode(), ts.encode(), hashlib.sha256).hexdigest()
-    return f"{ts}.{sig}"
+    payload = f"{ts}.{nonce}"
+    sig = _hmac.new(settings.secret_key.encode(), payload.encode(), hashlib.sha256).hexdigest()
+    return f"{payload}.{sig}"
 
 
-def _verify_oauth_state(state: str, max_age_seconds: int = 600) -> bool:
-    """Verify the signature and age of an OAuth state token."""
+def _verify_oauth_state(state: str, cookie_nonce: str, max_age_seconds: int = 600) -> bool:
+    """Verify signature, age, and that the state is bound to this session's cookie nonce."""
     try:
-        ts, sig = state.split(".", 1)
-        expected = _hmac.new(settings.secret_key.encode(), ts.encode(), hashlib.sha256).hexdigest()
-        return _hmac.compare_digest(sig, expected) and (time.time() - int(ts)) < max_age_seconds
+        ts, nonce, sig = state.split(".", 2)
+        payload = f"{ts}.{nonce}"
+        expected = _hmac.new(settings.secret_key.encode(), payload.encode(), hashlib.sha256).hexdigest()
+        if not _hmac.compare_digest(sig, expected):
+            return False
+        age = time.time() - int(ts)
+        if not (0 <= age < max_age_seconds):
+            return False
+        if not cookie_nonce or not _hmac.compare_digest(nonce, cookie_nonce):
+            return False
+        return True
     except (ValueError, TypeError, AttributeError):
         return False
 
 
 @router.get("/google/url")
-async def google_auth_url():
+async def google_auth_url(response: Response):
     """Get Google OAuth authorization URL."""
     if not settings.google_client_id:
         raise HTTPException(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
             detail="Google OAuth is not configured. Please set GOOGLE_CLIENT_ID in your environment.",
         )
-    
+
     import urllib.parse
 
-    state = _make_oauth_state()
+    nonce = secrets.token_urlsafe(32)
+    state = _make_oauth_state(nonce)
+    response.set_cookie(
+        "oauth_state",
+        nonce,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=600,
+        path="/",
+    )
 
     params = {
         "client_id": settings.google_client_id,
@@ -211,14 +231,18 @@ async def google_auth_url():
 async def google_callback(
     code: str,
     state: str,
+    request: Request,
+    response: Response,
     user_service: UserService = Depends(get_user_service),
 ):
     """Handle Google OAuth callback and exchange code for tokens."""
-    if not _verify_oauth_state(state):
+    cookie_nonce = request.cookies.get("oauth_state", "")
+    if not _verify_oauth_state(state, cookie_nonce):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired OAuth state (possible CSRF).",
         )
+    response.delete_cookie("oauth_state", path="/")
 
     import httpx
 

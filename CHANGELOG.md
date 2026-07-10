@@ -2,6 +2,19 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.13.1] - 2026-07-11
+
+Correctness sprint — Phase 2 of the v1 hardening roadmap. Fixes the framework's own failing tests and several bugs in the generated project template.
+
+### Fixed
+- **Generated frontend was broken**: `.tsx`/`.ts` files were copied verbatim with raw Jinja syntax inside (auth-strategy conditionals never rendered). Templates now render through Jinja with `{% raw %}` guards where JSX uses `{{ }}`. Added a CLI-side generation smoke harness (`test_template_generation.py`) that renders the template and asserts no Jinja leaks + backend compiles across auth strategies.
+- **Keycloak auth**: auto-created users no longer 500 on a missing email claim, a dotted username (e.g. `john.doe`), or land in `PENDING` — new dedicated `create_external_user` service path bypasses the registration DTO.
+- **MCP**: tool failures now return `ERROR (exit N):`-prefixed output instead of silently looking like success; implemented the documented-but-missing `lich_ci_all` tool; the tool-inventory test now matches the real **52** registered tools (docs/tests claimed 47) via a symmetric set assertion that can't silently drift again.
+- **Rate limiter**: the in-memory limiter now evicts stale IPs (was unbounded memory growth).
+- **Generated tests**: `test_user_service.py` rewritten to match the real service API (it previously could not run at all — wrong constructor kwarg, method name, and exception type).
+- **`lich version --history`**: robust CHANGELOG.md resolution outside a dev checkout.
+- **Docs**: corrected the "47 MCP tools" claim to 52 everywhere and documented the real deploy/CI tool names.
+
 ## [1.13.0] - 2026-07-10
 
 Security sprint — Phase 1 of the v1 hardening roadmap. Closes every known injection and default-secret vulnerability across the CLI, the MCP server, and the generated project template. Two new modules (`_validate.py`, `_shell.py`) form the security boundary: all user/config input is validated against strict allowlists at entry points, and all remote scripts are shell-quoted as defense-in-depth.

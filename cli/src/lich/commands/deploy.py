@@ -29,6 +29,7 @@ from lich.commands._validate import (
     validate_ssh_destination,
 )
 from lich.commands._shell import quote, run_remote
+from lich.commands.ci import _add_to_gitignore
 
 console = Console()
 
@@ -301,6 +302,7 @@ def _save_env_file(env: str, env_vars: dict):
             f.write(f'{key}="{value}"\n')
     
     console.print(f"  [green]✓ Saved to {env_file}[/green]")
+    _add_to_gitignore([".secrets", ".lich/*.env"])
     return env_file
 
 

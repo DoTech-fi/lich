@@ -199,3 +199,16 @@ class TestVerifyGithubAccessTimeout:
 
         result = _verify_github_access("git@github.com:acme/app.git", "/tmp/key")
         assert result is False, "TimeoutExpired must be caught and return False, not propagate"
+
+
+class TestDeploySecretsGitignore:
+    def test_save_env_file_adds_gitignore_entries(self, temp_dir, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        from lich.commands.deploy import _save_env_file
+
+        _save_env_file("production", {"API_KEY": "supersecret"})
+
+        gitignore = (temp_dir / ".gitignore").read_text()
+        assert ".lich/*.env" in gitignore
+        assert ".secrets" in gitignore
+        assert (temp_dir / ".lich" / "deploy.production.env").exists()

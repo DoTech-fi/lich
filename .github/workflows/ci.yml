@@ -67,3 +67,27 @@ jobs:
         run: |
           cd cli
           mypy src/lich
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install scanners
+        run: pip install bandit pip-audit
+
+      - name: Bandit (static security analysis)
+        run: |
+          cd cli
+          bandit -c pyproject.toml -r src
+
+      - name: pip-audit (dependency vulnerabilities)
+        run: |
+          cd cli
+          pip install -e .
+          pip-audit --skip-editable .

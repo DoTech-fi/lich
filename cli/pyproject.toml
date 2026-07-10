@@ -60,3 +60,19 @@ check_untyped_defs = false
 warn_unused_ignores = true
 exclude = ["tests/", "dist/"]
 disable_error_code = ["import-untyped"]
+
+[tool.bandit]
+targets = ["src"]
+# B603/B607: subprocess without shell — all call sites use list args and
+# validated input via commands/_shell.py (Phase 1). Triaged 2026-07-10.
+# B606: os.execvp in upgrade.py is a controlled self-restart using
+# sys.argv[0] (own executable path), not user-supplied input.
+# B404: informational import warning; presence of B603 skips makes it moot.
+skips = ["B404", "B603", "B606", "B607"]
+
+[tool.coverage.run]
+source = ["lich"]
+omit = ["tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+show_missing = true

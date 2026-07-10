@@ -116,18 +116,41 @@ def register_ci_tools(mcp):
     def lich_ci_landing(local: bool = False) -> str:
         """
         Run CI checks for landing page only.
-        
+
         By default runs with Docker/act. Use local=True for direct execution.
-        
+
         Args:
             local: If True, run locally without Docker.
         """
         cmd = ["lich", "ci", "landing"]
         if local:
             cmd.append("-l")
-        
+
         try:
             res = subprocess.run(cmd, capture_output=True, text=True)
             return res.stdout + res.stderr
         except FileNotFoundError:
             return "lich command not found"
+
+    @mcp.tool()
+    def lich_ci_all(local: bool = False) -> str:
+        """
+        Run CI checks for all components sequentially (backend, web, admin, landing).
+
+        By default runs with Docker/act. Use local=True for direct execution.
+
+        Args:
+            local: If True, run locally without Docker (faster for dev).
+        """
+        results = []
+        for component in ["backend", "web", "admin", "landing"]:
+            cmd = ["lich", "ci", component]
+            if local:
+                cmd.append("-l")
+            try:
+                res = subprocess.run(cmd, capture_output=True, text=True)
+                status = "✅" if res.returncode == 0 else f"❌ (exit {res.returncode})"
+                results.append(f"=== {component} {status} ===\n{res.stdout}{res.stderr}")
+            except FileNotFoundError:
+                return "lich command not found"
+        return "\n".join(results)

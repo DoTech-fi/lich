@@ -177,18 +177,20 @@ def _extract_repo_info(git_url: str) -> tuple[str, str, str]:
 
 
 def _verify_github_access(git_url: str, key_path: str) -> bool:
-    """Verify that the deploy key can access the GitHub repo."""
+    """Verify that the deploy key can access the GitHub/GitLab repo."""
     provider, owner, repo = _extract_repo_info(git_url)
-    
-    # Test SSH connection with the specific key
-    if provider == "github":
-        test_cmd = f'ssh -i {key_path} -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1'
-    else:
-        test_cmd = f'ssh -i {key_path} -o StrictHostKeyChecking=accept-new -T git@gitlab.com 2>&1'
-    
-    result = subprocess.run(test_cmd, shell=True, capture_output=True, text=True)
-    # GitHub returns exit code 1 but with success message
-    return "successfully authenticated" in result.stdout.lower() or "welcome" in result.stdout.lower()
+
+    git_host = "git@github.com" if provider == "github" else "git@gitlab.com"
+    cmd = [
+        "ssh",
+        "-i", key_path,
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-T", git_host,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    # ssh -T writes its greeting to stderr; GitHub exits 1 on success
+    output = (result.stdout + result.stderr).lower()
+    return "successfully authenticated" in output or "welcome" in output
 
 
 def _collect_env_vars(env: str) -> dict:

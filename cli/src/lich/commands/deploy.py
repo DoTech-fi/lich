@@ -517,47 +517,25 @@ def deploy_setup():
 
 
 # ============================================
-# INIT COMMAND (NEW)
+# INIT HELPERS
 # ============================================
 
-@deploy_app.command(name="init")
-def deploy_init(
-    environment: str = typer.Argument(..., help="Environment to initialize (staging, production)"),
-    skip_docker: bool = typer.Option(False, "--skip-docker", help="Skip Docker installation"),
-):
-    """
-    🚀 Initialize server for deployment.
-    
-    This command will:
-    1. Connect to the server via SSH
-    2. Install Docker and Docker Compose (if needed)
-    3. Setup the deploy key on the server
-    4. Clone the repository
-    5. Copy environment file
-    6. Setup Traefik with SSL
-    7. Start the services
-    
-    Examples:
-        lich deploy init production
-        lich deploy init staging --skip-docker
-    """
-    _check_lich_project()
-    
-    config = _load_deploy_config()
-    
+def _resolve_ssh_target(config: dict, environment: str) -> tuple[str, str, str]:
+    """Resolve and validate (ssh_host, deploy_path, git_repo) for an environment or exit."""
     if environment not in config:
         console.print(f"[red]Environment '{environment}' not configured[/red]")
         console.print("[yellow]Run 'lich deploy setup' first[/yellow]")
         raise typer.Exit(1)
-    
+
     env_config = config[environment]
-    
+
     # Build SSH host string
     if env_config.get("connection") == "ssh-config":
         ssh_host = env_config.get("ssh_name")
     else:
         ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
 
+    # Security: validate SSH destination before any ssh/scp use
     try:
         ssh_host = validate_ssh_destination(ssh_host)
     except ValidationError as e:
@@ -567,6 +545,7 @@ def deploy_init(
     deploy_path = env_config.get("path", "/opt/app")
     git_repo = config.get("git_repo")
 
+    # Security: re-validate config values at read time
     try:
         deploy_path = validate_deploy_path(deploy_path)
         if git_repo:
@@ -575,133 +554,142 @@ def deploy_init(
         console.print(f"[red]Invalid value in {DEPLOY_CONFIG_PATH}: {e}[/red]")
         raise typer.Exit(1)
 
-    console.print(Panel.fit(f"🚀 Initializing {environment.upper()} Server", style="bold blue"))
-    
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        
-        # Step 1: Test SSH connection
-        task = progress.add_task("[cyan]Connecting to server...", total=None)
-        if not _check_ssh_connection(ssh_host):
-            progress.stop()
-            console.print(f"[red]✗ Cannot connect to {ssh_host}[/red]")
-            raise typer.Exit(1)
-        progress.update(task, description="[green]✓ Connected to server")
-        progress.remove_task(task)
-        console.print(f"[green]✓[/green] Connected to {ssh_host}")
-        
-        # Step 2: Check/Install Docker
-        if not skip_docker:
-            task = progress.add_task("[cyan]Checking Docker...", total=None)
-            code, output = _run_ssh_command(ssh_host, "docker --version")
-            
-            if code != 0:
-                progress.update(task, description="[yellow]Installing Docker...")
-                
-                # Install Docker
-                docker_install_cmd = """
-                    curl -fsSL https://get.docker.com | sh && \
-                    systemctl enable docker && \
-                    systemctl start docker && \
-                    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
-                    chmod +x /usr/local/bin/docker-compose
-                """
-                code, output = _run_ssh_command(ssh_host, docker_install_cmd, timeout=300)
-                if code != 0:
-                    progress.stop()
-                    console.print(f"[red]✗ Failed to install Docker: {output}[/red]")
-                    raise typer.Exit(1)
-                
-                progress.update(task, description="[green]✓ Docker installed")
-            else:
-                progress.update(task, description="[green]✓ Docker already installed")
-            
-            progress.remove_task(task)
-            console.print("[green]✓[/green] Docker ready")
-        
-        # Step 3: Setup deploy key on server
-        if config.get("private_repo") and config.get("deploy_key_path"):
-            task = progress.add_task("[cyan]Setting up deploy key...", total=None)
-            
-            key_path = _safe_local_path(config.get("deploy_key_path"), "deploy_key_path")
+    return ssh_host, deploy_path, git_repo
 
-            # Copy private key to server
-            scp_cmd = ["scp", key_path, f"{ssh_host}:~/.ssh/deploy_key"]
-            result = subprocess.run(scp_cmd, capture_output=True, text=True)
-            
-            if result.returncode != 0:
-                progress.stop()
-                console.print(f"[red]✗ Failed to copy deploy key: {result.stderr}[/red]")
-                raise typer.Exit(1)
-            
-            # Set permissions and configure SSH
-            ssh_setup_cmd = """
-                chmod 600 ~/.ssh/deploy_key && \
-                echo 'Host github.com
-                    IdentityFile ~/.ssh/deploy_key
-                    StrictHostKeyChecking accept-new' >> ~/.ssh/config && \
-                chmod 600 ~/.ssh/config
-            """
-            _run_ssh_command(ssh_host, ssh_setup_cmd)
-            
-            progress.update(task, description="[green]✓ Deploy key configured")
-            progress.remove_task(task)
-            console.print("[green]✓[/green] Deploy key configured on server")
-        
-        # Step 4: Clone repository
-        task = progress.add_task("[cyan]Cloning repository...", total=None)
-        
-        # Create directory and clone
-        clone_cmd = _build_clone_cmd(deploy_path, git_repo)
-        code, output = _run_ssh_command(ssh_host, clone_cmd)
-        
+
+def _check_server_connection(progress, ssh_host: str) -> None:
+    """Step 1: verify SSH connectivity or exit."""
+    task = progress.add_task("[cyan]Connecting to server...", total=None)
+    if not _check_ssh_connection(ssh_host):
+        progress.stop()
+        console.print(f"[red]✗ Cannot connect to {ssh_host}[/red]")
+        raise typer.Exit(1)
+    progress.update(task, description="[green]✓ Connected to server")
+    progress.remove_task(task)
+    console.print(f"[green]✓[/green] Connected to {ssh_host}")
+
+
+def _install_docker_remote(progress, ssh_host: str) -> None:
+    """Step 2: check/install Docker and Docker Compose on the remote server."""
+    task = progress.add_task("[cyan]Checking Docker...", total=None)
+    code, output = _run_ssh_command(ssh_host, "docker --version")
+
+    if code != 0:
+        progress.update(task, description="[yellow]Installing Docker...")
+        docker_install_cmd = (
+            "curl -fsSL https://get.docker.com | sh && "
+            "systemctl enable docker && "
+            "systemctl start docker && "
+            'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"'
+            " -o /usr/local/bin/docker-compose && "
+            "chmod +x /usr/local/bin/docker-compose"
+        )
+        code, output = _run_ssh_command(ssh_host, docker_install_cmd, timeout=300)
         if code != 0:
             progress.stop()
-            console.print(f"[red]✗ Failed to clone repository: {output}[/red]")
+            console.print(f"[red]✗ Failed to install Docker: {output}[/red]")
             raise typer.Exit(1)
-        
-        progress.update(task, description="[green]✓ Repository cloned")
-        progress.remove_task(task)
-        console.print(f"[green]✓[/green] Repository cloned to {deploy_path}")
-        
-        # Step 5: Copy environment file
-        env_file = env_config.get("env_file")
-        if env_file:
-            env_file = _safe_local_path(env_file, "env_file")
-        if env_file and Path(env_file).exists():
-            task = progress.add_task("[cyan]Copying environment file...", total=None)
+        progress.update(task, description="[green]✓ Docker installed")
+    else:
+        progress.update(task, description="[green]✓ Docker already installed")
 
-            scp_cmd = ["scp", env_file, f"{ssh_host}:{deploy_path}/.env"]
-            result = subprocess.run(scp_cmd, capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                progress.update(task, description="[green]✓ Environment file copied")
-                console.print("[green]✓[/green] Environment file copied")
-            else:
-                progress.update(task, description="[yellow]⚠ Failed to copy env file")
-                console.print(f"[yellow]⚠[/yellow] Failed to copy env file: {result.stderr}")
-            
-            progress.remove_task(task)
-        
-        # Step 6: Setup Traefik (if domains configured)
-        if config.get("domains"):
-            task = progress.add_task("[cyan]Configuring Traefik...", total=None)
-            
-            domains = config.get("domains", {})
-            try:
-                main_domain = validate_domain(domains.get("main", "example.com"))
-            except ValidationError as e:
-                console.print(f"[red]Invalid domain in config: {e}[/red]")
-                raise typer.Exit(1)
-            qpath = quote(deploy_path)
+    progress.remove_task(task)
+    console.print("[green]✓[/green] Docker ready")
 
-            # Create traefik configuration
-            traefik_setup_cmd = f"""
-                mkdir -p {qpath}/traefik && \
-                cat > {qpath}/traefik/traefik.yml << 'EOF'
+
+def _copy_deploy_key_remote(progress, config: dict, ssh_host: str) -> None:
+    """Step 3: copy deploy key to server and configure SSH agent forwarding."""
+    task = progress.add_task("[cyan]Setting up deploy key...", total=None)
+
+    # Security: _safe_local_path rejects empty/dash-prefixed paths (scp option smuggling)
+    key_path = _safe_local_path(config.get("deploy_key_path"), "deploy_key_path")
+
+    # Copy private key to server
+    scp_cmd = ["scp", key_path, f"{ssh_host}:~/.ssh/deploy_key"]
+    result = subprocess.run(scp_cmd, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        progress.stop()
+        console.print(f"[red]✗ Failed to copy deploy key: {result.stderr}[/red]")
+        raise typer.Exit(1)
+
+    # Set permissions and configure SSH
+    ssh_setup_cmd = (
+        "chmod 600 ~/.ssh/deploy_key && "
+        "echo 'Host github.com\n"
+        "    IdentityFile ~/.ssh/deploy_key\n"
+        "    StrictHostKeyChecking accept-new' >> ~/.ssh/config && "
+        "chmod 600 ~/.ssh/config"
+    )
+    _run_ssh_command(ssh_host, ssh_setup_cmd)
+
+    progress.update(task, description="[green]✓ Deploy key configured")
+    progress.remove_task(task)
+    console.print("[green]✓[/green] Deploy key configured on server")
+
+
+def _clone_repo_remote(progress, ssh_host: str, deploy_path: str, git_repo: str) -> None:
+    """Step 4: clone or pull the repository using shell-quoted paths."""
+    task = progress.add_task("[cyan]Cloning repository...", total=None)
+
+    # Security: _build_clone_cmd shell-quotes deploy_path and git_repo
+    clone_cmd = _build_clone_cmd(deploy_path, git_repo)
+    code, output = _run_ssh_command(ssh_host, clone_cmd)
+
+    if code != 0:
+        progress.stop()
+        console.print(f"[red]✗ Failed to clone repository: {output}[/red]")
+        raise typer.Exit(1)
+
+    progress.update(task, description="[green]✓ Repository cloned")
+    progress.remove_task(task)
+    console.print(f"[green]✓[/green] Repository cloned to {deploy_path}")
+
+
+def _copy_env_file_remote(progress, env_config: dict, ssh_host: str, deploy_path: str) -> None:
+    """Step 5: copy environment file to server if configured."""
+    env_file = env_config.get("env_file")
+    # Security: _safe_local_path rejects empty/dash-prefixed paths (scp option smuggling)
+    if env_file:
+        env_file = _safe_local_path(env_file, "env_file")
+    if not (env_file and Path(env_file).exists()):
+        return
+
+    task = progress.add_task("[cyan]Copying environment file...", total=None)
+    scp_cmd = ["scp", env_file, f"{ssh_host}:{deploy_path}/.env"]
+    result = subprocess.run(scp_cmd, capture_output=True, text=True)
+
+    if result.returncode == 0:
+        progress.update(task, description="[green]✓ Environment file copied")
+        console.print("[green]✓[/green] Environment file copied")
+    else:
+        progress.update(task, description="[yellow]⚠ Failed to copy env file")
+        console.print(f"[yellow]⚠[/yellow] Failed to copy env file: {result.stderr}")
+
+    progress.remove_task(task)
+
+
+def _setup_traefik_remote(progress, config: dict, ssh_host: str, deploy_path: str) -> None:
+    """Step 6: write Traefik config + Let's Encrypt storage on the remote server."""
+    if not config.get("domains"):
+        return
+
+    task = progress.add_task("[cyan]Configuring Traefik...", total=None)
+
+    domains = config.get("domains", {})
+    # Security: validate domain before interpolating into remote shell script
+    try:
+        main_domain = validate_domain(domains.get("main", "example.com"))
+    except ValidationError as e:
+        console.print(f"[red]Invalid domain in config: {e}[/red]")
+        raise typer.Exit(1)
+
+    # Security: quote deploy_path before interpolating into remote shell script
+    qpath = quote(deploy_path)
+
+    traefik_setup_cmd = f"""
+        mkdir -p {qpath}/traefik && \
+        cat > {qpath}/traefik/traefik.yml << 'EOF'
 api:
   dashboard: true
 
@@ -728,53 +716,115 @@ providers:
   docker:
     exposedByDefault: false
 EOF
-                mkdir -p {qpath}/letsencrypt && \
-                touch {qpath}/letsencrypt/acme.json && \
-                chmod 600 {qpath}/letsencrypt/acme.json
-            """
-            _run_ssh_command(ssh_host, traefik_setup_cmd)
-            
-            progress.update(task, description="[green]✓ Traefik configured")
-            progress.remove_task(task)
-            console.print("[green]✓[/green] Traefik configured with Let's Encrypt")
-        
-        # Step 7: Start services
-        task = progress.add_task("[cyan]Starting services...", total=None)
-        
-        qpath = quote(deploy_path)
-        start_cmd = (
-            f"cd {qpath} && "
-            f"if [ -f docker-compose.prod.yml ]; then "
-            f"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull && "
-            f"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d; "
-            f"else docker compose -f docker-compose.yml pull && "
-            f"docker compose -f docker-compose.yml up -d; fi"
-        )
-        code, output = _run_ssh_command(ssh_host, start_cmd, timeout=180)
-        
-        if code != 0:
-            progress.update(task, description="[yellow]⚠ Services may need manual start")
-            console.print(f"[yellow]⚠[/yellow] Could not auto-start: {output}")
-        else:
-            progress.update(task, description="[green]✓ Services started")
-            console.print("[green]✓[/green] Services started")
-        
-        progress.remove_task(task)
-    
-    # Final summary
+        mkdir -p {qpath}/letsencrypt && \
+        touch {qpath}/letsencrypt/acme.json && \
+        chmod 600 {qpath}/letsencrypt/acme.json
+    """
+    _run_ssh_command(ssh_host, traefik_setup_cmd)
+
+    progress.update(task, description="[green]✓ Traefik configured")
+    progress.remove_task(task)
+    console.print("[green]✓[/green] Traefik configured with Let's Encrypt")
+
+
+def _start_services_remote(progress, ssh_host: str, deploy_path: str) -> None:
+    """Step 7: pull images and start services via docker compose.
+
+    Always passes explicit -f docker-compose.yml so prod never auto-loads
+    docker-compose.override.yml.  Layered with docker-compose.prod.yml when present.
+    """
+    task = progress.add_task("[cyan]Starting services...", total=None)
+
+    # Security: quote deploy_path before interpolating into remote shell script
+    qpath = quote(deploy_path)
+    start_cmd = (
+        f"cd {qpath} && "
+        f"if [ -f docker-compose.prod.yml ]; then "
+        f"docker compose -f docker-compose.yml -f docker-compose.prod.yml pull && "
+        f"docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d; "
+        f"else docker compose -f docker-compose.yml pull && "
+        f"docker compose -f docker-compose.yml up -d; fi"
+    )
+    code, output = _run_ssh_command(ssh_host, start_cmd, timeout=180)
+
+    if code != 0:
+        progress.update(task, description="[yellow]⚠ Services may need manual start")
+        console.print(f"[yellow]⚠[/yellow] Could not auto-start: {output}")
+    else:
+        progress.update(task, description="[green]✓ Services started")
+        console.print("[green]✓[/green] Services started")
+
+    progress.remove_task(task)
+
+
+def _print_init_summary(config: dict) -> None:
+    """Print final summary with application URLs."""
     console.print("\n" + "═" * 50)
     console.print("[bold green]✓ Server initialized successfully![/bold green]")
-    
+
     if config.get("domains"):
         domains = config.get("domains", {})
         console.print("\n[bold]🌐 Your app should be available at:[/bold]")
         console.print(f"   https://{domains.get('main')}")
         console.print(f"   https://{domains.get('api')}")
-        if domains.get('admin'):
+        if domains.get("admin"):
             console.print(f"   https://{domains.get('admin')}")
-    
+
     console.print("\n[dim]Note: DNS propagation may take a few minutes.[/dim]")
     console.print("[dim]Run 'lich deploy status' to check server status.[/dim]")
+
+
+# ============================================
+# INIT COMMAND (NEW)
+# ============================================
+
+@deploy_app.command(name="init")
+def deploy_init(
+    environment: str = typer.Argument(..., help="Environment to initialize (staging, production)"),
+    skip_docker: bool = typer.Option(False, "--skip-docker", help="Skip Docker installation"),
+):
+    """
+    🚀 Initialize server for deployment.
+
+    This command will:
+    1. Connect to the server via SSH
+    2. Install Docker and Docker Compose (if needed)
+    3. Setup the deploy key on the server
+    4. Clone the repository
+    5. Copy environment file
+    6. Setup Traefik with SSL
+    7. Start the services
+
+    Examples:
+        lich deploy init production
+        lich deploy init staging --skip-docker
+    """
+    _check_lich_project()
+    config = _load_deploy_config()
+    ssh_host, deploy_path, git_repo = _resolve_ssh_target(config, environment)
+    env_config = config[environment]
+
+    console.print(Panel.fit(f"🚀 Initializing {environment.upper()} Server", style="bold blue"))
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        _check_server_connection(progress, ssh_host)
+
+        if not skip_docker:
+            _install_docker_remote(progress, ssh_host)
+
+        if config.get("private_repo") and config.get("deploy_key_path"):
+            _copy_deploy_key_remote(progress, config, ssh_host)
+
+        _clone_repo_remote(progress, ssh_host, deploy_path, git_repo)
+        _copy_env_file_remote(progress, env_config, ssh_host, deploy_path)
+        _setup_traefik_remote(progress, config, ssh_host, deploy_path)
+        _start_services_remote(progress, ssh_host, deploy_path)
+
+    _print_init_summary(config)
 
 
 # ============================================

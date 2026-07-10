@@ -3,6 +3,7 @@
 These read the RAW template files (Jinja not rendered) and assert
 security-relevant content, so template regressions fail this repo's CI.
 """
+import json
 from pathlib import Path
 
 TEMPLATE_ROOT = Path(__file__).resolve().parent.parent.parent / "template"
@@ -17,3 +18,18 @@ class TestSettingsGuard:
 
     def test_generated_projects_get_the_guard_test(self):
         assert (PROJECT_TEMPLATE / "backend/tests/test_settings_guard.py").exists()
+
+
+class TestAdminPassword:
+    def test_cookiecutter_has_no_default_admin_password(self):
+        config = json.loads((TEMPLATE_ROOT / "cookiecutter.json").read_text())
+        assert config["admin_password"] == "", "admin_password must have no usable default"
+
+    def test_post_gen_hook_generates_password(self):
+        hook = (TEMPLATE_ROOT / "hooks/post_gen_project.py").read_text()
+        assert "token_urlsafe" in hook
+        assert "harden_admin_password" in hook
+
+    def test_seed_script_refuses_weak_password(self):
+        seed = (PROJECT_TEMPLATE / "backend/scripts/seed_db.py").read_text()
+        assert 'in ("", "admin")' in seed

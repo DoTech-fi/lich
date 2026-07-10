@@ -19,10 +19,21 @@ async def seed_admin():
     """Seed the database with the initial admin user."""
     admin_email = "{{ cookiecutter.admin_email }}"
     admin_password = "{{ cookiecutter.admin_password }}"
-    
-    if not admin_email or not admin_password:
-        logger.warning("Admin email or password not configured in cookiecutter.")
+
+    # Environment always wins; the literal above is patched by the post-gen hook.
+    admin_password = os.environ.get("ADMIN_PASSWORD", admin_password)
+
+    if not admin_email:
+        logger.warning("Admin email not configured.")
         return
+
+    if admin_password in ("", "admin"):
+        import secrets as _secrets
+        admin_password = _secrets.token_urlsafe(12)
+        logger.warning(
+            f"No secure admin password configured - generated one: {admin_password} "
+            "(save it now, it will not be shown again)"
+        )
 
     async for session in get_session():
         user_repo = UserRepository(session)

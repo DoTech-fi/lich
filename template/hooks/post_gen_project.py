@@ -3,6 +3,8 @@ Cookiecutter Post-Generation Hook.
 Cleans up files based on user choices and shows service URLs.
 """
 import os
+import re
+import secrets
 import shutil
 
 
@@ -26,12 +28,37 @@ def make_executable(filepath):
         os.chmod(filepath, 0o755)
 
 
+def harden_admin_password(project_dir):
+    """If no admin password was provided (or the insecure 'admin' was used),
+    generate a random one, patch it into the seed script, and return it so
+    main() can print it exactly once."""
+    rendered = "{{ cookiecutter.admin_password }}"
+    if rendered not in ("", "admin"):
+        return None
+
+    password = secrets.token_urlsafe(12)
+    seed_file = os.path.join(project_dir, "backend", "scripts", "seed_db.py")
+    if os.path.exists(seed_file):
+        with open(seed_file) as f:
+            content = f.read()
+        content = re.sub(
+            r'admin_password = ".*"',
+            f'admin_password = "{password}"',
+            content,
+            count=1,
+        )
+        with open(seed_file, "w") as f:
+            f.write(content)
+    return password
+
+
 def main():
     """Clean up based on cookiecutter choices."""
     print("\n🧹 Cleaning up based on your choices...")
     
     project_dir = os.getcwd()
-    
+    generated_password = harden_admin_password(project_dir)
+
     {%- if cookiecutter.auth_strategy != 'keycloak' %}
     remove_file(os.path.join(project_dir, "scripts", "setup-keycloak.sh"))
     {%- endif %}
@@ -53,6 +80,13 @@ def main():
     os.system("git init -q 2>/dev/null || true")
     
     print("\n✅ Project setup complete!")
+    if generated_password:
+        print("\n" + "!" * 50)
+        print("🔑 GENERATED ADMIN PASSWORD (shown only once):")
+        print(f"   email:    {{ cookiecutter.admin_email }}")
+        print(f"   password: {generated_password}")
+        print("   Change it after first login.")
+        print("!" * 50)
     print("\n" + "="*50)
     print("📚 {{ cookiecutter.project_name }}")
     print("="*50)

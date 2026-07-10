@@ -206,7 +206,8 @@ async def google_auth_url(response: Response):
         "oauth_state",
         nonce,
         httponly=True,
-        secure=True,
+        # Secure everywhere except local HTTP dev
+        secure=settings.environment.lower() != "development",
         samesite="lax",
         max_age=600,
         path="/",

@@ -93,3 +93,11 @@ def test_rate_limiter_has_stale_eviction(jwt_project):
     text = (jwt_project / "backend/api/middleware/rate_limit.py").read_text()
     assert "_sweep_stale" in text
     assert (jwt_project / "backend/tests/test_rate_limit.py").exists()
+
+
+def test_generated_user_service_test_matches_real_api(jwt_project):
+    text = (jwt_project / "backend/tests/test_user_service.py").read_text()
+    assert "user_repository=" not in text      # real kwarg is user_repo
+    assert "get_user_by_id" not in text        # real method is get_user
+    assert "CreateUserRequest" in text         # real signature takes a DTO
+    assert "ConflictError" in text             # real exception type

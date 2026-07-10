@@ -13,8 +13,20 @@ from lich import __version__
 
 console = Console()
 
-# Path to CHANGELOG.md (relative to package)
-CHANGELOG_PATH = Path(__file__).parent.parent.parent.parent.parent / "CHANGELOG.md"
+def _find_changelog():
+    """Locate CHANGELOG.md: dev checkout first, then working directory."""
+    candidates = [
+        Path(__file__).resolve().parents[4] / "CHANGELOG.md",
+        Path.cwd() / "CHANGELOG.md",
+        Path.cwd().parent / "CHANGELOG.md",
+    ]
+    for candidate in candidates:
+        try:
+            if candidate.exists():
+                return candidate
+        except OSError:
+            continue
+    return None
 
 
 def show_version(
@@ -64,8 +76,9 @@ def _show_available_versions():
 
 def _show_changelog():
     """Show full changelog."""
-    if CHANGELOG_PATH.exists():
-        with open(CHANGELOG_PATH) as f:
+    changelog = _find_changelog()
+    if changelog:
+        with open(changelog) as f:
             content = f.read()
         md = Markdown(content)
         console.print(md)
@@ -77,11 +90,12 @@ def _parse_changelog() -> list:
     """Parse CHANGELOG.md for version info."""
     versions = []
     
-    if not CHANGELOG_PATH.exists():
+    changelog = _find_changelog()
+    if not changelog:
         return [{"version": __version__, "date": "current", "highlights": "Current version"}]
-    
+
     try:
-        with open(CHANGELOG_PATH) as f:
+        with open(changelog) as f:
             content = f.read()
         
         import re

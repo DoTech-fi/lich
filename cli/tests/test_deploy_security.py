@@ -104,3 +104,57 @@ class TestDeployConfigValidation:
         result = runner.invoke(app, ["deploy", "prod", "backend", "--force"])
         assert result.exit_code == 1
         assert "Invalid" in result.output
+
+
+import os
+
+
+def _write_ssh_config_deploy(project_dir: Path, ssh_name: str, deploy_key_path: str = None):
+    """Write a deploy.yml using the ssh-config connection branch."""
+    lich_dir = project_dir / ".lich"
+    lich_dir.mkdir(exist_ok=True)
+    production = {
+        "connection": "ssh-config",
+        "ssh_name": ssh_name,
+        "path": "/opt/app",
+        "runtime": "docker-compose",
+    }
+    config = {
+        "production": production,
+        "git_repo": "git@github.com:acme/app.git",
+    }
+    if deploy_key_path is not None:
+        config["private_repo"] = True
+        config["deploy_key_path"] = deploy_key_path
+    (lich_dir / "deploy.yml").write_text(yaml.dump(config))
+
+
+class TestDeploySSHDestinationValidation:
+    def test_deploy_init_rejects_option_smuggling_ssh_name(self, runner: CliRunner, temp_dir: Path, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        (temp_dir / "backend").mkdir()
+        marker = temp_dir / "lich_pwned"
+        _write_ssh_config_deploy(temp_dir, f"-oProxyCommand=touch {marker}")
+
+        result = runner.invoke(app, ["deploy", "init", "production"])
+        assert result.exit_code == 1
+        assert "Invalid" in result.output
+        assert not marker.exists()
+
+    def test_deploy_rejects_dashed_key_path(self, runner: CliRunner, temp_dir: Path, monkeypatch):
+        monkeypatch.chdir(temp_dir)
+        (temp_dir / "backend").mkdir()
+        _write_ssh_config_deploy(temp_dir, "myserver", deploy_key_path="-oProxyCommand=evil")
+
+        # Reach the deploy-key setup step: pretend the server is reachable and
+        # skip Docker so the dashed key_path guard is exercised before any scp.
+        monkeypatch.setattr("lich.commands.deploy._check_ssh_connection", lambda host: True)
+
+        def _fake_scp_fail(*args, **kwargs):
+            raise AssertionError("scp must not be invoked with a dashed key_path")
+
+        monkeypatch.setattr("lich.commands.deploy.subprocess.run", _fake_scp_fail)
+
+        result = runner.invoke(app, ["deploy", "init", "production", "--skip-docker"])
+        assert result.exit_code == 1
+        assert "Invalid" in result.output

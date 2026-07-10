@@ -26,6 +26,7 @@ from lich.commands._validate import (
     validate_domain,
     validate_git_ref,
     validate_git_url,
+    validate_ssh_destination,
 )
 
 console = Console()
@@ -75,10 +76,22 @@ def _check_lich_project():
         raise typer.Exit(1)
 
 
-def _prompt_validated(prompt_text: str, validator, default: str = None):
+def _safe_local_path(value: str, label: str) -> str:
+    """Reject empty or dash-prefixed local paths (scp/ssh option smuggling)."""
+    value = (value or "").strip()
+    if not value or value.startswith("-"):
+        console.print(f"[red]Invalid {label} in config: {value!r}[/red]")
+        raise typer.Exit(1)
+    return value
+
+
+def _prompt_validated(prompt_text: str, validator, default: Optional[str] = None):
     """Prompt.ask in a loop until the validator accepts the value."""
     while True:
-        value = Prompt.ask(prompt_text, default=default) if default is not None else Prompt.ask(prompt_text)
+        try:
+            value = Prompt.ask(prompt_text, default=default) if default is not None else Prompt.ask(prompt_text)
+        except EOFError:
+            raise typer.Exit(1)
         try:
             return validator(value)
         except ValidationError as e:
@@ -540,7 +553,13 @@ def deploy_init(
         ssh_host = env_config.get("ssh_name")
     else:
         ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
-    
+
+    try:
+        ssh_host = validate_ssh_destination(ssh_host)
+    except ValidationError as e:
+        console.print(f"[red]Invalid SSH destination in {DEPLOY_CONFIG_PATH}: {e}[/red]")
+        raise typer.Exit(1)
+
     deploy_path = env_config.get("path", "/opt/app")
     git_repo = config.get("git_repo")
 
@@ -603,8 +622,8 @@ def deploy_init(
         if config.get("private_repo") and config.get("deploy_key_path"):
             task = progress.add_task("[cyan]Setting up deploy key...", total=None)
             
-            key_path = config.get("deploy_key_path")
-            
+            key_path = _safe_local_path(config.get("deploy_key_path"), "deploy_key_path")
+
             # Copy private key to server
             scp_cmd = ["scp", key_path, f"{ssh_host}:~/.ssh/deploy_key"]
             result = subprocess.run(scp_cmd, capture_output=True, text=True)
@@ -654,9 +673,11 @@ def deploy_init(
         
         # Step 5: Copy environment file
         env_file = env_config.get("env_file")
+        if env_file:
+            env_file = _safe_local_path(env_file, "env_file")
         if env_file and Path(env_file).exists():
             task = progress.add_task("[cyan]Copying environment file...", total=None)
-            
+
             scp_cmd = ["scp", env_file, f"{ssh_host}:{deploy_path}/.env"]
             result = subprocess.run(scp_cmd, capture_output=True, text=True)
             
@@ -803,7 +824,14 @@ def deploy_status(
             ssh_host = env_config.get("ssh_name")
         else:
             ssh_host = f"{env_config.get('user')}@{env_config.get('host')}"
-        
+
+        try:
+            ssh_host = validate_ssh_destination(ssh_host)
+        except ValidationError as e:
+            console.print(f"│  [red]Invalid SSH destination in config: {e}[/red]")
+            console.print(f"[bold]└{'─' * 44}┘[/bold]")
+            continue
+
         deploy_path = env_config.get("path", "/opt/app")
 
         try:
@@ -912,6 +940,7 @@ def _run_deploy(env: str, component: str, version: Optional[str] = None, dry_run
     deploy_path = env_config.get("path", "/opt/app")
 
     try:
+        ssh_host = validate_ssh_destination(ssh_host)
         deploy_path = validate_deploy_path(deploy_path)
         if version and version != "latest":
             version = validate_git_ref(version)
@@ -1101,6 +1130,7 @@ def deploy_logs(
 
     _validate_component(component)
     try:
+        ssh_host = validate_ssh_destination(ssh_host)
         deploy_path = validate_deploy_path(deploy_path)
     except ValidationError as e:
         console.print(f"[red]Invalid deploy path in config: {e}[/red]")

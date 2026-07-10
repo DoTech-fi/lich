@@ -2,6 +2,20 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.14.0] - 2026-07-11
+
+Quality sprint — Phase 3 of the v1 hardening roadmap. Large internal refactor, MCP modernization, type checking, and a big test-coverage lift. No behavior change for users; all security guards from Phase 1 preserved.
+
+### Changed
+- **Deduplicated** copy-pasted helpers into `commands/common.py` (project detection, subprocess runners, tool checks) — removed 8 copies of `_check_lich_project`, 4 of `_run_command`, and the duplicated template-download helpers.
+- **Broke up oversized functions** into orchestrator + focused helpers (all < 80 lines): `deploy_setup`, `deploy_init`, `upgrade_project`, `ci_setup`; factored the near-identical `ci_web`/`ci_admin`/`ci_landing` into one implementation. Every Phase 1 security guard (input validation, SSH-destination checks, shell-quoting, scp-path guards) verified preserved.
+- **MCP tools modernized**: converted from closure-defined to module-level (now directly unit-testable); long-running tools (deploy/CI/migration/backup) are `async` via `asyncio.create_subprocess_exec` (never a shell). Tool inventory unchanged at 52; all Phase 1/2 argument validation preserved.
+- **Exception hygiene**: narrowed 16 bare `except Exception` sites to specific exception types (no longer swallowing `SystemExit`/`KeyboardInterrupt`/programming errors).
+
+### Added
+- **Type checking**: `mypy` runs clean under a lenient config and is enforced in CI; added missing return-type hints across the CLI.
+- **Test coverage raised from ~33% to 81%** (695 tests): new suites for `common`, `deploy`, `ci`, `security`, `backup`, `upgrade`, `secret`, `git`, `lint`, `dev`, `doctor`, `middleware`, `production-ready`, `version`, and the MCP tool layer, plus MCP functional tests.
+
 ## [1.13.1] - 2026-07-11
 
 Correctness sprint — Phase 2 of the v1 hardening roadmap. Fixes the framework's own failing tests and several bugs in the generated project template.

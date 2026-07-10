@@ -1,4 +1,5 @@
 """Security tests for lich deploy: no shell=True, validated inputs, quoted scripts."""
+import subprocess
 import pytest
 import yaml
 from typer.testing import CliRunner
@@ -184,3 +185,17 @@ class TestRemoteScriptQuoting:
         code, output = _run_ssh_command("prod", "echo ok")
         assert code == 0
         assert captured["ssh_host"] == "prod"
+
+
+class TestVerifyGithubAccessTimeout:
+    def test_returns_false_on_timeout(self, monkeypatch):
+        """_verify_github_access must return False (not raise) when SSH hangs."""
+
+        def fake_run(cmd, **kwargs):
+            raise subprocess.TimeoutExpired("ssh", 15)
+
+        monkeypatch.setattr("lich.commands.deploy.subprocess.run", fake_run)
+        from lich.commands.deploy import _verify_github_access
+
+        result = _verify_github_access("git@github.com:acme/app.git", "/tmp/key")
+        assert result is False, "TimeoutExpired must be caught and return False, not propagate"

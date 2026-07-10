@@ -218,7 +218,10 @@ def _verify_github_access(git_url: str, key_path: str) -> bool:
         "-o", "StrictHostKeyChecking=accept-new",
         "-T", git_host,
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    except subprocess.TimeoutExpired:
+        return False
     # ssh -T writes its greeting to stderr; GitHub exits 1 on success
     output = (result.stdout + result.stderr).lower()
     return "successfully authenticated" in output or "welcome" in output
@@ -359,7 +362,7 @@ def deploy_setup():
             if ssh_hosts:
                 console.print(f"  [dim]Available: {', '.join(ssh_hosts[:8])}{'...' if len(ssh_hosts) > 8 else ''}[/dim]")
             
-            ssh_name = Prompt.ask("SSH config name")
+            ssh_name = _prompt_validated("SSH config name", validate_ssh_destination)
             env_config["ssh_name"] = ssh_name
             
             # Verify SSH connection
@@ -451,9 +454,15 @@ def deploy_setup():
                 
                 Prompt.ask("\n  Press Enter when done", default="")
                 
-                # Verify access
+                # Verify access (advisory — GitHub may need a moment to propagate the key)
                 console.print("  Verifying GitHub access...", end=" ")
-                console.print("[green]✓[/green]")
+                try:
+                    if _verify_github_access(git_repo, key_path):
+                        console.print("[green]✓[/green]")
+                    else:
+                        console.print("[yellow]⚠ could not verify yet (continuing)[/yellow]")
+                except Exception:
+                    console.print("[yellow]⚠ verification skipped (continuing)[/yellow]")
             else:
                 # Use existing key
                 default_key = str(Path.home() / ".ssh" / "id_ed25519")

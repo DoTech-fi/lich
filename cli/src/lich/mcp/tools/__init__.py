@@ -20,21 +20,25 @@ def clean_cli_output(text: str) -> str:
 
 def run_lich_command(cmd: list, force_no_color: bool = True) -> str:
     """Run a lich CLI command and return cleaned output.
-    
+
     Args:
         cmd: Command list to run (e.g., ["lich", "deploy", "prod", "web"])
         force_no_color: If True, set NO_COLOR=1 to disable rich formatting
-    
+
     Returns:
-        Cleaned output string (stdout + stderr)
+        Cleaned output string (stdout + stderr), or "ERROR (exit N): <output>"
+        if the subprocess exits with a non-zero return code.
     """
     import subprocess
-    
+
     try:
         env = os.environ.copy()
         if force_no_color:
             env['NO_COLOR'] = '1'
         res = subprocess.run(cmd, capture_output=True, text=True, env=env)
-        return clean_cli_output(res.stdout + res.stderr)
+        output = clean_cli_output(res.stdout + res.stderr)
+        if res.returncode != 0:
+            return f"ERROR (exit {res.returncode}): {output}"
+        return output
     except FileNotFoundError:
         return "lich command not found"

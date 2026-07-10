@@ -23,9 +23,9 @@ class ValidationError(ValueError):
 def validate_identifier(name: str) -> str:
     """Validate a Python identifier used in generated code (entity, service, ... names)."""
     name = (name or "").strip()
-    if not _IDENTIFIER_RE.match(name):
+    if not _IDENTIFIER_RE.fullmatch(name):
         raise ValidationError(
-            f"Invalid name '{name}': use letters, digits and underscores, "
+            f"Invalid name {name!r}: use letters, digits and underscores, "
             "starting with a letter or underscore (e.g. Product, order_item)."
         )
     return name
@@ -34,10 +34,10 @@ def validate_identifier(name: str) -> str:
 def validate_deploy_path(path: str) -> str:
     """Validate an absolute server-side deploy path (used inside SSH commands)."""
     path = (path or "").strip()
-    if not _DEPLOY_PATH_RE.match(path) or ".." in path:
+    if not _DEPLOY_PATH_RE.fullmatch(path) or ".." in path or "//" in path or path.count("/") < 2 or path.endswith("/"):
         raise ValidationError(
-            f"Invalid deploy path '{path}': must be an absolute path using only "
-            "letters, digits, '.', '_', '-' and '/' (e.g. /opt/app)."
+            f"Invalid deploy path {path!r}: must be an absolute path using only "
+            "letters, digits, '.', '_', '-' and '/', e.g. /opt/app (at least two segments)."
         )
     return path
 
@@ -45,9 +45,9 @@ def validate_deploy_path(path: str) -> str:
 def validate_git_url(url: str) -> str:
     """Validate a git remote URL (ssh 'git@host:owner/repo.git' or https)."""
     url = (url or "").strip()
-    if not (_GIT_SSH_RE.match(url) or _GIT_HTTPS_RE.match(url)):
+    if not (_GIT_SSH_RE.fullmatch(url) or _GIT_HTTPS_RE.fullmatch(url)):
         raise ValidationError(
-            f"Invalid git URL '{url}': expected git@host:owner/repo.git "
+            f"Invalid git URL {url!r}: expected git@host:owner/repo.git "
             "or https://host/owner/repo.git."
         )
     return url
@@ -56,9 +56,9 @@ def validate_git_url(url: str) -> str:
 def validate_git_ref(ref: str) -> str:
     """Validate a git ref (tag, branch, sha) used in 'git checkout <ref>'."""
     ref = (ref or "").strip()
-    if not _GIT_REF_RE.match(ref):
+    if not _GIT_REF_RE.fullmatch(ref) or ".." in ref:
         raise ValidationError(
-            f"Invalid git ref '{ref}': use letters, digits, '.', '_', '-' and '/', "
+            f"Invalid git ref {ref!r}: use letters, digits, '.', '_', '-' and '/', "
             "not starting with '-' (e.g. v1.2.3, feature/login)."
         )
     return ref
@@ -67,9 +67,13 @@ def validate_git_ref(ref: str) -> str:
 def validate_domain(domain: str) -> str:
     """Validate a DNS domain name."""
     domain = (domain or "").strip()
-    if not _DOMAIN_RE.match(domain):
+    if (
+        not _DOMAIN_RE.fullmatch(domain)
+        or len(domain) > 253
+        or any(len(label) > 63 for label in domain.split("."))
+    ):
         raise ValidationError(
-            f"Invalid domain '{domain}': use letters, digits, '-' and '.' only "
+            f"Invalid domain {domain!r}: use letters, digits, '-' and '.' only "
             "(e.g. example.com)."
         )
     return domain

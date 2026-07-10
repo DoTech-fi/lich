@@ -126,3 +126,53 @@ class TestValidateDomain:
     def test_rejects_spaces(self):
         with pytest.raises(ValidationError):
             validate_domain("exam ple.com")
+
+
+class TestNewlineAndControlChars:
+    def test_identifier_rejects_trailing_newline_payload(self):
+        with pytest.raises(ValidationError):
+            validate_identifier("Product\n; rm -rf /")
+
+    def test_raw_regex_is_safe_without_strip(self):
+        # fullmatch must reject a trailing newline even before strip() is applied
+        from lich.commands._validate import _IDENTIFIER_RE
+        assert _IDENTIFIER_RE.fullmatch("Product\n") is None
+
+    def test_error_message_escapes_control_chars(self):
+        with pytest.raises(ValidationError) as excinfo:
+            validate_identifier("evil\x1b[31mRED")
+        assert "\x1b" not in str(excinfo.value)
+
+
+class TestDeployPathDepth:
+    def test_rejects_bare_root(self):
+        with pytest.raises(ValidationError):
+            validate_deploy_path("/")
+
+    def test_rejects_double_slash(self):
+        with pytest.raises(ValidationError):
+            validate_deploy_path("//etc")
+
+    def test_rejects_single_segment(self):
+        with pytest.raises(ValidationError):
+            validate_deploy_path("/opt")
+
+    def test_rejects_trailing_slash(self):
+        with pytest.raises(ValidationError):
+            validate_deploy_path("/opt/app/")
+
+
+class TestGitRefRange:
+    def test_rejects_range_syntax(self):
+        with pytest.raises(ValidationError):
+            validate_git_ref("main..prod")
+
+
+class TestDomainLength:
+    def test_rejects_overlong_label(self):
+        with pytest.raises(ValidationError):
+            validate_domain("a" * 64 + ".com")
+
+    def test_rejects_overlong_domain(self):
+        with pytest.raises(ValidationError):
+            validate_domain(".".join(["abcdefgh"] * 32) + ".com")

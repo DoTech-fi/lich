@@ -2,6 +2,13 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.15.3] - 2026-11-12
+
+Security follow-up to 1.15.2.
+
+### Security
+- **Self-registration no longer forges email verification.** 1.15.2 activated new users by setting both `status=ACTIVE` and `is_verified=True`, which falsely marked an unverified, public-registration email as verified. Now `is_verified` stays `False` on self-registration (honest — no mailbox proof), and `User.can_login` gates on `status == ACTIVE` alone. Email verification is tracked separately and documented as a flow to wire up; never default `is_verified=True` for unauthenticated registrations.
+
 ## [1.15.2] - 2026-11-12
 
 Template & golden-path repair. The e2e golden-path had been red since September; the original failure (missing `email-validator`) masked a cascade of latent bugs. The generated test suite had never fully run in CI, and the `auth=none` variant had never been generated-and-run at all. Both e2e matrix legs (`postgresql+jwt_builtin`, `mongodb+none`) are now green, and all 42 Dependabot alerts are cleared.

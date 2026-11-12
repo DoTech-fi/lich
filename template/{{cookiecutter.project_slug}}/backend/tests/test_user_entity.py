@@ -100,15 +100,19 @@ class TestUserEntity:
         )
         assert user.can_login is False
     
-    def test_cannot_login_when_not_verified(self):
-        """User cannot login when not verified."""
+    def test_can_login_when_active_but_unverified(self):
+        """Login is gated on account status, not email verification.
+
+        is_verified tracks email ownership separately; an active user can log in
+        even before verifying email (no verification flow ships by default).
+        """
         user = User(
             email="test@example.com",
             username="test",
             status=UserStatus.ACTIVE,
             is_verified=False,
         )
-        assert user.can_login is False
+        assert user.can_login is True
     
     def test_activate_user(self):
         """Activate should set status to ACTIVE and verify."""

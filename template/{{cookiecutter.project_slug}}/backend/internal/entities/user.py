@@ -68,8 +68,15 @@ class User(BaseEntity):
     
     @property
     def can_login(self) -> bool:
-        """Check if user is allowed to login."""
-        return self.status == UserStatus.ACTIVE and self.is_verified
+        """Check if user is allowed to login.
+
+        Gated on account status only. `is_verified` tracks whether the user has
+        proven control of their email (via a verification flow) and is kept
+        separate on purpose — it must NOT be assumed true for self-registered
+        users, so it is not a login gate here. Wire an email-verification flow
+        and tighten this if you need verified-email-before-login.
+        """
+        return self.status == UserStatus.ACTIVE
     
     def activate(self):
         """Activate the user account."""

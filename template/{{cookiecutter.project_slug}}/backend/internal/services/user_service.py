@@ -60,11 +60,11 @@ class UserService:
             hashed_password=pwd_context.hash(request.password),
             {%- endif %}
             role=UserRole.USER,
-            # Activate on creation: no email-verification flow is wired up, so
-            # leaving users PENDING/unverified would make can_login() always
-            # false and lock every self-registered user out.
+            # Activate on creation so the user can log in (can_login gates on
+            # status only). is_verified stays False — this is a public,
+            # unauthenticated registration and the email is NOT proven; wire an
+            # email-verification flow to flip it. Never default it to True here.
             status=UserStatus.ACTIVE,
-            is_verified=True,
         )
 
         return await self.user_repo.create(user)

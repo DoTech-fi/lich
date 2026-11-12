@@ -2,6 +2,20 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.15.2] - 2026-11-12
+
+Template & golden-path repair. The e2e golden-path had been red since September; the original failure (missing `email-validator`) masked a cascade of latent bugs. The generated test suite had never fully run in CI, and the `auth=none` variant had never been generated-and-run at all. Both e2e matrix legs (`postgresql+jwt_builtin`, `mongodb+none`) are now green, and all 42 Dependabot alerts are cleared.
+
+### Fixed
+- **Generated backend ran broken out of the box.** `pydantic[email]` for `EmailStr`; pinned `bcrypt<4.1` (passlib incompat) and `beanie<2` (init_beanie API change); added root `/ready` endpoint; `mongodb_url` now sets `authSource=admin`.
+- **Auth actually works now.** `get_user_service` injected the DB session via `Depends(get_session)` so the per-request commit runs (register was never committed → login 401); self-registered users are activated on creation (no verification flow exists → previously 403 "Account is not active").
+- **`auth=none` variant was structurally broken** — the app could not import. `auth_deps` now selects `BeanieUserRepository` for MongoDB; `auth.py` gates `/me`+`/logout` behind auth; test suite gates `LoginRequest`/password/auth-endpoint tests by auth strategy.
+- **Generated test suite** — removed a session-polluting `sys.modules` settings mock, fixed weak-password / invalid-UUID / sync-vs-async-mock test bugs exposed once the suite actually ran.
+
+### Changed
+- **Generated frontends** — `admin` on Next.js `^15.5.28` (was 14), `landing` on Astro `^7.3.2` (was 4); both build clean. Clears all 42 Dependabot alerts (3 critical + 11 high).
+- **e2e runner** — initializes the DB schema before pytest (tests drive the app via httpx `ASGITransport`, which skips the lifespan that calls `init_db`).
+
 ## [1.15.1] - 2026-11-12
 
 Maintenance release — unblocks fresh installs and turns CI green again after four months of upstream dependency drift. No feature changes.

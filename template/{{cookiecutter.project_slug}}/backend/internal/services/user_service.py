@@ -60,9 +60,13 @@ class UserService:
             hashed_password=pwd_context.hash(request.password),
             {%- endif %}
             role=UserRole.USER,
-            status=UserStatus.PENDING,
+            # Activate on creation: no email-verification flow is wired up, so
+            # leaving users PENDING/unverified would make can_login() always
+            # false and lock every self-registered user out.
+            status=UserStatus.ACTIVE,
+            is_verified=True,
         )
-        
+
         return await self.user_repo.create(user)
     
     {%- if cookiecutter.auth_strategy == 'jwt_builtin' %}

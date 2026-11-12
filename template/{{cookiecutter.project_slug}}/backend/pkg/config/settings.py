@@ -48,7 +48,9 @@ class Settings(BaseSettings):
     @property
     def mongodb_url(self) -> str:
         """Build MongoDB URL."""
-        return f"mongodb://{self.mongodb_user}:{self.mongodb_password}@{self.mongodb_host}:{self.mongodb_port}/{self.mongodb_db}"
+        # authSource=admin: the root user (MONGO_INITDB_ROOT_USERNAME) is created
+        # in the admin db, so credentials must be verified there, not in the app db.
+        return f"mongodb://{self.mongodb_user}:{self.mongodb_password}@{self.mongodb_host}:{self.mongodb_port}/{self.mongodb_db}?authSource=admin"
     {%- endif %}
     
     {%- if cookiecutter.use_redis == 'yes' %}

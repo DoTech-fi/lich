@@ -17,6 +17,7 @@ from pkg.config.settings import settings
 from internal.entities.user import User, UserRole
 from internal.services.user_service import UserService
 {%- if cookiecutter.database == 'postgresql' %}
+from sqlalchemy.ext.asyncio import AsyncSession
 from internal.adapters.db.user_repo import SQLAlchemyUserRepository
 from internal.adapters.db.connection import get_session
 {%- else %}
@@ -27,15 +28,21 @@ from internal.adapters.db.user_repo import BeanieUserRepository
 security = HTTPBearer(auto_error=False)
 
 
+{%- if cookiecutter.database == 'postgresql' %}
+async def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
+    """Dependency to get UserService instance.
+
+    Takes the session via Depends(get_session) so FastAPI owns the generator's
+    lifecycle and runs its post-yield commit after the request — a bare
+    ``async for session in get_session()`` abandons the generator, so writes
+    (e.g. register) flush but never commit.
+    """
+    return UserService(SQLAlchemyUserRepository(session))
+{%- else %}
 async def get_user_service() -> UserService:
     """Dependency to get UserService instance."""
-    {%- if cookiecutter.database == 'postgresql' %}
-    async for session in get_session():
-        repo = SQLAlchemyUserRepository(session)
-        return UserService(repo)
-    {%- else %}
     return UserService(BeanieUserRepository())
-    {%- endif %}
+{%- endif %}
 
 
 {%- if cookiecutter.auth_strategy == 'keycloak' %}

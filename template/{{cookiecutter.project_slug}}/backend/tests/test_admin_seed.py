@@ -2,11 +2,13 @@ import pytest
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-# Mock settings before importing module that uses them
-sys.modules["pkg.config.settings"] = MagicMock()
-from pkg.config.settings import settings
+# NOTE: Do NOT replace pkg.config.settings with a bare MagicMock here — it
+# leaks into sys.modules for the whole pytest session (breaking other tests'
+# `from pkg.config.settings import Settings`) and turns settings.database_url
+# into a MagicMock, which crashes create_async_engine at import time. The real
+# settings have safe defaults, and the DB engine is created lazily (no connect).
 
 # Setup sys path to verify script import
 sys.path.append(str(Path(__file__).parent.parent))
@@ -22,8 +24,8 @@ from internal.dto.requests import CreateUserRequest
 @pytest.mark.asyncio
 async def test_admin_seeding_logic():
     """Test that admin user creation logic works as expected."""
-    # Mock Repo
-    user_repo = MagicMock()
+    # Mock Repo (AsyncMock — its methods are awaited, e.g. user_repo.update)
+    user_repo = AsyncMock()
     user_repo.get_by_email.return_value = None
     user_repo.create.return_value = MagicMock(id="123", email="admin@example.com")
     user_repo.update.return_value = MagicMock(id="123", role=UserRole.SUPER_ADMIN)
@@ -32,7 +34,7 @@ async def test_admin_seeding_logic():
     
     # 1. Simulate Script Logic
     admin_email = "admin@example.com"
-    admin_password = "secure_password"
+    admin_password = "SecurePass123"
     
     # Create request
     request = CreateUserRequest(
@@ -47,8 +49,7 @@ async def test_admin_seeding_logic():
     # We mock the create_user method to return a user object that we then modify
     mock_user = MagicMock()
     mock_user.email = admin_email
-    service.create_user = MagicMock()
-    service.create_user.return_value = mock_user
+    service.create_user = AsyncMock(return_value=mock_user)
     
     # Execute "Script" Logic
     user = await service.create_user(request)

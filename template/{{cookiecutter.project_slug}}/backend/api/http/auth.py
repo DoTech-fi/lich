@@ -351,6 +351,9 @@ async def get_auth_config():
 {%- endif %}
 
 
+{%- if cookiecutter.auth_strategy != 'none' %}
+
+
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
@@ -378,3 +381,4 @@ async def logout():
     # For JWT, client should discard tokens
     # For Keycloak, redirect to logout endpoint
     return MessageResponse(message="Logged out successfully")
+{%- endif %}

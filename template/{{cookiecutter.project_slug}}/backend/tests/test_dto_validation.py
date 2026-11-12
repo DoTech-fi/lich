@@ -4,7 +4,10 @@ Ensures request/response models validate correctly.
 """
 import pytest
 from pydantic import ValidationError
-from internal.dto.requests import CreateUserRequest, LoginRequest
+from internal.dto.requests import CreateUserRequest
+{%- if cookiecutter.auth_strategy == 'jwt_builtin' %}
+from internal.dto.requests import LoginRequest
+{%- endif %}
 from internal.dto.responses import UserResponse
 
 
@@ -28,6 +31,7 @@ class TestCreateUserRequest:
                 password="SecurePass123!",
             )
 
+    {%- if cookiecutter.auth_strategy == 'jwt_builtin' %}
     def test_short_password(self):
         """Password shorter than 8 chars should fail."""
         with pytest.raises(ValidationError):
@@ -35,6 +39,7 @@ class TestCreateUserRequest:
                 email="test@example.com",
                 password="short",
             )
+    {%- endif %}
 
     def test_empty_email(self):
         """Empty email should fail validation."""
@@ -45,6 +50,7 @@ class TestCreateUserRequest:
             )
 
 
+{% if cookiecutter.auth_strategy == 'jwt_builtin' -%}
 class TestLoginRequest:
     """Tests for LoginRequest validation."""
 
@@ -60,6 +66,7 @@ class TestLoginRequest:
         """Missing password should fail."""
         with pytest.raises(ValidationError):
             LoginRequest(email="test@example.com")
+{%- endif %}
 
 
 class TestUserResponse:
@@ -67,8 +74,9 @@ class TestUserResponse:
 
     def test_user_response_creation(self):
         """Should create valid response model."""
+        user_id = "00000000-0000-0000-0000-000000000123"
         response = UserResponse(
-            id="123",
+            id=user_id,
             email="test@example.com",
             username="testuser",
             first_name="Test",
@@ -79,5 +87,5 @@ class TestUserResponse:
             is_verified=True,
             created_at="2024-01-01T00:00:00Z",
         )
-        assert response.id == "123"
+        assert str(response.id) == user_id
         assert response.full_name == "Test User"

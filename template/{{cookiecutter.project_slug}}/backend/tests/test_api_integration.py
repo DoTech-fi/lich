@@ -31,6 +31,7 @@ class TestHealthEndpoints:
         assert response.status_code == 200
 
 
+{% if cookiecutter.auth_strategy == 'jwt_builtin' -%}
 class TestAuthEndpoints:
     """Tests for authentication endpoints."""
 
@@ -57,8 +58,10 @@ class TestAuthEndpoints:
             )
         
         assert response.status_code == 422
+{%- endif %}
 
 
+{% if cookiecutter.auth_strategy != 'none' -%}
 class TestUserEndpoints:
     """Tests for user management endpoints."""
 
@@ -77,5 +80,6 @@ class TestUserEndpoints:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/api/v1/users")
-        
+
         assert response.status_code == 401
+{%- endif %}

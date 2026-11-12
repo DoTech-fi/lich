@@ -16,8 +16,12 @@ from datetime import datetime, timedelta
 from pkg.config.settings import settings
 from internal.entities.user import User, UserRole
 from internal.services.user_service import UserService
+{%- if cookiecutter.database == 'postgresql' %}
 from internal.adapters.db.user_repo import SQLAlchemyUserRepository
 from internal.adapters.db.connection import get_session
+{%- else %}
+from internal.adapters.db.user_repo import BeanieUserRepository
+{%- endif %}
 
 
 security = HTTPBearer(auto_error=False)
@@ -25,9 +29,13 @@ security = HTTPBearer(auto_error=False)
 
 async def get_user_service() -> UserService:
     """Dependency to get UserService instance."""
+    {%- if cookiecutter.database == 'postgresql' %}
     async for session in get_session():
         repo = SQLAlchemyUserRepository(session)
         return UserService(repo)
+    {%- else %}
+    return UserService(BeanieUserRepository())
+    {%- endif %}
 
 
 {%- if cookiecutter.auth_strategy == 'keycloak' %}

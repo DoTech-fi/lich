@@ -61,6 +61,13 @@ else
   BACKEND_ENV+=(-e MONGODB_HOST=mongodb -e MONGODB_USER=app -e MONGODB_PASSWORD=app_secret -e MONGODB_DB="$SLUG")
 fi
 
+echo "=== 4b. Initialize database schema ==="
+# Integration tests drive the app via httpx ASGITransport, which does NOT run
+# the FastAPI lifespan — so init_db() (table creation / Beanie init) never fires
+# during pytest. Create the schema up front so DB-backed tests work.
+docker run --rm --network "$COMPOSE_NETWORK" "${BACKEND_ENV[@]}" \
+  e2e-backend python -c "import asyncio; from internal.adapters.db.connection import init_db; asyncio.run(init_db())"
+
 echo "=== 5. Run generated backend tests inside the image ==="
 docker run --rm --network "$COMPOSE_NETWORK" "${BACKEND_ENV[@]}" \
   e2e-backend python -m pytest -v --tb=short

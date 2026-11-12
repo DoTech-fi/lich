@@ -4,7 +4,7 @@
 # Core
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
-pydantic>=2.5.0
+pydantic[email]>=2.5.0
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
 
@@ -37,7 +37,9 @@ passlib[bcrypt]>=1.7.4
 {%- endif %}
 
 # Security
-bcrypt>=4.1.0
+# Pinned <4.1: passlib 1.7.4 reads bcrypt.__about__.__version__, removed in
+# bcrypt 4.1+, which breaks password hashing (AttributeError / 72-byte error).
+bcrypt>=4.0.1,<4.1
 
 # HTTP Client
 httpx>=0.26.0

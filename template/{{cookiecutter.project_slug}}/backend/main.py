@@ -107,6 +107,12 @@ async def health_check():
     return {"status": "healthy", "service": "{{ cookiecutter.project_slug }}-api"}
 
 
+@app.get("/ready")
+async def readiness_check():
+    """Readiness check endpoint (for k8s/compose readiness probes)."""
+    return {"status": "ready", "service": "{{ cookiecutter.project_slug }}-api"}
+
+
 @app.get("/api/health")
 async def api_health_check():
     """API health check endpoint."""

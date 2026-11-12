@@ -3,7 +3,6 @@ MCP Tools for Secret Management.
 """
 from typing import Optional
 
-from lich.commands._validate import ValidationError
 
 from . import run_lich_command
 

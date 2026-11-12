@@ -7,12 +7,16 @@ Usage:
     lich lint --frontend        # TypeScript only (eslint)
     lich lint --fix             # Auto-fix issues
 """
-import subprocess
 from pathlib import Path
 from typing import Any, Dict
 import typer
 from rich.console import Console
 from rich.panel import Panel
+from lich.commands.common import (
+    ensure_lich_project as _check_lich_project,
+    run_command as _run_command,
+    check_tool_installed as _check_tool_installed,
+)
 
 console = Console()
 
@@ -23,11 +27,6 @@ lint_app = typer.Typer(
 )
 
 
-from lich.commands.common import (
-    ensure_lich_project as _check_lich_project,
-    run_command as _run_command,
-    check_tool_installed as _check_tool_installed,
-)
 
 
 def lint_python(fix: bool = False) -> dict:

@@ -103,7 +103,7 @@ async def lich_ci_all(local: bool = False) -> str:
     for component in ["backend", "web", "admin", "landing"]:
         output = await _run_ci(component, local)
         if output.startswith("ERROR"):
-            status = f"❌ (failed)"
+            status = "❌ (failed)"
         else:
             status = "✅"
         results.append(f"=== {component} {status} ===\n{output}")

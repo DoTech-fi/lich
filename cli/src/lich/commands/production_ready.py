@@ -8,12 +8,13 @@ Usage:
 import re
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+from lich.commands.common import ensure_lich_project as _check_lich_project
 
 console = Console()
 
@@ -456,7 +457,6 @@ def display_results(categories: List[CheckCategory], as_json: bool = False):
         ))
 
 
-from lich.commands.common import ensure_lich_project as _check_lich_project
 
 
 class AutoFixer:

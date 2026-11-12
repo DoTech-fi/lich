@@ -13,6 +13,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+from lich.commands.common import ensure_lich_project as _check_lich_project
 
 console = Console()
 
@@ -23,7 +24,6 @@ secret_app = typer.Typer(
 )
 
 
-from lich.commands.common import ensure_lich_project as _check_lich_project
 
 
 def _generate_secret(length: int = 32, charset: str = "alphanum") -> str:

@@ -1,9 +1,8 @@
 """
 lich doctor - Diagnose project health and structure.
 """
-import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 import typer
 from rich.console import Console
@@ -79,7 +78,6 @@ def doctor():
             continue
             
         total_checks += 1
-        icon = "✅" if status else "❌"
         # msg already has color tags from _check_path or generic
         # Parse status from tuple
         if status:

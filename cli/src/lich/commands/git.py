@@ -1,8 +1,6 @@
 import typer
 from rich.console import Console
 from rich.prompt import Prompt, Confirm
-import subprocess
-from pathlib import Path
 from typing import Optional
 
 from lich.commands._validate import ValidationError, validate_git_ref

@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 
 from lich.commands._validate import ValidationError, validate_identifier
+from lich.commands.common import is_lich_project as _check_lich_project
 
 console = Console()
 
@@ -17,7 +18,6 @@ make_app = typer.Typer(
 )
 
 
-from lich.commands.common import is_lich_project as _check_lich_project
 
 
 def _valid_name(name: str) -> str:

@@ -10,14 +10,18 @@ Usage:
     lich security --fix         # Auto-fix where possible
     lich security --json        # Output as JSON
 """
-import subprocess
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+from lich.commands.common import (
+    ensure_lich_project as _check_lich_project,
+    run_command as _run_command,
+    check_tool_installed as _check_tool_installed,
+)
 
 console = Console()
 
@@ -28,11 +32,6 @@ security_app = typer.Typer(
 )
 
 
-from lich.commands.common import (
-    ensure_lich_project as _check_lich_project,
-    run_command as _run_command,
-    check_tool_installed as _check_tool_installed,
-)
 
 
 def scan_python_security(fix: bool = False) -> dict:

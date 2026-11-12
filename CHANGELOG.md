@@ -2,6 +2,21 @@
 
 All notable changes to Lich Toolkit will be documented in this file.
 
+## [1.15.1] - 2026-11-12
+
+Maintenance release — unblocks fresh installs and turns CI green again after four months of upstream dependency drift. No feature changes.
+
+### Fixed
+- **MCP server broken on fresh installs**: `mcp` was pinned `>=0.1.0` with no upper bound, so new installs pulled `mcp` 2.x, which renamed `FastMCP` → `MCPServer` and crashed `lich.mcp.server` on import. Pinned `mcp>=0.1.0,<2`.
+- **README install command**: `pip install lich-cli` → `pip install lich` (the `lich-cli` package does not exist on PyPI).
+- **Test suite under current typer/click**: `typer.exceptions.Exit` is now a distinct class from `click.exceptions.Exit`; assertions in `test_common_and_extras.py` updated to expect `typer.Exit` (what the code actually raises).
+
+### Changed
+- **Lint clean under current Ruff**: moved late `lich.commands.common` imports to the top of their modules (E402), removed unused imports/variables (F401/F841).
+
+### Removed
+- **Stale `nextjs.yml` workflow**: a GitHub-default "Deploy Next.js site to Pages" workflow that failed on every push (no root `package.json`). Docs deploy via `docs.yml` (MkDocs) is the real site.
+
 ## [1.15.0] - 2026-07-11
 
 Gates & golden-path sprint — Phase 4 (final) of the v1 hardening roadmap. Adds the CI gates that keep the framework honest and an end-to-end test that proves a generated project actually runs.

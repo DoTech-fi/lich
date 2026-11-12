@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from lich.cli import app
@@ -30,8 +31,7 @@ from lich.commands.common import (
 class TestEnsureLichProject:
     def test_exits_outside_project(self, temp_dir, monkeypatch):
         monkeypatch.chdir(temp_dir)
-        import click
-        with pytest.raises(click.exceptions.Exit):
+        with pytest.raises(typer.Exit):
             ensure_lich_project()
 
     def test_passes_in_project(self, in_lich_project):
@@ -126,36 +126,32 @@ class TestCheckToolInstalled:
 class TestDownloadTemplate:
     def test_ssl_error_exits_1(self, monkeypatch):
         import requests as req
-        import click
         def fake_get(*a, **kw):
             raise req.exceptions.SSLError("ssl error")
         monkeypatch.setattr("lich.commands.common.requests.get", fake_get)
-        with pytest.raises(click.exceptions.Exit):
+        with pytest.raises(typer.Exit):
             download_template()
 
     def test_network_error_exits_1(self, monkeypatch):
         import requests as req
-        import click
         def fake_get(*a, **kw):
             raise req.exceptions.RequestException("network error")
         monkeypatch.setattr("lich.commands.common.requests.get", fake_get)
-        with pytest.raises(click.exceptions.Exit):
+        with pytest.raises(typer.Exit):
             download_template()
 
     def test_bad_zip_exits_1(self, tmp_path, monkeypatch):
         """Simulate bad zip file."""
-        import click
         fake_response = MagicMock()
         fake_response.raise_for_status = MagicMock()
         fake_response.iter_content = lambda **kw: [b"not a zip"]
         monkeypatch.setattr("lich.commands.common.requests.get", lambda *a, **kw: fake_response)
-        with pytest.raises(click.exceptions.Exit):
+        with pytest.raises(typer.Exit):
             download_template()
 
     def test_missing_template_dir_exits_1(self, tmp_path, monkeypatch):
         """Zip extracts but no template dir inside."""
         import io
-        import click
         # Create a valid zip with wrong structure
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zf:
@@ -166,7 +162,7 @@ class TestDownloadTemplate:
         fake_response.raise_for_status = MagicMock()
         fake_response.iter_content = lambda **kw: [zip_bytes]
         monkeypatch.setattr("lich.commands.common.requests.get", lambda *a, **kw: fake_response)
-        with pytest.raises(click.exceptions.Exit):
+        with pytest.raises(typer.Exit):
             download_template()
 
 

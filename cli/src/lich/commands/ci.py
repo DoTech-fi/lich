@@ -11,9 +11,8 @@ Usage:
     lich ci landing         # Landing page only
     lich ci setup           # Setup act for local CI
 """
-import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -27,6 +26,10 @@ from lich.commands.ci_utils import (
     run_act_workflow,
     ensure_act_ready,
 )
+from lich.commands.common import (
+    ensure_lich_project as _check_lich_project,
+    run_command_ok as _run_command,
+)
 
 console = Console()
 
@@ -37,10 +40,6 @@ ci_app = typer.Typer(
 )
 
 
-from lich.commands.common import (
-    ensure_lich_project as _check_lich_project,
-    run_command_ok as _run_command,
-)
 
 
 def run_backend_ci() -> bool:

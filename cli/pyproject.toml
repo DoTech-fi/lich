@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lich"
-version = "1.15.0"
+version = "1.15.1"
 description = "AI-Ready Full-Stack Project Generator"
 readme = "README.md"
 license = {text = "MIT"}
@@ -29,7 +29,7 @@ dependencies = [
     "rich>=13.0.0",
     "pyyaml>=6.0",
     "requests>=2.28.0",
-    "mcp>=0.1.0",
+    "mcp>=0.1.0,<2",
 ]
 
 [project.optional-dependencies]

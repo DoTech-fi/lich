@@ -25,7 +25,7 @@ Lich Toolkit is a **production-ready project generator** inspired by Laravel's e
 
 ```bash
 # Install CLI
-pip install lich-cli
+pip install lich
 
 # Create new project
 lich init

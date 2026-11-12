@@ -38,7 +38,10 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-mock>=3.14.0",
     "pytest-cov>=4.1.0",
-    "mypy>=1.10",
+    # Linters pinned to match CI exactly — unpinned ruff/mypy drift their
+    # default rule-sets and fail the gate without any code change.
+    "ruff==0.14.10",
+    "mypy==2.4.1",
 ]
 
 [project.scripts]

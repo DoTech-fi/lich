@@ -57,3 +57,5 @@ npm-debug.log
 *.log
 *.tmp
 .cache/
+.superpowers/
+.playwright-mcp/
